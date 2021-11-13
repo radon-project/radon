@@ -2,4 +2,4 @@ from django.shortcuts import render
 
 
 def index(request):
-    return render(request, 'core/theme/index.html')
+    return render(request, 'themes/radonone/index.html')
