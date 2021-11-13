@@ -1,0 +1,10 @@
+{
+    "RN" : {
+        "NAME"          : "Radon One",
+        "VERSION"       : "1.0.0",
+        "AUTHOR"        : "Md. Almas Ali",
+        "AUTHOR_URI"    : "https://almasali.net",
+        "LICENSE_NAME"  : "Radon Public License",
+        "LICENSE_URI"   : "https://github.com/almas-ali/radom/blob/master/LICENSE"
+    }
+}

@@ -1,0 +1,66 @@
+a:link {
+    text-decoration: none;
+    color: white;
+}
+
+a:hover {
+    text-decoration: none;
+    color: aqua;
+    text-shadow: hoff voff blur aqua; /* how to set text shadow in links (a) */
+}
+
+/* body {
+    height: 200%;
+    background-image: url('../img/track_bg.jpg');
+    background-color: cover;
+    padding: 4% 4%;
+} */
+
+.card__ {
+    background-color: rgba(255, 255, 255, 0.815);
+    border-radius: 10px;
+    margin: auto;
+    max-width: 450px;
+    width: 100%;
+}
+
+.card2__ {
+    background-color: rgba(255, 255, 255, 0.815);
+    border-radius: 10px;
+    margin: auto;
+    max-width: 90%;
+    width: 100%;
+    padding: 1%;
+}
+
+.card3__ {
+    background-color: rgba(255, 255, 255, 0);
+    border-radius: 10px;
+    margin: auto;
+    max-width: 90%;
+    width: 100%;
+    padding: 1%;
+}
+
+.main_contact {
+    height: 100%;
+    background-image: url('../img/theme_bg.jpg');
+    background-color: cover;
+    padding: 5%;
+}
+/* body {
+    background-image: url('../img/bg_img.jpg');
+} */
+
+.ui-front {
+    z-index: 9999;
+}
+
+.font-h3 { 
+    font-size: 150%;
+}
+
+.box {
+    margin-top: 2%;
+    margin-bottom: 2%;
+}
