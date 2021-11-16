@@ -48,7 +48,7 @@ ROOT_URLCONF = 'radon.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': ['rn-themes'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
