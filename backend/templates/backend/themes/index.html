@@ -9,33 +9,74 @@
     </div>
 
     <!-- <div class="themes-main card-group"> -->
-        <div class="themes-main row row-cols-1 row-cols-md-3">
+    <div class="themes-main row row-cols-1 row-cols-md-3">
         {% for theme in themes %}
-        <div class="card themes-card">
-            <div class="card-img themes-img loading" align="center">
-                <img src="{% static 'static/img/screenshot.png' %}" alt="Image">
+        <a href="#" data-toggle="modal" data-target="#{{theme}}" class="theme-details">
+            <div class="card themes-card">
+                <div class="card-img themes-img loading" align="center">
+                    <img src="{% static theme|theme_image %}" alt="Image">
+                </div>
+                <div class="card-body">
+                    <div class="card-title">
+                        {{theme|theme_name}}
+                    </div>
+                    <div class="card-text">
+                        {{theme|theme_description|slice:"0:120"}}
+                    </div>
+                    <div class="themes-btn">
+                        <a href="#" class="btn btn-outline-primary btn-sm"><i class="fas fa-cogs"></i> Customize</a>
+                        <a href="#" class="btn btn-primary btn-sm"><i class="fas fa-bolt"></i> Active</a>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="card-title">
-                    {{theme|theme_name}}
-                </div>
-                <div class="card-text">
-                    {{theme|theme_description|slice:"0:120"}}
-                </div>
-                <div class="themes-btn">
-                    <a href="#" class="btn btn-outline-primary btn-sm"><i class="fas fa-cogs"></i> Customize</a>
-                    <a href="#" class="btn btn-primary btn-sm"><i class="fas fa-bolt"></i> Active</a>
-                </div>
-            </div>
-        </div>
+        </a>
         {% if forloop.counter|divisibleby:4 %}
     </div>
     <!-- <div class="themes-main card-group"> -->
-        <div class="themes-main row row-cols-1 row-cols-md-3">
+    <div class="themes-main row row-cols-1 row-cols-md-3">
         {% else %}
 
         {% endif %}
         {% endfor %}
+
+
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#modelId">
+            Launch
+        </button>
+
+        <!-- Modal -->
+        <div class="modal fade" id="radonone" tabindex="-1" role="dialog" aria-labelledby="modelTitleId"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Modal title</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="container-fluid">
+                            Add rows here
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            $('#exampleModal').on('show.bs.modal', event => {
+                var button = $(event.relatedTarget);
+                var modal = $(this);
+                // Use above variables to manipulate the DOM
+
+            });
+        </script>
 
 
     </div>

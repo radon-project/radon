@@ -38,3 +38,12 @@ def theme_description(name):
     except:
         theme = 'Broken Theme'
     return theme
+
+
+@register.filter(name='theme_image')
+def theme_image(name):
+    try:
+        theme = f'{name}/static/img/screenshot.png'
+    except:
+        theme = 'Broken Theme'
+    return theme

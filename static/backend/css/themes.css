@@ -5,6 +5,21 @@
     justify-content: space-evenly;
 }
 
+.themes-card:hover {
+    box-shadow: 8px 8px 8px blue;
+    transform: scale(1.02);
+}
+
+.theme-details {
+    color: black;
+    text-decoration: none;
+}
+
+.themes-main a:hover {
+    color: black;
+    text-decoration-line: none;
+}
+
 .themes-card {
     width: 16rem;
     color: black;
