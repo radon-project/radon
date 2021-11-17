@@ -1,19 +1,16 @@
-{% extends 'backend/layout.html' %}
-{% block title %}Themes{% endblock title %}
-{% load static %}
-{% load theme_details %}
-{% block links %}
-<link rel="stylesheet" href="{% static 'backend/css/themes.css' %}">
-{% endblock links %}
-{% block body %}
+{% extends 'backend/layout.html' %} {% block title %}Themes{% endblock title %}
+{% load static %} {% load theme_details %} {% block links %}
+<link rel="stylesheet" href="{% static 'backend/css/themes.css' %}" />
+{% endblock links %} {% block body %}
 
 <div class="main">
     <div align="center">
         <h2>Installed Themes</h2>
     </div>
-    {% for theme in themes %}
-    {% comment %} {% if forloop.counter  divisibleby %}<hr>{% endif %} {% endcomment %}
-    <div class="themes-main">
+
+    <!-- <div class="themes-main card-group"> -->
+        <div class="themes-main row row-cols-1 row-cols-md-3">
+        {% for theme in themes %}
         <div class="card themes-card">
             <div class="card-img themes-img loading" align="center">
                 <img src="{% static 'static/img/screenshot.png' %}" alt="Image">
@@ -23,8 +20,7 @@
                     {{theme|theme_name}}
                 </div>
                 <div class="card-text">
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit. At beatae veniam aspernatur aperiam fugiat
-                    voluptate!...
+                    {{theme|theme_description|slice:"0:120"}}
                 </div>
                 <div class="themes-btn">
                     <a href="#" class="btn btn-outline-primary btn-sm"><i class="fas fa-cogs"></i> Customize</a>
@@ -32,10 +28,16 @@
                 </div>
             </div>
         </div>
+        {% if forloop.counter|divisibleby:4 %}
     </div>
-    {% endfor %}
-    
+    <!-- <div class="themes-main card-group"> -->
+        <div class="themes-main row row-cols-1 row-cols-md-3">
+        {% else %}
 
-</div>
+        {% endif %}
+        {% endfor %}
 
-{% endblock body %}
+
+    </div>
+
+    {% endblock body %}

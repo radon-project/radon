@@ -5,6 +5,7 @@
         "AUTHOR"        : "Md. Almas Ali",
         "AUTHOR_URI"    : "https://almasali.net",
         "LICENSE_NAME"  : "Radon Public License",
-        "LICENSE_URI"   : "https://github.com/almas-ali/radom/blob/master/LICENSE"
+        "LICENSE_URI"   : "https://github.com/almas-ali/radom/blob/master/LICENSE",
+        "DESCRIPTION"   : "This theme is our official theme. It's free to use for everyone. Thanks."
     }
 }
