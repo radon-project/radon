@@ -1,6 +1,7 @@
 {% extends 'backend/layout.html' %}
 {% block title %}Themes{% endblock title %}
 {% load static %}
+{% load theme_details %}
 {% block links %}
 <link rel="stylesheet" href="{% static 'backend/css/themes.css' %}">
 {% endblock links %}
@@ -10,27 +11,30 @@
     <div align="center">
         <h2>Installed Themes</h2>
     </div>
+    {% for theme in themes %}
+    {% comment %} {% if forloop.counter  divisibleby %}<hr>{% endif %} {% endcomment %}
     <div class="themes-main">
         <div class="card themes-card">
-            <div class="card-img themes-img" align="center">
-                <img src="{% static 'backend/img/default.png' %}" alt="Image" height="120" width="120"
-                    style="border-radius: 20px;">
+            <div class="card-img themes-img loading" align="center">
+                <img src="{% static 'static/img/screenshot.png' %}" alt="Image">
             </div>
             <div class="card-body">
                 <div class="card-title">
-                    Lorem, ipsum dolor.
+                    {{theme|theme_name}}
                 </div>
                 <div class="card-text">
                     Lorem ipsum dolor sit amet, consectetur adipisicing elit. At beatae veniam aspernatur aperiam fugiat
                     voluptate!...
                 </div>
                 <div class="themes-btn">
-                    <button class="btn btn-outline-primary btn-sm">Customize</button>
-                    <button class="btn btn-primary btn-sm">Active</button>
+                    <a href="#" class="btn btn-outline-primary btn-sm"><i class="fas fa-cogs"></i> Customize</a>
+                    <a href="#" class="btn btn-primary btn-sm"><i class="fas fa-bolt"></i> Active</a>
                 </div>
             </div>
         </div>
     </div>
+    {% endfor %}
+    
 
 </div>
 

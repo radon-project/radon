@@ -3,17 +3,42 @@
 }
 
 .themes-card {
-    width: 13rem;
+    width: 16rem;
     color: black;
     border-radius: 15px;
 }
 
 .themes-img {
-    margin-top: 10px;
+    margin-top: 10px !important;
+}
+
+.themes-img img {
+    border-radius: 20px;
+    height: 150px;
+    width: 222px;
+    /* border: #1115 solid 3px; */
+    background-color: gray;
 }
 
 .themes-btn {
     margin-top: 10px;
     display: flex;
     justify-content: space-between;
+}
+
+.loading {
+    border-radius: 20px;
+    height: 150px;
+    width: 222px;
+    margin: 0 auto;
+    animation: loading-animation 1s linear infinite alternate;
+}
+
+@keyframes loading-animation {
+    0% {
+        background-color: hsl(200, 20%, 70%);
+    }
+    100% {
+        background-color: hsl(200, 20%, 95%);
+    }
 }
