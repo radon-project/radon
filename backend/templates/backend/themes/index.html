@@ -1,0 +1,37 @@
+{% extends 'backend/layout.html' %}
+{% block title %}Themes{% endblock title %}
+{% load static %}
+{% block links %}
+<link rel="stylesheet" href="{% static 'backend/css/themes.css' %}">
+{% endblock links %}
+{% block body %}
+
+<div class="main">
+    <div align="center">
+        <h2>Installed Themes</h2>
+    </div>
+    <div class="themes-main">
+        <div class="card themes-card">
+            <div class="card-img themes-img" align="center">
+                <img src="{% static 'backend/img/default.png' %}" alt="Image" height="120" width="120"
+                    style="border-radius: 20px;">
+            </div>
+            <div class="card-body">
+                <div class="card-title">
+                    Lorem, ipsum dolor.
+                </div>
+                <div class="card-text">
+                    Lorem ipsum dolor sit amet, consectetur adipisicing elit. At beatae veniam aspernatur aperiam fugiat
+                    voluptate!...
+                </div>
+                <div class="themes-btn">
+                    <button class="btn btn-outline-primary btn-sm">Customize</button>
+                    <button class="btn btn-primary btn-sm">Active</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock body %}

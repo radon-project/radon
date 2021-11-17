@@ -1,0 +1,19 @@
+.themes-main {
+    padding: 2vw;
+}
+
+.themes-card {
+    width: 13rem;
+    color: black;
+    border-radius: 15px;
+}
+
+.themes-img {
+    margin-top: 10px;
+}
+
+.themes-btn {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+}

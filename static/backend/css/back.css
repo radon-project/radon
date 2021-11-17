@@ -13,11 +13,7 @@ body {
     padding: 1.5em;
     color: #fff;
     list-style-type: none;
-}
-
-.box {
-    display: flex;
-    flex-direction: column;
+    margin-top: 0 !important;
 }
 
 .main-menu li {
@@ -46,4 +42,25 @@ body {
 
 .main {
     margin-left: 8.7rem;
+}
+
+/* footer {
+    display: flex;
+    align-self: end;
+} */
+
+footer a {
+    color: #fff;
+    text-decoration: none;
+    padding: 5px;
+
+    position: relative;
+    left: 80%;
+    bottom: 0;
+}
+
+footer a:hover {
+    color: #fff;
+    background-color: gray;
+    text-decoration-line: none;
 }
