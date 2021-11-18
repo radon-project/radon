@@ -60,3 +60,24 @@
         background-color: hsl(200, 20%, 95%);
     }
 }
+
+.modal {
+    color: black;
+}
+
+.modal-dialog {
+    max-width: 80%;
+    margin: 2rem auto;
+}
+
+.modal-image img {
+    height: 300px;
+    width: 460px;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: flex-start;
+}

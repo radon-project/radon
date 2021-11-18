@@ -36,7 +36,16 @@ def theme_description(name):
     try:
         theme = theme_details(name)['RN_THEME']['DESCRIPTION']
     except:
-        theme = 'Broken Theme'
+        theme = 'No description found !'
+    return theme
+
+
+@register.filter(name='theme_short_description')
+def theme_short_description(name):
+    try:
+        theme = theme_details(name)['RN_THEME']['DESCRIPTION'][:50]+'...'
+    except:
+        theme = 'No description found !'
     return theme
 
 
@@ -45,5 +54,50 @@ def theme_image(name):
     try:
         theme = f'{name}/static/img/screenshot.png'
     except:
-        theme = 'Broken Theme'
+        theme = 'No image found !'
+    return theme
+
+
+@register.filter(name='theme_author')
+def theme_author(name):
+    try:
+        theme = theme_details(name)['RN_THEME']['AUTHOR']
+    except:
+        theme = 'No author found !'
+    return theme
+
+
+@register.filter(name='theme_author_uri')
+def theme_author_uri(name):
+    try:
+        theme = theme_details(name)['RN_THEME']['AUTHOR_URI']
+    except:
+        theme = '#'
+    return theme
+
+
+@register.filter(name='theme_version')
+def theme_version(name):
+    try:
+        theme = theme_details(name)['RN_THEME']['VERSION']
+    except:
+        theme = 'No version code found !'
+    return theme
+
+
+@register.filter(name='theme_license')
+def theme_license(name):
+    try:
+        theme = theme_details(name)['RN_THEME']['LICENSE']
+    except:
+        theme = 'No license found !'
+    return theme
+
+
+@register.filter(name='theme_license_uri')
+def theme_license_uri(name):
+    try:
+        theme = theme_details(name)['RN_THEME']['LICENSE_URI']
+    except:
+        theme = '#'
     return theme
