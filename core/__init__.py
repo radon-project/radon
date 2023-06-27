@@ -1153,10 +1153,10 @@ class Parser:
         if res.error:
             return res
 
-        if not self.current_tok.matches(TT_KEYWORD, 'TO'):
+        if not self.current_tok.matches(TT_KEYWORD, 'to'):
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                f"Expected 'TO'"
+                f"Expected 'to'"
             ))
 
         res.register_advancement()
