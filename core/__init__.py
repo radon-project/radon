@@ -19,6 +19,7 @@ CURRENT_DIR = None
 STDLIBS = [
     'Math',
     'System',
+    'String',
 ]
 
 #######################################
@@ -70,6 +71,7 @@ TT_MINUS = 'MINUS'
 TT_MUL = 'MUL'
 TT_DIV = 'DIV'
 TT_POW = 'POW'
+TT_MOD = 'MOD'
 TT_EQ = 'EQ'
 TT_LPAREN = 'LPAREN'
 TT_RPAREN = 'RPAREN'
@@ -106,6 +108,7 @@ KEYWORDS = [
     'continue',
     'break',
     'class',
+    'include',
 ]
 
 
@@ -180,6 +183,9 @@ class Lexer:
                 self.advance()
             elif self.current_char == '^':
                 tokens.append(Token(TT_POW, pos_start=self.pos))
+                self.advance()
+            elif self.current_char == '%':
+                tokens.append(Token(TT_MOD, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '(':
                 tokens.append(Token(TT_LPAREN, pos_start=self.pos))
@@ -400,6 +406,14 @@ class VarAssignNode:
 
         self.child = None
 
+class IncludeNode:
+    def __init__(self, module_tok):
+        self.module_tok = module_tok
+
+        self.pos_start = self.module_tok.pos_start
+        self.pos_end = self.module_tok.pos_end
+
+        self.child = None
 
 class BinOpNode:
     def __init__(self, left_node, op_tok, right_node):
@@ -680,7 +694,7 @@ class Parser:
         if res.error:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected 'return', 'continue', 'break', 'var', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[' or 'not'"
+                "Expected 'return', 'continue', 'break', 'var', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '%', '(', '[' or 'not'"
             ))
         return res.success(expr)
 
@@ -730,6 +744,22 @@ class Parser:
             if res.error:
                 return res
             return res.success(VarAssignNode(var_name, expr, extra_names))
+        
+        elif self.current_tok.matches(TT_KEYWORD, 'include'):
+            res.register_advancement()
+            self.advance()
+
+            if self.current_tok.type != TT_STRING:
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected string"
+                ))
+
+            file_name = self.current_tok
+            res.register_advancement()
+            self.advance()
+
+            return res.success(IncludeNode(file_name))
 
         node = res.register(self.bin_op(
             self.comp_expr, ((TT_KEYWORD, 'and'), (TT_KEYWORD, 'or'))))
@@ -770,7 +800,7 @@ class Parser:
         return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
 
     def term(self):
-        return self.bin_op(self.factor, (TT_MUL, TT_DIV))
+        return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_MOD))
 
     def factor(self):
         res = ParseResult()
@@ -788,6 +818,9 @@ class Parser:
 
     def power(self):
         return self.bin_op(self.call, (TT_POW, ), self.factor)
+
+    def mod(self):
+        return self.bin_op(self.factor, (TT_MOD, ))
 
     def call(self):
         res = ParseResult()
@@ -1596,6 +1629,12 @@ class Number(Value):
             return Number(self.value ** other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
+    
+    def modded_by(self, other):
+        if isinstance(other, Number):
+            return Number(self.value % other.value).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
 
     def get_comparison_eq(self, other):
         if isinstance(other, Number):
@@ -1667,7 +1706,6 @@ class Number(Value):
 Number.null = Number(0)
 Number.false = Number(0)
 Number.true = Number(1)
-Number.math_PI = Number(math.pi)
 
 
 class String(Value):
@@ -1707,7 +1745,12 @@ class String(Value):
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
-
+    
+    def to_int(self):
+        if self.value.isdigit():
+            return int(self.value)
+        return None
+        
     def __str__(self):
         return self.value
 
@@ -2004,6 +2047,18 @@ class BuiltInFunction(BaseFunction):
         return RTResult().success(Number.true if is_number else Number.false)
     execute_is_list.arg_names = ["value"]
 
+    def execute_to_int(self, exec_ctx):
+        try:
+            number = int(exec_ctx.symbol_table.get("value").value)
+        except:
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Could not convert to int",
+                exec_ctx
+            ))
+        return RTResult().success(Number(number))
+    execute_to_int.arg_names = ["value"]
+
     def execute_is_function(self, exec_ctx):
         is_number = isinstance(
             exec_ctx.symbol_table.get("value"), BaseFunction)
@@ -2076,7 +2131,7 @@ class BuiltInFunction(BaseFunction):
         return RTResult().success(Number.null)
     execute_extend.arg_names = ["listA", "listB"]
 
-    def execute_len(self, exec_ctx):
+    def execute_arrlen(self, exec_ctx):
         list_ = exec_ctx.symbol_table.get("list")
 
         if not isinstance(list_, List):
@@ -2087,7 +2142,20 @@ class BuiltInFunction(BaseFunction):
             ))
 
         return RTResult().success(Number(len(list_.elements)))
-    execute_len.arg_names = ["list"]
+    execute_arrlen.arg_names = ["list"]
+
+    def execute_strlen(self, exec_ctx):
+        string = exec_ctx.symbol_table.get("string")
+
+        if not isinstance(string, String):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Argument must be string",
+                exec_ctx
+            ))
+
+        return RTResult().success(Number(len(string.value)))
+    execute_strlen.arg_names = ["string"]
 
     def execute_require(self, exec_ctx):
         module = exec_ctx.symbol_table.get("module")
@@ -2163,9 +2231,11 @@ BuiltInFunction.is_function = BuiltInFunction("is_function")
 BuiltInFunction.append = BuiltInFunction("append")
 BuiltInFunction.pop = BuiltInFunction("pop")
 BuiltInFunction.extend = BuiltInFunction("extend")
-BuiltInFunction.len = BuiltInFunction("len")
+BuiltInFunction.arrlen = BuiltInFunction("arrlen")
 BuiltInFunction.require = BuiltInFunction("require")
 BuiltInFunction.exit = BuiltInFunction("exit")
+BuiltInFunction.to_int = BuiltInFunction("to_int")
+BuiltInFunction.strlen = BuiltInFunction("strlen")
 
 #######################################
 # CONTEXT
@@ -2321,6 +2391,56 @@ class Interpreter:
         context.symbol_table.set(var_name, value)
         return res.success(value)
 
+    def visit_IncludeNode(self, node, context):
+        res = RTResult()
+        exec_ctx = context
+
+        module = node.module_tok.value
+
+        try:
+            if module not in STDLIBS:
+                file_extension = module.split("/")[-1].split('.')[-1]
+                if file_extension != "rn":
+                    return res.failure(RTError(
+                        node.pos_start, node.pos_end,
+                        "A Radon script must have a .rn extension",
+                        exec_ctx
+                    ))
+                module_file = module.split("/")[-1]
+                module_path = os.path.dirname(os.path.realpath(module))
+
+                global CURRENT_DIR
+                if CURRENT_DIR is None:
+                    CURRENT_DIR = module_path
+
+                module = os.path.join(CURRENT_DIR, module_file)
+            else:
+                # For STDLIB modules
+                module = os.path.join(BASE_DIR, 'stdlib', f'{module}.rn')
+
+            with open(module, "r") as f:
+                script = f.read()
+        except Exception as e:
+            return RTResult().failure(RTError(
+                node.pos_start, node.pos_end,
+                f"Failed to load script \"{module}\"\n" + str(e),
+                exec_ctx
+            ))
+
+        _, error, should_exit = run(module, script)
+
+        if error:
+            return RTResult().failure(RTError(
+                node.pos_start, node.pos_end,
+                f"Failed to finish executing script \"{module}\"\n" +
+                error.as_string(),
+                exec_ctx
+            ))
+
+        if should_exit:
+            return RTResult().success_exit(Number.null)
+        return RTResult().success(Number.null)
+
     def visit_BinOpNode(self, node, context):
         res = RTResult()
         left = res.register(self.visit(node.left_node, context))
@@ -2340,6 +2460,8 @@ class Interpreter:
             result, error = left.dived_by(right)
         elif node.op_tok.type == TT_POW:
             result, error = left.powed_by(right)
+        elif node.op_tok.type == TT_MOD:
+            result, error = left.modded_by(right)
         elif node.op_tok.type == TT_EE:
             result, error = left.get_comparison_eq(right)
         elif node.op_tok.type == TT_NE:
@@ -2559,7 +2681,6 @@ global_symbol_table = SymbolTable()
 global_symbol_table.set("null", Number.null)
 global_symbol_table.set("false", Number.false)
 global_symbol_table.set("true", Number.true)
-global_symbol_table.set("MATH_PI", Number.math_PI)
 global_symbol_table.set("print", BuiltInFunction.print)
 global_symbol_table.set("print_ret", BuiltInFunction.print_ret)
 global_symbol_table.set("input", BuiltInFunction.input)
@@ -2570,12 +2691,14 @@ global_symbol_table.set("is_num", BuiltInFunction.is_number)
 global_symbol_table.set("is_str", BuiltInFunction.is_string)
 global_symbol_table.set("is_list", BuiltInFunction.is_list)
 global_symbol_table.set("is_fun", BuiltInFunction.is_function)
+global_symbol_table.set("require", BuiltInFunction.require)
+global_symbol_table.set("exit", BuiltInFunction.exit)
+global_symbol_table.set("to_int", BuiltInFunction.to_int)
 global_symbol_table.set("append", BuiltInFunction.append)
 global_symbol_table.set("pop", BuiltInFunction.pop)
 global_symbol_table.set("extend", BuiltInFunction.extend)
-global_symbol_table.set("len", BuiltInFunction.len)
-global_symbol_table.set("require", BuiltInFunction.require)
-global_symbol_table.set("exit", BuiltInFunction.exit)
+global_symbol_table.set("arrlen", BuiltInFunction.arrlen)
+global_symbol_table.set("strlen", BuiltInFunction.strlen)
 
 
 def run(fn, text):
