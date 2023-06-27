@@ -1,0 +1,22 @@
+class Person
+	fun Person(name)
+		var this.name = name
+	end
+	fun Format()
+		return "My name is " + this.name + "."
+	end
+	fun single_line() -> "This is a single line method"
+end
+
+print("Enter a name, or type 'exit' to quit.")
+var inp = input("Name: ")
+
+while inp != "exit" then
+	var p = Person(inp)
+	print(p.Format())
+	var inp = input("Name: ")
+	p.single_line()
+end
+
+exit()
+print("This message will never ever show up! Isn't that wacky?!")

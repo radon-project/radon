@@ -1,0 +1,32 @@
+##################################
+# Testing stdlib Math library
+##################################
+
+require("Math")
+
+var math = Math()
+print(math.PI) # Ligal
+
+# print(Math().PI) # Illigal
+
+
+##################################
+# Testing System library
+##################################
+
+require("System")
+
+var sys = System()
+print(sys.getInfo())
+
+
+##################################
+# Testing external library
+##################################
+
+# require("simple.rn")
+
+
+##################################
+# Testing 
+##################################

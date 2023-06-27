@@ -1,0 +1,41 @@
+print("This is a simple test module")
+
+var add = fun (a, b) -> a + b
+
+fun verySimple(string) 
+    if string == "OK" then
+        return "Very simple test : " + string
+    else 
+        return "Very simple test : Not OK"
+    end
+end
+
+var vs = verySimple("OK")
+# print(vs)
+# 
+# print(add(1, 2))
+
+# Linear search algorithm
+# fun find(list, value)
+#     for i = 0 to len(list) then
+#         if i == value then
+#             return i
+#         end
+#     end
+#     return -1
+# end
+
+# var list = [1, 2, 3, 4, 5]
+# var index = find(list, 3)
+# print(index)
+
+class Algorithm
+    fun find(list, value)
+        for i = 0 to len(list) then
+            if i == value then
+                return i
+            end
+        end
+        return -1
+    end
+end
