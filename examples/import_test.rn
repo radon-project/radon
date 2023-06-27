@@ -2,10 +2,10 @@
 # Testing stdlib Math library
 ##################################
 
-require("Math")
+# require("Math")
 
-var math = Math()
-print(math.PI) # Ligal
+# var math = Math()
+# print(math.PI) # Ligal
 
 # print(Math().PI) # Illigal
 
@@ -14,10 +14,10 @@ print(math.PI) # Ligal
 # Testing System library
 ##################################
 
-require("System")
+# require("System")
 
-var sys = System()
-print(sys.getInfo())
+# var sys = System()
+# print(sys.getInfo())
 
 
 ##################################
@@ -28,5 +28,15 @@ print(sys.getInfo())
 
 
 ##################################
-# Testing 
+# Testing String library
 ##################################
+
+# require("String")
+
+include "String"
+
+var data = "Hello World !"
+var str = String(data)
+
+print(str.length())
+

@@ -29,6 +29,8 @@ var vs = verySimple("OK")
 # var index = find(list, 3)
 # print(index)
 
+fun iseven(num) -> if (num%2) == 0 then print("even") else print("odd")
+
 class Algorithm
     fun find(list, value)
         for i = 0 to len(list) then
