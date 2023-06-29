@@ -41,7 +41,7 @@ class Error:
     def as_string(self):
         result = f'{self.error_name}: {self.details}\n'
         result += f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
-        result += '\n\n' + \
+        result += '\n' + \
             string_with_arrows(self.pos_start.ftxt,
                                self.pos_start, self.pos_end)
         return result
@@ -70,7 +70,7 @@ class RTError(Error):
     def as_string(self):
         result = self.generate_traceback()
         result += f'{self.error_name}: {self.details}'
-        result += '\n\n' + \
+        result += '\n' + \
             string_with_arrows(self.pos_start.ftxt,
                                self.pos_start, self.pos_end)
         return result
