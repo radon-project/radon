@@ -1,0 +1,14 @@
+include Array
+
+var arr = Array([1,2,3,4,5,6,7,8,9,10])
+print(arr.is_array())
+print(arr.to_string())
+
+arr.append(11)
+print(arr.to_string())
+
+print(arr.len())
+
+arr.pop(5)
+print(arr.to_string())
+
