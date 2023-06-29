@@ -1,28 +1,41 @@
-class String
+class String {
     # The constructor method
-    fun String(value)
+    fun String(value) {
         var this.value = value
-    end
+    }
+
+    # TODO: Need to fix
+    fun join(separator) {
+        var result = ""
+
+        for i = 0 to strlen(this.value) {
+            result += this.value[i]
+            if i < strlen(this.value) - 1 {
+                result += separator
+            }
+        }
+        return result
+    }
 
     # Find a character in a string and return its index
-    fun find(data)
+    fun find(data) {
         var result = 0
 
-        for i = 0 to strlen(this.value) then
-            if this.value == data then
+        for i = 0 to strlen(this.value) {
+            if this.value == data {
                 return i
-            end
-        end
+            }
+        }
         return -1
-    end
+    }
 
     # Magic method to convert string to int if possible
-    fun to_int()
-        if is_num(this.value) == true then
+    fun to_int() {
+        if is_num(this.value) == true {
             return to_int(this.value)
-        end
-    end
+        }
+    }
 
     # Return the length of the string
-    fun length() -> return strlen(this.value)
-end
+    # fun length() -> return strlen(this.value)
+}

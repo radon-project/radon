@@ -1,9 +1,9 @@
-class System
-    fun System()
+class System {
+    fun System() {
         var this.name = "Linux"
         var this.version = "1.0"
-    end
-    fun getInfo()
+    }
+    fun getInfo() {
         return "System: " + this.name + " " + this.version
-    end
-end
+    }
+}

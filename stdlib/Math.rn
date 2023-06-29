@@ -1,8 +1,8 @@
 # The Math class provides all types of math functionalites for radon language.
 
-class Math
-    fun Math()
+class Math {
+    fun Math() {
         var this.PI = 3.141592653589793
-    end
-    fun to_string() -> "The Math class"
-end
+    }
+    #fun to_string() -> "The Math class"
+}
