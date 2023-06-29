@@ -25,14 +25,18 @@ radon
 │   ├── errors.py
 │   ├── __init__.py
 ├── examples
+│   ├── arrays.rn
 │   ├── classes.rn
 │   ├── functions.rn
 │   ├── import_test.rn
-│   └── simple.rn
+│   ├── new_syntax.rn
+│   ├── simple.rn
+│   └── syntax.rn
 ├── Makefile
 ├── radon.py
 ├── README.md
 ├── stdlib
+│   ├── Array.rn
 │   ├── Math.rn
 │   ├── String.rn
 │   └── System.rn
@@ -91,38 +95,40 @@ var d = "World"
 print(c + " " + d) # Hello World
 
 # Conditional statement
-if a > b then
+if a > b {
     print("a is greater than b")
-elif a < b then
+} 
+elif a < b {
     print("a is less than b")
-else
+} 
+else {
     print("a is equal to b")
-end
+}
 
 # For loop
 var x = 9 # Multiplication table of 9
 
-for i = 1 to 10 then
+for i = 1 to 10 {
     print(x + " X " + i + " = " + x * i)
-end
+}
 
 # While loop
-while x > 0 then
+while x > 0 {
     print(x)
     x = x - 1
-end
+}
 
 # Function definition
-fun add(a, b)
+fun add(a, b) {
     return a + b
-end
+}
 
 print(add(10, 20)) # 30
 
 # Anonymous function
-var sub = fun (a, b)
+var sub = fun (a, b) {
     return a - b
-end
+}
 
 print(sub(20, 10)) # 10
 
@@ -131,21 +137,45 @@ fun mul(a, b) -> a * b
 print(mul(10, 20)) # 200
 
 # Class definition
-class Person
+class Person {
     # Constructor
-    fun Person(name, age)
-        this.name = name
-        this.age = age
-    end
+    fun Person(name, age) {
+        var this.name = name
+        var this.age = age
+    }
 
-    fun get_name()
+    fun get_name() {
         return this.name
-    end
+    }
 
-    fun get_age()
+    fun get_age() {
         return this.age
-    end
-end
+    }
+}
+
+# builtin functions
+
+int()
+float()
+
+is_num()
+is_str()
+is_bool()
+is_list()
+
+strlen()
+arrlen()
+
+print()
+print_ret()
+input()
+input_int()
+
+push()
+pop()
+append()
+extend()
+
 ```
 
 ## Contributing
