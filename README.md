@@ -14,7 +14,12 @@ It is currently in development state. It is not ready for use yet. But you can s
 ```bash
 git clone https://github.com/radon-project/radon.git
 cd radon
+
+# To run the repl
 python radon.py
+
+# To run a .rn file use the -s flag and pass the filename
+python radon.py -s <filename>
 ```
 
 ## Project Structure
