@@ -1,0 +1,45 @@
+class Array {
+    fun Array(list) {
+        var this.list = list
+        var this.root_append = append
+        var this.root_pop = pop
+        var this.root_extend = extend
+    }
+
+    fun map(func) {
+        var new_elements = []
+
+        for i = 0 to arrlen(this.list) {
+            append(new_elements, func(this.list/i))
+        }
+
+        return new_elements
+    }
+
+    fun append(item) {
+        this.root_append(this.list, item)
+    }
+
+    fun pop(index) {
+        this.root_pop(this.list, index)
+    }
+
+    fun extend(list) {
+        this.root_extend(this.list, list)
+    }
+    
+    fun len() {
+        return arrlen(this.list)
+    }
+
+    fun to_string() {
+        return this.list
+    }
+
+    fun is_empty() {
+        return this.list == []
+    }
+
+    # fun is_array() -> true
+    
+}
