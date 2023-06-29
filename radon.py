@@ -8,11 +8,28 @@ import core as base_core
 
 def shell():
     print('Radon 0.0.1\nPress Ctrl+C to exit()')
+    brace_count = 0
+    
     while True:
         try:
-            text = input('radon > ')
+            text = input('>>> ')
             if text.strip() == "":
                 continue
+
+            if text.strip()[-1] == '{':
+                brace_count += 1
+                while True:
+                    text += '\n' + input('... ')
+                    if text.strip()[-1] == '{':
+                        brace_count += 1
+                    elif text.strip()[-1] == '}':
+                        brace_count -= 1
+
+                    if brace_count == 0:
+                        break
+
+                    
+            
             result, error, should_exit = base_core.run('<stdin>', text)
 
             if error:
