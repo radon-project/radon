@@ -4,7 +4,7 @@ fun oopify(prefix) -> prefix + "oop"
 
 fun join(elements, separator)
     var result = ""
-    var length = len(elements)
+    var length = arrlen(elements)
 
     for i = 0 to length then
         var result = result + elements/i
@@ -17,7 +17,7 @@ end
 fun map(elements, func)
     var new_elements = []
 
-    for i = 0 to len(elements) then
+    for i = 0 to arrlen(elements) then
         append(new_elements, func(elements/i))
     end
 
