@@ -1,0 +1,68 @@
+# PASSED
+# class Num {
+#     
+#     fun Num() {
+#         print("Num")
+#     }
+# 
+#     fun is_even(number) {
+#         if number % 2 == 0 {
+#             return true
+#         } else {
+#             return false
+#         }
+#     }
+# 
+# }
+# 
+# fun main() {
+#     var num = Num()
+#     print(num.is_even(2))
+#     
+# }
+# 
+# main()
+
+
+# PASSED
+# for i = 0 to 10 step 2 {
+#     print(i)
+# }
+
+# PASSED
+# while true {
+#     var usr = input("> ")
+#     if usr == "exit" {
+#         break
+#     }
+#     print(usr)
+# }
+
+# PASSED 
+# if 3 == 4 {
+#     print("OK")
+# 
+# } elif 3 == 0 {
+#     print("YES")
+#     
+# } else {
+#     print("NO")
+# }
+
+
+############################################
+
+# FAILING
+# fun something() -> true
+# var a = fun () -> print("this is")
+# a()
+
+# var obj = {
+#     "name" : "John",
+#     "age"  : 30,
+#     "city" : "New York"
+# }
+
+# var i = 3
+# i += 4
+# print(i)
