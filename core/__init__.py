@@ -6,7 +6,6 @@ from .errors import *
 
 import string
 import os
-import math
 import pathlib
 
 #######################################
@@ -17,6 +16,7 @@ BASE_DIR = pathlib.Path(__file__).parent.parent
 CURRENT_DIR = None
 
 STDLIBS = [
+    'Array',
     'Math',
     'System',
     'String',
@@ -61,33 +61,42 @@ class Position:
 #######################################
 
 
-TT_INT = 'INT'
-TT_FLOAT = 'FLOAT'
-TT_STRING = 'STRING'
-TT_IDENTIFIER = 'IDENTIFIER'
-TT_KEYWORD = 'KEYWORD'
-TT_PLUS = 'PLUS'
-TT_MINUS = 'MINUS'
-TT_MUL = 'MUL'
-TT_DIV = 'DIV'
-TT_POW = 'POW'
-TT_MOD = 'MOD'
-TT_EQ = 'EQ'
-TT_LPAREN = 'LPAREN'
-TT_RPAREN = 'RPAREN'
-TT_LSQUARE = 'LSQUARE'
-TT_RSQUARE = 'RSQUARE'
-TT_EE = 'EE'
-TT_NE = 'NE'
-TT_LT = 'LT'
-TT_GT = 'GT'
-TT_LTE = 'LTE'
-TT_GTE = 'GTE'
-TT_COMMA = 'COMMA'
-TT_ARROW = 'ARROW'
-TT_NEWLINE = 'NEWLINE'
-TT_DOT = 'DOT'
-TT_EOF = 'EOF'
+TT_INT = 'INT'  # 123456
+TT_FLOAT = 'FLOAT'  # 5.5
+TT_STRING = 'STRING'  # "Hello World"
+TT_IDENTIFIER = 'IDENTIFIER'  # var_name
+TT_KEYWORD = 'KEYWORD'  # var, if, for, while, fun
+TT_PLUS = 'PLUS'  # Plus
+TT_MINUS = 'MINUS'  # Minus
+TT_MUL = 'MUL'  # Times
+TT_DIV = 'DIV'  # Divide
+TT_POW = 'POW'  # Power
+TT_MOD = 'MOD'  # Modulo
+TT_EQ = 'EQ'  # Equal
+TT_LPAREN = 'LPAREN'  # (
+TT_RPAREN = 'RPAREN'  # )
+TT_LBRACE = 'LBRACE'  # {
+TT_RBRACE = 'RBRACE'  # }
+TT_LSQUARE = 'LSQUARE'  # [
+TT_RSQUARE = 'RSQUARE'  # ]
+TT_EE = 'EE'  # Equal Equal
+TT_NE = 'NE'  # Not Equal
+TT_LT = 'LT'  # Less Than
+TT_GT = 'GT'  # Greater Than
+TT_LTE = 'LTE'  # Less Than or Equal
+TT_GTE = 'GTE'  # Greater Than or Equal
+TT_PE = 'PE'  # Plus Equal
+TT_ME = 'ME'  # Minus Equal
+TT_TE = 'TE'  # Times Equal
+TT_DE = 'DE'  # Divide Equal
+TT_MDE = 'MDE'  # Modulo Divide Equal
+TT_POWE = 'POWE'  # Power Equal
+TT_COMMA = 'COMMA'  # ,
+TT_COLON = 'COLON'  # :
+TT_ARROW = 'ARROW'  # ->
+TT_NEWLINE = 'NEWLINE'  # \n
+TT_DOT = 'DOT'  # .
+TT_EOF = 'EOF'  # End Of File
 
 KEYWORDS = [
     'var',
@@ -168,30 +177,51 @@ class Lexer:
                 tokens.append(self.make_identifier())
             elif self.current_char == '"':
                 tokens.append(self.make_string())
+            elif self.current_char == ":":
+                tokens.append(Token(TT_COLON, pos_start=self.pos))
+                self.advance()
             # elif self.current_char == "'":
             #     tokens.append(self.make_string())
+            # elif self.current_char == '+':
+            #     tokens.append(Token(TT_PLUS, pos_start=self.pos))
+            #     self.advance()
+            # elif self.current_char == '-':
+            #     tokens.append(self.make_minus_or_arrow())
+            # elif self.current_char == '*':
+            #     tokens.append(Token(TT_MUL, pos_start=self.pos))
+            #     self.advance()
+            # elif self.current_char == '/':
+            #     tokens.append(Token(TT_DIV, pos_start=self.pos))
+            #     self.advance()
+            # elif self.current_char == '^':
+            #     tokens.append(Token(TT_POW, pos_start=self.pos))
+            #     self.advance()
+            # elif self.current_char == '%':
+            #     tokens.append(Token(TT_MOD, pos_start=self.pos))
             elif self.current_char == '+':
-                tokens.append(Token(TT_PLUS, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_plus_equals())
             elif self.current_char == '-':
-                tokens.append(self.make_minus_or_arrow())
+                tokens.append(self.make_minus_equals())
             elif self.current_char == '*':
-                tokens.append(Token(TT_MUL, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_times_equals())
             elif self.current_char == '/':
-                tokens.append(Token(TT_DIV, pos_start=self.pos))
-                self.advance()
-            elif self.current_char == '^':
-                tokens.append(Token(TT_POW, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_divide_equals())
             elif self.current_char == '%':
-                tokens.append(Token(TT_MOD, pos_start=self.pos))
+                tokens.append(self.make_mod_equals())
+            elif self.current_char == '^':
+                tokens.append(self.make_power_equals())
                 self.advance()
             elif self.current_char == '(':
                 tokens.append(Token(TT_LPAREN, pos_start=self.pos))
                 self.advance()
             elif self.current_char == ')':
                 tokens.append(Token(TT_RPAREN, pos_start=self.pos))
+                self.advance()
+            elif self.current_char == '{':
+                tokens.append(Token(TT_LBRACE, pos_start=self.pos))
+                self.advance()
+            elif self.current_char == '}':
+                tokens.append(Token(TT_RBRACE, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '[':
                 tokens.append(Token(TT_LSQUARE, pos_start=self.pos))
@@ -335,6 +365,60 @@ class Lexer:
 
         return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
 
+    def make_plus_equals(self):
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            self.advance()
+            return Token(TT_PE, pos_start=pos_start, pos_end=self.pos)
+        return Token(TT_PLUS, pos_start=pos_start, pos_end=self.pos)
+
+    def make_minus_equals(self):
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            self.advance()
+            return Token(TT_ME, pos_start=pos_start, pos_end=self.pos)
+        return Token(TT_MINUS, pos_start=pos_start, pos_end=self.pos)
+
+    def make_times_equals(self):
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            self.advance()
+            return Token(TT_TE, pos_start=pos_start, pos_end=self.pos)
+        return Token(TT_MUL, pos_start=pos_start, pos_end=self.pos)
+
+    def make_divide_equals(self):
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            self.advance()
+            return Token(TT_DE, pos_start=pos_start, pos_end=self.pos)
+        return Token(TT_DIV, pos_start=pos_start, pos_end=self.pos)
+
+    def make_mod_equals(self):
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            self.advance()
+            return Token(TT_MDE, pos_start=pos_start, pos_end=self.pos)
+        return Token(TT_MOD, pos_start=pos_start, pos_end=self.pos)
+
+    def make_power_equals(self):
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            self.advance()
+            return Token(TT_POWE, pos_start=pos_start, pos_end=self.pos)
+        return Token(TT_POW, pos_start=pos_start, pos_end=self.pos)
+
     def skip_comment(self):
         self.advance()
 
@@ -406,6 +490,19 @@ class VarAssignNode:
 
         self.child = None
 
+
+class VarManipulateNode:
+    def __init__(self, var_name_tok, op_tok, value_node):
+        self.var_name_tok = var_name_tok
+        self.op_tok = op_tok
+        self.value_node = value_node
+
+        self.pos_start = self.var_name_tok.pos_start
+        self.pos_end = self.value_node.pos_end
+
+        self.child = None
+
+
 class IncludeNode:
     def __init__(self, module_tok):
         self.module_tok = module_tok
@@ -414,6 +511,7 @@ class IncludeNode:
         self.pos_end = self.module_tok.pos_end
 
         self.child = None
+
 
 class BinOpNode:
     def __init__(self, left_node, op_tok, right_node):
@@ -629,7 +727,7 @@ class Parser:
 
     def statements(self):
         res = ParseResult()
-        statements = []
+        list_statements = []
         pos_start = self.current_tok.pos_start.copy()
 
         while self.current_tok.type == TT_NEWLINE:
@@ -639,7 +737,7 @@ class Parser:
         statement = res.register(self.statement())
         if res.error:
             return res
-        statements.append(statement)
+        list_statements.append(statement)
 
         more_statements = True
 
@@ -659,10 +757,12 @@ class Parser:
                 self.reverse(res.to_reverse_count)
                 more_statements = False
                 continue
-            statements.append(statement)
+            list_statements.append(statement)
+            
+        
 
         return res.success(ListNode(
-            statements,
+            list_statements,
             pos_start,
             self.current_tok.pos_end.copy()
         ))
@@ -744,15 +844,16 @@ class Parser:
             if res.error:
                 return res
             return res.success(VarAssignNode(var_name, expr, extra_names))
-        
+
         elif self.current_tok.matches(TT_KEYWORD, 'include'):
             res.register_advancement()
             self.advance()
 
-            if self.current_tok.type != TT_STRING:
+            if self.current_tok.type != TT_STRING and \
+                  self.current_tok.type != TT_IDENTIFIER:
                 return res.failure(InvalidSyntaxError(
                     self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected string"
+                    "Expected string or identifier"
                 ))
 
             file_name = self.current_tok
@@ -821,6 +922,24 @@ class Parser:
 
     def mod(self):
         return self.bin_op(self.factor, (TT_MOD, ))
+
+    def plus_equals(self):
+        return self.bin_op(self.factor, (TT_PE, ))
+    
+    def minus_equals(self):
+        return self.bin_op(self.factor, (TT_ME, ))
+    
+    def times_equals(self):
+        return self.bin_op(self.factor, (TT_TE, ))
+    
+    def divide_equals(self):
+        return self.bin_op(self.factor, (TT_DE, ))
+    
+    def mod_equals(self):
+        return self.bin_op(self.factor, (TT_MDE, ))
+    
+    def power_equals(self):
+        return self.bin_op(self.factor, (TT_POWE, ))
 
     def call(self):
         res = ParseResult()
@@ -999,6 +1118,54 @@ class Parser:
             self.current_tok.pos_end.copy()
         ))
 
+    def object_expr(self):
+        res = ParseResult()
+        element_nodes = []
+        pos_start = self.current_tok.pos_start.copy()
+
+        if self.current_tok.type != TT_LBRACE:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected '{'"
+            ))
+
+        # res.register_advancement()
+        # self.advance()
+
+        if self.current_tok.type == TT_LBRACE:
+            res.register_advancement()
+            self.advance()
+        else:
+            element_nodes.append(res.register(self.expr()))
+            if res.error:
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected '}', 'var', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[' or 'not'"
+                ))
+
+            while self.current_tok.type == TT_COMMA:
+                res.register_advancement()
+                self.advance()
+
+                element_nodes.append(res.register(self.expr()))
+                if res.error:
+                    return res
+
+            if self.current_tok.type != TT_RBRACE:
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected ',' or '}'"
+                ))
+
+            res.register_advancement()
+            self.advance()
+
+        return res.success(ObjectNode(
+            element_nodes,
+            pos_start,
+            self.current_tok.pos_end.copy()
+        ))
+
     def if_expr(self):
         res = ParseResult()
         all_cases = res.register(self.if_expr_cases('if'))
@@ -1018,7 +1185,7 @@ class Parser:
             res.register_advancement()
             self.advance()
 
-            if self.current_tok.type == TT_NEWLINE:
+            if self.current_tok.type == TT_LBRACE:
                 res.register_advancement()
                 self.advance()
 
@@ -1027,13 +1194,13 @@ class Parser:
                     return res
                 else_case = (statements, True)
 
-                if self.current_tok.matches(TT_KEYWORD, 'end'):
+                if self.current_tok.type == TT_RBRACE:
                     res.register_advancement()
                     self.advance()
                 else:
                     return res.failure(InvalidSyntaxError(
                         self.current_tok.pos_start, self.current_tok.pos_end,
-                        "Expected 'end'"
+                        "Expected '}'"
                     ))
             else:
                 expr = res.register(self.statement())
@@ -1077,16 +1244,14 @@ class Parser:
         if res.error:
             return res
 
-        if not self.current_tok.matches(TT_KEYWORD, 'then'):
+        # if not self.current_tok.matches(TT_KEYWORD, 'then'):
+        if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                f"Expected 'then'"
+                "Expected '{'"
             ))
 
-        res.register_advancement()
-        self.advance()
-
-        if self.current_tok.type == TT_NEWLINE:
+        if self.current_tok.type == TT_LBRACE:
             res.register_advancement()
             self.advance()
 
@@ -1095,15 +1260,17 @@ class Parser:
                 return res
             cases.append((condition, statements, True))
 
-            if self.current_tok.matches(TT_KEYWORD, 'end'):
+            # if self.current_tok.matches(TT_KEYWORD, 'end'):
+            if self.current_tok.type == TT_RBRACE:
                 res.register_advancement()
                 self.advance()
-            else:
-                all_cases = res.register(self.if_expr_b_or_c())
-                if res.error:
-                    return res
-                new_cases, else_case = all_cases
-                cases.extend(new_cases)
+        
+            all_cases = res.register(self.if_expr_b_or_c())
+            if res.error:
+                return res
+            new_cases, else_case = all_cases
+            cases.extend(new_cases)
+
         else:
             expr = res.register(self.statement())
             if res.error:
@@ -1176,16 +1343,17 @@ class Parser:
         else:
             step_value = None
 
-        if not self.current_tok.matches(TT_KEYWORD, 'then'):
+        # if not self.current_tok.matches(TT_KEYWORD, 'then'):
+        if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                f"Expected 'then'"
+                "Expected '{'"
             ))
 
-        res.register_advancement()
-        self.advance()
+        # res.register_advancement()
+        # self.advance()
 
-        if self.current_tok.type == TT_NEWLINE:
+        if self.current_tok.type == TT_LBRACE:
             res.register_advancement()
             self.advance()
 
@@ -1193,10 +1361,11 @@ class Parser:
             if res.error:
                 return res
 
-            if not self.current_tok.matches(TT_KEYWORD, 'end'):
+            # if not self.current_tok.matches(TT_KEYWORD, 'end'):
+            if self.current_tok.type != TT_RBRACE:
                 return res.failure(InvalidSyntaxError(
                     self.current_tok.pos_start, self.current_tok.pos_end,
-                    f"Expected 'end'"
+                    "Expected '}'"
                 ))
 
             res.register_advancement()
@@ -1226,16 +1395,17 @@ class Parser:
         if res.error:
             return res
 
-        if not self.current_tok.matches(TT_KEYWORD, 'then'):
+        # if not self.current_tok.matches(TT_KEYWORD, 'then'):
+        if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                f"Expected 'then'"
+                "Expected '{'"
             ))
 
-        res.register_advancement()
-        self.advance()
+        # res.register_advancement()
+        # self.advance()
 
-        if self.current_tok.type == TT_NEWLINE:
+        if self.current_tok.type == TT_LBRACE:
             res.register_advancement()
             self.advance()
 
@@ -1243,10 +1413,11 @@ class Parser:
             if res.error:
                 return res
 
-            if not self.current_tok.matches(TT_KEYWORD, 'end'):
+            # if not self.current_tok.matches(TT_KEYWORD, 'end'):
+            if self.current_tok.type != TT_RBRACE:
                 return res.failure(InvalidSyntaxError(
                     self.current_tok.pos_start, self.current_tok.pos_end,
-                    f"Expected 'end'"
+                    "Expected '}'"
                 ))
 
             res.register_advancement()
@@ -1285,10 +1456,10 @@ class Parser:
         res.register_advancement()
         self.advance()
 
-        if self.current_tok.type != TT_NEWLINE:
+        if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                f"Expected NEWLINE"
+                "Expected '{'"
             ))
 
         res.register_advancement()
@@ -1297,11 +1468,12 @@ class Parser:
         body = res.register(self.statements())
         if res.error:
             return res
+            
 
-        if not self.current_tok.matches(TT_KEYWORD, 'end'):
+        if self.current_tok.type != TT_RBRACE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                f"Expected 'end'"
+                "Expected '}'"
             ))
 
         res.register_advancement()
@@ -1391,10 +1563,10 @@ class Parser:
                 True
             ))
 
-        if self.current_tok.type != TT_NEWLINE:
+        if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                f"Expected '->' or NEWLINE"
+                "Expected '->' or '{'"
             ))
 
         res.register_advancement()
@@ -1404,10 +1576,10 @@ class Parser:
         if res.error:
             return res
 
-        if not self.current_tok.matches(TT_KEYWORD, 'end'):
+        if self.current_tok.type != TT_RBRACE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                f"Expected 'end'"
+                "Expected '}'"
             ))
 
         res.register_advancement()
@@ -1629,7 +1801,7 @@ class Number(Value):
             return Number(self.value ** other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
-    
+
     def modded_by(self, other):
         if isinstance(other, Number):
             return Number(self.value % other.value).set_context(self.context), None
@@ -1672,6 +1844,49 @@ class Number(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
+    def plus_equals(self, other):
+        if isinstance(other, Number):
+            return Number(self.value + other.value).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
+        
+    def minus_equals(self, other):
+        if isinstance(other, Number):
+            return Number(self.value - other.value).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
+
+    def times_equals(self, other):
+        if isinstance(other, Number):
+            return Number(self.value * other.value).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
+
+    def divide_equals(self, other):
+        if isinstance(other, Number):
+            if other.value == 0:
+                return None, RTError(
+                    other.pos_start, other.pos_end,
+                    'Division by zero',
+                    self.context
+                )
+
+            return Number(self.value / other.value).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
+        
+    def mod_equals(self, other):
+        if isinstance(other, Number):
+            return Number(self.value % other.value).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
+        
+    def power_equals(self, other):
+        if isinstance(other, Number):
+            return Number(self.value ** other.value).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
+
     def anded_by(self, other):
         if isinstance(other, Number):
             return Number(int(self.value and other.value)).set_context(self.context), None
@@ -1703,9 +1918,43 @@ class Number(Value):
         return str(self.value)
 
 
+class Boolean(Value):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+    def anded_by(self, other):
+        return Boolean(self.value and other.value).set_context(self.context), None
+
+    def ored_by(self, other):
+        return Boolean(self.value or other.value).set_context(self.context), None
+
+    def notted(self):
+        return Boolean(not self.value).set_context(self.context), None
+
+    def copy(self):
+        copy = Boolean(self.value)
+        copy.set_pos(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+
+    def is_true(self):
+        return self.value
+
+    def __str__(self):
+        return "true" if self.value else "false"
+
+    def __repr__(self):
+        return "true" if self.value else "false"
+
+
 Number.null = Number(0)
 Number.false = Number(0)
 Number.true = Number(1)
+
+Boolean.null = Boolean(False)
+Boolean.false = Boolean(False)
+Boolean.true = Boolean(True)
 
 
 class String(Value):
@@ -1745,12 +1994,12 @@ class String(Value):
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
-    
+
     def to_int(self):
         if self.value.isdigit():
             return int(self.value)
         return None
-        
+
     def __str__(self):
         return self.value
 
@@ -1815,6 +2064,65 @@ class List(Value):
 
     def __repr__(self):
         return f'[{", ".join([repr(x) for x in self.elements])}]'
+
+
+class ObjectNode(Value):
+    def __init__(self, elements):
+        super().__init__()
+        self.elements = elements
+
+    def added_to(self, other):
+        new_object = self.copy()
+        new_object.elements.append(other)
+        return new_object, None
+
+    def subbed_by(self, other):
+        if isinstance(other, String):
+            new_object = self.copy()
+            try:
+                del new_object.elements[other.value]
+                return new_object, None
+            except:
+                return None, RTError(
+                    other.pos_start, other.pos_end,
+                    'Element at this index could not be removed from object because index is out of bounds',
+                    self.context
+                )
+        else:
+            return None, Value.illegal_operation(self, other)
+
+    def multed_by(self, other):
+        if isinstance(other, ObjectNode):
+            new_object = self.copy()
+            new_object.elements.extend(other.elements)
+            return new_object, None
+        else:
+            return None, Value.illegal_operation(self, other)
+
+    def dived_by(self, other):
+        if isinstance(other, String):
+            try:
+                return self.elements[other.value], None
+            except:
+                return None, RTError(
+                    other.pos_start, other.pos_end,
+                    'Element at this index could not be retrieved from object because index is out of bounds',
+                    self.context
+                )
+        else:
+            return None, Value.illegal_operation(self, other)
+
+    def copy(self):
+        copy = ObjectNode(self.elements)
+        copy.set_pos(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+
+    def __str__(self):
+        return ", ".join([str(x) for x in self.elements])
+
+    def __repr__(self):
+        return f'{{{", ".join([repr(x) for x in self.elements])}}}'
 
 
 class BaseFunction(Value):
@@ -1900,7 +2208,7 @@ class Class(Value):
 
         exec_ctx = Context(self.name, self.context, self.pos_start)
 
-        inst = Instance(self)
+        inst = Instance(self) # TODO: Some issue here when direct accessing class methods without instantiation
         inst.symbol_table = SymbolTable(self.symbol_table)
 
         exec_ctx.symbol_table = inst.symbol_table
@@ -2034,17 +2342,22 @@ class BuiltInFunction(BaseFunction):
 
     def execute_is_number(self, exec_ctx):
         is_number = isinstance(exec_ctx.symbol_table.get("value"), Number)
-        return RTResult().success(Number.true if is_number else Number.false)
+        return RTResult().success(Boolean.true if is_number else Boolean.false)
     execute_is_number.arg_names = ["value"]
 
     def execute_is_string(self, exec_ctx):
         is_number = isinstance(exec_ctx.symbol_table.get("value"), String)
-        return RTResult().success(Number.true if is_number else Number.false)
+        return RTResult().success(Boolean.true if is_number else Boolean.false)
     execute_is_string.arg_names = ["value"]
+
+    def execute_is_bool(self, exec_ctx):
+        is_number = isinstance(exec_ctx.symbol_table.get("value"), Boolean)
+        return RTResult().success(Boolean.true if is_number else Boolean.false)
+    execute_is_bool.arg_names = ["value"]
 
     def execute_is_list(self, exec_ctx):
         is_number = isinstance(exec_ctx.symbol_table.get("value"), List)
-        return RTResult().success(Number.true if is_number else Number.false)
+        return RTResult().success(Boolean.true if is_number else Boolean.false)
     execute_is_list.arg_names = ["value"]
 
     def execute_to_int(self, exec_ctx):
@@ -2062,7 +2375,7 @@ class BuiltInFunction(BaseFunction):
     def execute_is_function(self, exec_ctx):
         is_number = isinstance(
             exec_ctx.symbol_table.get("value"), BaseFunction)
-        return RTResult().success(Number.true if is_number else Number.false)
+        return RTResult().success(Boolean.true if is_number else Boolean.false)
     execute_is_function.arg_names = ["value"]
 
     def execute_append(self, exec_ctx):
@@ -2157,6 +2470,32 @@ class BuiltInFunction(BaseFunction):
         return RTResult().success(Number(len(string.value)))
     execute_strlen.arg_names = ["string"]
 
+    def execute_int(self, exec_ctx):
+        value = exec_ctx.symbol_table.get("value")
+
+        try:
+            return RTResult().success(Number(int(value.value)))
+        except:
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Could not convert to int",
+                exec_ctx
+            ))
+    execute_int.arg_names = ["value"]
+
+    def execute_float(self, exec_ctx):
+        value = exec_ctx.symbol_table.get("value")
+
+        try:
+            return RTResult().success(Number(float(value.value)))
+        except:
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Could not convert to float",
+                exec_ctx
+            ))
+    execute_float.arg_names = ["value"]
+
     def execute_require(self, exec_ctx):
         module = exec_ctx.symbol_table.get("module")
 
@@ -2226,6 +2565,7 @@ BuiltInFunction.input_int = BuiltInFunction("input_int")
 BuiltInFunction.clear = BuiltInFunction("clear")
 BuiltInFunction.is_number = BuiltInFunction("is_number")
 BuiltInFunction.is_string = BuiltInFunction("is_string")
+BuiltInFunction.is_bool = BuiltInFunction("is_bool")
 BuiltInFunction.is_list = BuiltInFunction("is_list")
 BuiltInFunction.is_function = BuiltInFunction("is_function")
 BuiltInFunction.append = BuiltInFunction("append")
@@ -2236,6 +2576,8 @@ BuiltInFunction.require = BuiltInFunction("require")
 BuiltInFunction.exit = BuiltInFunction("exit")
 BuiltInFunction.to_int = BuiltInFunction("to_int")
 BuiltInFunction.strlen = BuiltInFunction("strlen")
+BuiltInFunction.int = BuiltInFunction("int")
+BuiltInFunction.float = BuiltInFunction("float")
 
 #######################################
 # CONTEXT
@@ -2310,6 +2652,20 @@ class Interpreter:
 
         return res.success(
             List(elements).set_context(context).set_pos(
+                node.pos_start, node.pos_end)
+        )
+
+    def visit_ObjectNode(self, node, context):
+        res = RTResult()
+        elements = []
+
+        for element_node in node.element_nodes:
+            elements.append(res.register(self.visit(element_node, context)))
+            if res.should_return():
+                return res
+
+        return res.success(
+            ObjectNode(elements).set_context(context).set_pos(
                 node.pos_start, node.pos_end)
         )
 
@@ -2389,6 +2745,39 @@ class Interpreter:
             return res.success(value)
 
         context.symbol_table.set(var_name, value)
+        return res.success(value)
+
+    def visit_VarManipulateNode(self, node, context):
+        res = RTResult()
+        var_name = node.var_name_tok.value
+        value = context.symbol_table.get(var_name)
+
+        if not value:
+            return res.failure(RTError(
+                node.pos_start, node.pos_end,
+                f"'{var_name}' is not defined",
+                context
+            ))
+
+        if node.child:
+            if not isinstance(value, Instance) and not isinstance(value, Class):
+                return res.failure(RTError(
+                    node.pos_start, node.pos_end,
+                    f"Value must be instance of class or class",
+                    context
+                ))
+
+            new_context = Context(value.parent_class.name,
+                                  context, node.pos_start)
+            new_context.symbol_table = value.symbol_table
+
+            child = res.register(self.visit(node.child, new_context))
+            if res.error:
+                return res
+
+            value = child
+
+        value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
         return res.success(value)
 
     def visit_IncludeNode(self, node, context):
@@ -2474,6 +2863,18 @@ class Interpreter:
             result, error = left.get_comparison_lte(right)
         elif node.op_tok.type == TT_GTE:
             result, error = left.get_comparison_gte(right)
+        elif node.op_tok.type == TT_PE:
+            result, error = left.plus_equals(right)
+        elif node.op_tok.type == TT_ME:
+            result, error = left.minus_equals(right)
+        elif node.op_tok.type == TT_TE:
+            result, error = left.times_equals(right)
+        elif node.op_tok.type == TT_DE:
+            result, error = left.divide_equals(right)
+        elif node.op_tok.type == TT_ME:
+            result, error = left.mod_equals(right)
+        elif node.op_tok.type == TT_POWE:
+            result, error = left.power_equals(right)
         elif node.op_tok.matches(TT_KEYWORD, 'and'):
             result, error = left.anded_by(right)
         elif node.op_tok.matches(TT_KEYWORD, 'or'):
@@ -2679,8 +3080,8 @@ class Interpreter:
 
 global_symbol_table = SymbolTable()
 global_symbol_table.set("null", Number.null)
-global_symbol_table.set("false", Number.false)
-global_symbol_table.set("true", Number.true)
+global_symbol_table.set("false", Boolean.false)
+global_symbol_table.set("true", Boolean.true)
 global_symbol_table.set("print", BuiltInFunction.print)
 global_symbol_table.set("print_ret", BuiltInFunction.print_ret)
 global_symbol_table.set("input", BuiltInFunction.input)
@@ -2689,6 +3090,7 @@ global_symbol_table.set("clear", BuiltInFunction.clear)
 global_symbol_table.set("cls", BuiltInFunction.clear)
 global_symbol_table.set("is_num", BuiltInFunction.is_number)
 global_symbol_table.set("is_str", BuiltInFunction.is_string)
+global_symbol_table.set("is_bool", BuiltInFunction.is_bool)
 global_symbol_table.set("is_list", BuiltInFunction.is_list)
 global_symbol_table.set("is_fun", BuiltInFunction.is_function)
 global_symbol_table.set("require", BuiltInFunction.require)
@@ -2699,6 +3101,8 @@ global_symbol_table.set("pop", BuiltInFunction.pop)
 global_symbol_table.set("extend", BuiltInFunction.extend)
 global_symbol_table.set("arrlen", BuiltInFunction.arrlen)
 global_symbol_table.set("strlen", BuiltInFunction.strlen)
+global_symbol_table.set("int", BuiltInFunction.int)
+global_symbol_table.set("float", BuiltInFunction.float)
 
 
 def run(fn, text):
