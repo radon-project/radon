@@ -111,11 +111,9 @@ print(c + " " + d) # Hello World
 # Conditional statement
 if a > b {
     print("a is greater than b")
-} 
-elif a < b {
+} elif a < b {
     print("a is less than b")
-} 
-else {
+} else {
     print("a is equal to b")
 }
 
@@ -169,7 +167,7 @@ class Person {
 
 # Use a class
 var person = Person("Almas", 21)
-var details = "Name is : " + person.get_name() + " Age : " + str(person.get_age())
+var details = "Name is : " + person.get_name() + ", Age : " + str(person.get_age())
 print(details)
 
 # Include statement
