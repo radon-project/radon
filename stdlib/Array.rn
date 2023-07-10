@@ -32,14 +32,12 @@ class Array {
         return arrlen(this.list)
     }
 
-    fun to_string() {
-        return this.list
-    }
 
     fun is_empty() {
         return this.list == []
     }
 
-    # fun is_array() -> true
+    fun to_string() -> this.list
+    fun is_array() -> true
     
 }
