@@ -27,14 +27,22 @@ python radon.py -s <filename>
 ```
 radon
 ├── core
+│   ├── builtin_funcs.py
+│   ├── datatypes.py
 │   ├── errors.py
 │   ├── __init__.py
+│   ├── interpreter.py
+│   ├── lexer.py
+│   ├── nodes.py
+│   ├── parser.py
+│   └── tokens.py
 ├── examples
 │   ├── arrays.rn
 │   ├── classes.rn
 │   ├── functions.rn
 │   ├── import_test.rn
 │   ├── new_syntax.rn
+│   ├── python_api.rn
 │   ├── simple.rn
 │   └── syntax.rn
 ├── Makefile
@@ -45,7 +53,8 @@ radon
 │   ├── Math.rn
 │   ├── String.rn
 │   └── System.rn
-└── tests
+├── tests
+└── TODO.md
 ```
 
 ## Standard Library
@@ -81,7 +90,7 @@ Check out the syntax:
 # or - Logical or
 # not - Logical not
 
-# Assignment operators (Future feature)
+# Assignment operators (Development)
 # = - Assign
 # += - Add and assign
 # -= - Subtract and assign
@@ -113,14 +122,14 @@ else {
 # For loop
 var x = 9 # Multiplication table of 9
 
-for i = 1 to 10 {
-    print(x + " X " + i + " = " + x * i)
+for i = 1 to 11 {
+    print(str(x) + " X " + str(i) + " = " + str(x * i))
 }
 
 # While loop
 while x > 0 {
     print(x)
-    x = x - 1
+    var x = x - 1
 }
 
 # Function definition
@@ -158,29 +167,56 @@ class Person {
     }
 }
 
+# Use a class
+var person = Person("Almas", 21)
+var details = "Name is : " + person.get_name() + " Age : " + str(person.get_age())
+print(details)
+
+# Include statement
+include Math # to include math library
+include "examples/simple.rn" # to use a path
+
+
 # builtin functions
 
+# Utility methods
+cls()
+clear()
+exit()
+
+# same as include statement
+require() 
+
+# Typecase methods
 int()
 float()
+str()
+type()
 
+# Type checker methods
 is_num()
+is_int()
+is_float()
 is_str()
 is_bool()
-is_list()
+is_array()
+is_fun()
 
+# Length counter
 strlen()
 arrlen()
 
+# I/O methods
 print()
 print_ret()
 input()
 input_int()
 
+# array methods
 push()
 pop()
 append()
 extend()
-
 ```
 
 ## Contributing
