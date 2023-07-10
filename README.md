@@ -174,7 +174,6 @@ print(details)
 include Math # to include math library
 include "examples/simple.rn" # to use a path
 
-
 # builtin functions
 
 # Utility methods
