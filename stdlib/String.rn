@@ -2,20 +2,31 @@ class String {
     # The constructor method
     fun String(value) {
         var this.value = value
+        
+        # Builtin attributes
+        var this.ascii_uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        var this.ascii_lowercase = "abcdefghijklmnopqrstuvwxyz"
+        var this.ascii_letters = this.ascii_uppercase + this.ascii_lowercase
+        var this.digits = "0123456789"
+        var this.hexdigits = "0123456789abcdefABCDEF"
+        var this.octdigits = "01234567"
+        var this.punctuation = "!#$%&'()*+,-./:;<=>?@[\]^_`{|}~"
+        var this.whitespace = " "
+        var this.tab = "    "
     }
 
     # TODO: Need to fix
-    fun join(separator) {
-        var result = ""
+    #fun join(separator) {
+    #    var result = ""
 
-        for i = 0 to strlen(this.value) {
-            result += this.value[i]
-            if i < strlen(this.value) - 1 {
-                result += separator
-            }
-        }
-        return result
-    }
+    #    for i = 0 to strlen(this.value) {
+    #        result = result + this.value[i]
+    #        if i < strlen(this.value) - 1 {
+    #            result = result + separator
+    #        }
+    #    }
+    #    return result
+    #}
 
     # Find a character in a string and return its index
     fun find(data) {
@@ -32,7 +43,9 @@ class String {
     # Magic method to convert string to int if possible
     fun to_int() {
         if is_num(this.value) == true {
-            return to_int(this.value)
+            return int(this.value)
+        } else {
+            return false
         }
     }
 
