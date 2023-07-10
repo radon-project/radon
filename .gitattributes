@@ -1,1 +1,3 @@
-*.rn linguist-language=Radon
+* linguist-vendored
+*.rn linguist-vendored=false
+*.rn linguist-language=radon
