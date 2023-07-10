@@ -1,0 +1,3 @@
+pyapi("import os; value = os.getcwd()")
+
+print(value)

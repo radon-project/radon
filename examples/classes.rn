@@ -20,3 +20,16 @@ while inp != "exit" {
 
 exit()
 print("This message will never ever show up! Isn't that wacky?!")
+
+
+class Some {
+    fun Some() {
+        var this.name = "something"
+        var this.value = 45
+    }
+    fun to_object() -> "Name is : "+ this.name + " Value is : "+ str(this.value)
+}
+
+var cls_ = Some()
+var obj = cls_.to_object()
+print(obj)

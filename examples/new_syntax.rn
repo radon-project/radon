@@ -49,14 +49,15 @@
 #     print("NO")
 # }
 
-
-############################################
-
-# FAILING
+# PASSED
 # fun something() -> true
 # var a = fun () -> print("this is")
 # a()
 
+############################################
+
+
+# FAILING
 # var obj = {
 #     "name" : "John",
 #     "age"  : 30,
