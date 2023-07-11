@@ -64,7 +64,6 @@ class Lexer:
                 tokens.append(self.make_mod_equals())
             elif self.current_char == '^':
                 tokens.append(self.make_power_equals())
-                self.advance()
             elif self.current_char == '(':
                 tokens.append(Token(TT_LPAREN, pos_start=self.pos))
                 self.advance()
@@ -280,13 +279,15 @@ class Lexer:
         return Token(TT_MOD, pos_start=pos_start, pos_end=self.pos)
 
     def make_power_equals(self):
+        tok_type = TT_POW
         pos_start = self.pos.copy()
         self.advance()
 
         if self.current_char == '=':
+            tok_type = TT_POWE
             self.advance()
-            return Token(TT_POWE, pos_start=pos_start, pos_end=self.pos)
-        return Token(TT_POW, pos_start=pos_start, pos_end=self.pos)
+            
+        return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
 
     def skip_comment(self):
         self.advance()
