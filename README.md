@@ -1,4 +1,8 @@
-# Radon - A programming language
+# The Radon Programming Language
+
+<center>
+<img src="radon.png" height=250>
+</center>
 
 Radon is a programming language that is designed to be easy to learn and use. It is a high-level language intended to be used for general purpose programming. It is designed to be easy to learn and use, while still being powerful enough to be used for most tasks. Some of the features of Radon include:
 
