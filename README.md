@@ -37,6 +37,7 @@ radon
 │   ├── parser.py
 │   └── tokens.py
 ├── examples
+│   ├── args_test.rn
 │   ├── arrays.rn
 │   ├── classes.rn
 │   ├── functions.rn
@@ -52,7 +53,8 @@ radon
 │   ├── Array.rn
 │   ├── Math.rn
 │   ├── String.rn
-│   └── System.rn
+│   ├── System.rn
+│   └── Winlib.rn
 ├── tests
 └── TODO.md
 ```
@@ -182,12 +184,19 @@ clear()
 exit()
 
 # same as include statement
-require() 
+require()
+
+# Command line arguments
+sys_args()
+
+# API methods
+pyapi(string)
 
 # Typecase methods
 int()
 float()
 str()
+bool()
 type()
 
 # Type checker methods
@@ -199,9 +208,8 @@ is_bool()
 is_array()
 is_fun()
 
-# Length counter
+# String methods
 strlen()
-arrlen()
 
 # I/O methods
 print()
@@ -209,11 +217,14 @@ print_ret()
 input()
 input_int()
 
-# array methods
-push()
-pop()
-append()
-extend()
+# Array methods
+arr_len()
+arr_push(array, item)
+arr_pop(array, index)
+arr_append(array, item)
+arr_extend(array1, array2)
+arr_find(array, index)
+arr_slice(array, start, end)
 ```
 
 ## Contributing
