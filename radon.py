@@ -7,7 +7,7 @@ import core as base_core
 
 
 def shell():
-    print('Radon 0.0.1\nPress Ctrl+C to exit()')
+    print(f'Radon {base_core.__version__}\nType to exit()')
     brace_count = 0
 
     while True:
@@ -46,7 +46,7 @@ def shell():
 
 
 parser = argparse.ArgumentParser(description='Radon programming language')
-parser.add_argument('-s', '--source', type=str, help='Radon source file')
+parser.add_argument('-s', '--source', type=str, help='Radon source file', nargs='*')
 parser.add_argument('-c', '--command', type=str,
                     help='Command to execute as string')
 parser.add_argument('-v', '--version', help='Version info',
@@ -55,7 +55,7 @@ args = parser.parse_args()
 
 if args.source:
     result, error, should_exit = base_core.run(
-        '<stdin>', f'require("{args.source}")')
+        '<stdin>', f'require("{args.source[0]}")')
 
     if error:
         print(error.as_string())
