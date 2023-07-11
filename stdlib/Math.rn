@@ -2,7 +2,73 @@
 
 class Math {
     fun Math() {
-        var this.PI = 3.141592653589793
+        var this.PI = 3.14159265358979323846
     }
-    #fun to_string() -> "The Math class"
+
+    fun to_string() -> "<class 'math'>"
+    fun sqrt(number) -> number ^ 0.5
+    fun pow(base, power) -> base ^ power
+    fun mod(a, b) -> a % b
+
+    fun factorial(number) {
+        if number == 0 {
+            return 1
+        } 
+        return number * factorial(number - 1)
+    }
+    
+    # Same as mod, but implemented in pure radon.
+    fun modulas(a, b) {
+        var frac = a / b
+        if frac > 0 {
+            var floor = int(frac) 
+        } else {
+            var floor = int(frac - 0.9999999999999999)
+        }
+        return a - b * floor
+    }
+
+    # Same as pow, but implemented in pure radon.
+    fun power(n, p) {
+        var result = n
+        for i=1 to p {
+            var result = result * n
+        }
+        return result
+    }
+
+    # Sine implementation in radon.
+    fun sin(n) {
+        var n = n % (2 * this.PI)
+        
+        if n < 0 {
+            var n = 2 * this.PI - n
+        }
+
+        var sign = 1
+        if n > this.PI {
+            var n = n - this.PI
+            var sign = -1
+        }
+
+        var result = n
+        var coefficient = 3
+
+        for i=0 to 10 {
+            var pow_val = n ^ coefficient
+            var frac = factorial(coefficient)
+            
+            if i % 2 == 0{
+                var result = result - (pow_val / frac)
+            } else {
+
+                var result = result + (pow_val / frac)
+            }
+            
+            var coefficient = coefficient + 2
+        }
+        return sign * result
+    }
+
+
 }
