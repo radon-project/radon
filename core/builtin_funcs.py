@@ -7,6 +7,7 @@ from core.lexer import *
 
 import os
 
+
 class BuiltInFunction(BaseFunction):
     def __init__(self, name):
         super().__init__(name)
@@ -126,7 +127,7 @@ class BuiltInFunction(BaseFunction):
         return RTResult().success(Boolean.true if is_number else Boolean.false)
     execute_is_function.arg_names = ["value"]
 
-    def execute_append(self, exec_ctx):
+    def execute_arr_append(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
         value = exec_ctx.symbol_table.get("value")
 
@@ -139,9 +140,9 @@ class BuiltInFunction(BaseFunction):
 
         array_.elements.append(value)
         return RTResult().success(Number.null)
-    execute_append.arg_names = ["array", "value"]
+    execute_arr_append.arg_names = ["array", "value"]
 
-    def execute_pop(self, exec_ctx):
+    def execute_arr_pop(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
         index = exec_ctx.symbol_table.get("index")
 
@@ -168,9 +169,9 @@ class BuiltInFunction(BaseFunction):
                 exec_ctx
             ))
         return RTResult().success(element)
-    execute_pop.arg_names = ["array", "index"]
+    execute_arr_pop.arg_names = ["array", "index"]
 
-    def execute_extend(self, exec_ctx):
+    def execute_arr_extend(self, exec_ctx):
         arrayA = exec_ctx.symbol_table.get("arrayA")
         arrayB = exec_ctx.symbol_table.get("arrayB")
 
@@ -190,9 +191,78 @@ class BuiltInFunction(BaseFunction):
 
         arrayA.elements.extend(arrayB.elements)
         return RTResult().success(Number.null)
-    execute_extend.arg_names = ["arrayA", "arrayB"]
+    execute_arr_extend.arg_names = ["arrayA", "arrayB"]
 
-    def execute_arrlen(self, exec_ctx):
+    def execute_arr_find(self, exec_ctx):
+        array = exec_ctx.symbol_table.get("array")
+        index = exec_ctx.symbol_table.get("index")
+
+        if not isinstance(array, Array):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "First argument must be array",
+                exec_ctx
+            ))
+
+        if not isinstance(index, Number):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Second argument must be number",
+                exec_ctx
+            ))
+
+        try:
+            return RTResult().success(
+                array.elements[index.value]
+            )
+        except:
+            return RTResult().failure(IndexError(
+                self.pos_start, self.pos_end,
+                "Could't find that index",
+                exec_ctx
+            ))
+        
+    execute_arr_find.arg_names = ["array", "index"]
+
+    def execute_arr_slice(self, exec_ctx):
+        array = exec_ctx.symbol_table.get("array")
+        start = exec_ctx.symbol_table.get("start")
+        end = exec_ctx.symbol_table.get("end")
+
+        if not isinstance(array, Array):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "First argument must be array",
+                exec_ctx
+            ))
+
+        if not isinstance(start, Number):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Second argument must be number",
+                exec_ctx
+            ))
+
+        if not isinstance(end, Number):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Third argument must be number",
+                exec_ctx
+            ))
+
+        try:
+            _list = Array(array.elements[start.value:end.value])
+        except:
+            return RTResult().failure(IndexError(
+                self.pos_start, self.pos_end,
+                "Could't find that index",
+                exec_ctx
+            ))
+        return RTResult().success(_list)
+        
+    execute_arr_slice.arg_names = ["array", "start", "end"]
+
+    def execute_arr_len(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
 
         if not isinstance(array_, Array):
@@ -203,7 +273,7 @@ class BuiltInFunction(BaseFunction):
             ))
 
         return RTResult().success(Number(len(array_.elements)))
-    execute_arrlen.arg_names = ["array"]
+    execute_arr_len.arg_names = ["array"]
 
     def execute_strlen(self, exec_ctx):
         string = exec_ctx.symbol_table.get("string")
@@ -270,26 +340,12 @@ class BuiltInFunction(BaseFunction):
             ))
     execute_bool.arg_names = ["value"]
 
-    def execute_type(self, exec_ctx):  # TODO : Need attention
+    def execute_type(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
-        # if isinstance(value, String):
-        #     return RTResult().success(String(str(type(value.value))))
-        # elif isinstance(value, Number):
-        #     return RTResult().success(Number(str(type(value.value))))
-        # elif isinstance(value, Boolean):
-        #     return RTResult().success(Number(str(type(value.value))))
-        # elif isinstance(value, Instance):
-        #     return RTResult().success(Instance(str(type(value.value))))
-        # elif isinstance(value, Array):
-        #     return RTResult().success(Number(str(type(value.elements))))
-        # else:
-        #     return RTResult().failure(RTError(
-        #         self.pos_start, self.pos_end,
-        #         "Not a valid type",
-        #         exec_ctx
-        #     ))
-        return RTResult().success(Type(value))
+        return RTResult().success(
+            Type(value)
+        )
     execute_type.arg_names = ["value"]
 
     def execute_pyapi(self, exec_ctx):
@@ -307,6 +363,22 @@ class BuiltInFunction(BaseFunction):
                 exec_ctx
             ))
     execute_pyapi.arg_names = ["code"]
+
+    def execute_sys_args(self, exec_ctx):
+        from sys import argv  # Lazy import
+
+        try:
+            return RTResult().success(
+                Array(argv)
+            )
+        except Exception as e:
+            print(e)
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Could't run the sys_args",
+                exec_ctx
+            ))
+    execute_sys_args.arg_names = []
 
     def execute_require(self, exec_ctx):
         module = exec_ctx.symbol_table.get("module")
@@ -371,7 +443,7 @@ class BuiltInFunction(BaseFunction):
 
 
 def run(fn, text):
-    from core.interpreter import Interpreter # Lazy import
+    from core.interpreter import Interpreter  # Lazy import
 
     # Generate tokens
     lexer = Lexer(fn, text)
@@ -400,17 +472,22 @@ BuiltInFunction.print_ret = BuiltInFunction("print_ret")
 BuiltInFunction.input = BuiltInFunction("input")
 BuiltInFunction.input_int = BuiltInFunction("input_int")
 BuiltInFunction.clear = BuiltInFunction("clear")
-BuiltInFunction.is_number = BuiltInFunction("is_number")
+
+BuiltInFunction.is_num = BuiltInFunction("is_num")
 BuiltInFunction.is_int = BuiltInFunction("is_int")
 BuiltInFunction.is_float = BuiltInFunction("is_float")
 BuiltInFunction.is_string = BuiltInFunction("is_string")
 BuiltInFunction.is_bool = BuiltInFunction("is_bool")
 BuiltInFunction.is_array = BuiltInFunction("is_array")
-BuiltInFunction.is_function = BuiltInFunction("is_function")
-BuiltInFunction.append = BuiltInFunction("append")
-BuiltInFunction.pop = BuiltInFunction("pop")
-BuiltInFunction.extend = BuiltInFunction("extend")
-BuiltInFunction.arrlen = BuiltInFunction("arrlen")
+BuiltInFunction.is_fun = BuiltInFunction("is_fun")
+
+BuiltInFunction.arr_append = BuiltInFunction("arr_append")
+BuiltInFunction.arr_pop = BuiltInFunction("arr_pop")
+BuiltInFunction.arr_extend = BuiltInFunction("arr_extend")
+BuiltInFunction.arr_find = BuiltInFunction("arr_find")
+BuiltInFunction.arr_slice = BuiltInFunction("arr_slice")
+BuiltInFunction.arr_len = BuiltInFunction("arr_len")
+
 BuiltInFunction.require = BuiltInFunction("require")
 BuiltInFunction.exit = BuiltInFunction("exit")
 BuiltInFunction.strlen = BuiltInFunction("strlen")
@@ -420,6 +497,7 @@ BuiltInFunction.str = BuiltInFunction("str")
 BuiltInFunction.bool = BuiltInFunction("bool")
 BuiltInFunction.type = BuiltInFunction("type")
 BuiltInFunction.pyapi = BuiltInFunction("pyapi")
+BuiltInFunction.sys_args = BuiltInFunction("sys_args")
 
 
 # Setting all functions to global symbol table
@@ -433,23 +511,31 @@ global_symbol_table.set("input", BuiltInFunction.input)
 global_symbol_table.set("input_int", BuiltInFunction.input_int)
 global_symbol_table.set("clear", BuiltInFunction.clear)
 global_symbol_table.set("cls", BuiltInFunction.clear)
-global_symbol_table.set("is_num", BuiltInFunction.is_number)
+global_symbol_table.set("require", BuiltInFunction.require)
+global_symbol_table.set("exit", BuiltInFunction.exit)
+# Datatype validator methods
+global_symbol_table.set("is_num", BuiltInFunction.is_num)
 global_symbol_table.set("is_int", BuiltInFunction.is_int)
 global_symbol_table.set("is_float", BuiltInFunction.is_float)
 global_symbol_table.set("is_str", BuiltInFunction.is_string)
 global_symbol_table.set("is_bool", BuiltInFunction.is_bool)
 global_symbol_table.set("is_array", BuiltInFunction.is_array)
-global_symbol_table.set("is_fun", BuiltInFunction.is_function)
-global_symbol_table.set("require", BuiltInFunction.require)
-global_symbol_table.set("exit", BuiltInFunction.exit)
-global_symbol_table.set("append", BuiltInFunction.append)
-global_symbol_table.set("pop", BuiltInFunction.pop)
-global_symbol_table.set("extend", BuiltInFunction.extend)
-global_symbol_table.set("arrlen", BuiltInFunction.arrlen)
+global_symbol_table.set("is_fun", BuiltInFunction.is_fun)
+# Internal array methods
+global_symbol_table.set("arr_append", BuiltInFunction.arr_append)
+global_symbol_table.set("arr_pop", BuiltInFunction.arr_pop)
+global_symbol_table.set("arr_extend", BuiltInFunction.arr_extend)
+global_symbol_table.set("arr_find", BuiltInFunction.arr_find)
+global_symbol_table.set("arr_slice", BuiltInFunction.arr_slice)
+global_symbol_table.set("arr_len", BuiltInFunction.arr_len)
+# String methods
 global_symbol_table.set("strlen", BuiltInFunction.strlen)
+# Typecase methods
 global_symbol_table.set("int", BuiltInFunction.int)
 global_symbol_table.set("float", BuiltInFunction.float)
 global_symbol_table.set("str", BuiltInFunction.str)
 global_symbol_table.set("bool", BuiltInFunction.bool)
+
 global_symbol_table.set("type", BuiltInFunction.type)
 global_symbol_table.set("pyapi", BuiltInFunction.pyapi)
+global_symbol_table.set("sys_args", BuiltInFunction.sys_args)
