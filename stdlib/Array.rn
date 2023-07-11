@@ -1,42 +1,26 @@
 class Array {
     fun Array(list) {
         var this.list = list
-        var this.root_append = append
-        var this.root_pop = pop
-        var this.root_extend = extend
     }
 
     fun map(func) {
         var new_elements = []
 
-        for i = 0 to arrlen(this.list) {
-            append(new_elements, func(this.list/i))
+        for i = 0 to arr_len(this.list) {
+            arr_append(new_elements, func(arr_find(this.list, i)))
         }
 
         return new_elements
     }
 
-    fun append(item) {
-        this.root_append(this.list, item)
-    }
-
-    fun pop(index) {
-        this.root_pop(this.list, index)
-    }
-
-    fun extend(list) {
-        this.root_extend(this.list, list)
-    }
+    fun append(item) -> arr_append(this.list, item)
+    fun pop(index) -> arr_pop(this.list, index)
+    fun extend(list) -> arr_extend(this.list, list)
+    fun find(index) -> arr_find(this.list, index)
+    fun slice(start, end) -> arr_slice(this.list, start, end)
     
-    fun len() {
-        return arrlen(this.list)
-    }
-
-
-    fun is_empty() {
-        return this.list == []
-    }
-
+    fun len() -> arr_len(this.list)
+    fun is_empty() -> this.list == []
     fun to_string() -> this.list
     fun is_array() -> true
     
