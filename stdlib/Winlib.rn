@@ -1,0 +1,4 @@
+class Winlib {
+    fun Winlib() -> 0
+
+}
