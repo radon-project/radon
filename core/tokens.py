@@ -11,6 +11,7 @@ STDLIBS = [
     'Math',
     'System',
     'String',
+    'Winlib',
 ]
 
 
@@ -96,8 +97,6 @@ KEYWORDS = [
     'step',
     'while',
     'fun',
-    'then',
-    'end',
     'return',
     'continue',
     'break',
