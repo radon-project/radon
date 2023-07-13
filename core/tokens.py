@@ -7,6 +7,7 @@ BASE_DIR = pathlib.Path(__file__).parent.parent
 CURRENT_DIR = None
 
 STDLIBS = [
+    'Argparser',
     'Array',
     'Math',
     'System',
