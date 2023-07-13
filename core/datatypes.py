@@ -323,6 +323,15 @@ class String(Value):
     def __repr__(self):
         return f'"{self.value}"'
 
+    def __iter__(self):
+        return iter(self.value)
+
+    def __getitem__(self, index):
+        return self.value[index]
+
+    def __len__(self):
+        return len(self.value)
+
 
 class Array(Value):
     def __init__(self, elements):
@@ -374,11 +383,18 @@ class Array(Value):
             return None, Value.illegal_operation(self, other)
 
     def get_comparison_eq(self, other):
-        # print(self.elements == other.elements)
         if isinstance(other, Array):
             return Boolean(int(self.elements == other.elements)).set_context(self.context), None
         elif isinstance(other, String):
-            return Number(int(self.elements == other.value)).set_context(self.context), None
+            return Boolean(int(self.elements == other.value)).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
+    
+    def get_comparison_ne(self, other):
+        if isinstance(other, Array):
+            return Boolean(int(self.elements != other.elements)).set_context(self.context), None
+        elif isinstance(other, String):
+            return Boolean(int(self.elements != other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -396,6 +412,12 @@ class Array(Value):
 
     def __repr__(self):
         return f'[{", ".join([repr(x) for x in self.elements])}]'
+
+    def __iter__(self):
+        return iter(self.elements)
+
+    def __getitem__(self, index):
+        return self.elements[index]
 
 
 class ObjectNode(Value):
@@ -496,7 +518,7 @@ class Type(Value):
 
     def __str__(self):
         return f'<class \'{self.type}\'>'
-    
+
     def __repr__(self):
         return f'<class \'{self.type}\'>'
 
@@ -665,7 +687,7 @@ class Function(BaseFunction):
         self.should_auto_return = should_auto_return
 
     def execute(self, args):
-        from core.interpreter import Interpreter # Lazy import
+        from core.interpreter import Interpreter  # Lazy import
 
         res = RTResult()
         interpreter = Interpreter()
