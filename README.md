@@ -51,9 +51,11 @@ radon
 │   ├── simple.rn
 │   └── syntax.rn
 ├── Makefile
+├── radon.png
 ├── radon.py
 ├── README.md
 ├── stdlib
+│   ├── Argparser.rn
 │   ├── Array.rn
 │   ├── Math.rn
 │   ├── String.rn
@@ -213,7 +215,9 @@ is_array()
 is_fun()
 
 # String methods
-strlen()
+str_len()
+str_find(string, index)
+str_slice(string, start, end)
 
 # I/O methods
 print()
