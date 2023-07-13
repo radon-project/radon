@@ -46,7 +46,8 @@ def shell():
 
 
 parser = argparse.ArgumentParser(description='Radon programming language')
-parser.add_argument('-s', '--source', type=str, help='Radon source file', nargs='*')
+parser.add_argument('-s', '--source', type=str,
+                    help='Radon source file', nargs='*')
 parser.add_argument('-c', '--command', type=str,
                     help='Command to execute as string')
 parser.add_argument('-v', '--version', help='Version info',
@@ -67,6 +68,7 @@ if args.source:
 
     if should_exit:
         exit()
+
 
 elif args.command:
     result, error, should_exit = base_core.run('<stdin>', args.command)
