@@ -1,3 +1,21 @@
-var args = is_array(sys_args())
+include Argparser
 
-print(args)
+var parser = Argparser("Utility Tool", "A simple utility tool.")
+
+# Callback function
+fun version() -> "1.0.0"
+fun author() -> "Md. Almas Ali"
+
+# Add commands
+parser.add_command("-v", "Version information", 0, version)
+parser.add_command("-a", "About author", 0, author)
+
+# Get args lists
+# print(parser.get_args())
+
+# Get help text
+# print(parser.get_help())
+
+# print(parser.get_commands())
+
+parser.parse()
