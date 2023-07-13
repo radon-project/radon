@@ -1,6 +1,7 @@
 from core.tokens import *
 from core.errors import *
 
+
 class Lexer:
     def __init__(self, fn, text):
         self.fn = fn
@@ -137,17 +138,22 @@ class Lexer:
             't': '\t'
         }
 
-        while self.current_char != None and (self.current_char != '"' or escape_character):
+        while self.current_char is not None and (self.current_char != '"' or escape_character):
             if escape_character:
-                string += escape_characters.get(self.current_char,
-                                                self.current_char)
+                if self.current_char == 'n':
+                    string += '\n'  # Handle newline character
+                else:
+                    string += escape_characters.get(self.current_char, self.current_char)
+                escape_character = False
             else:
                 if self.current_char == '\\':
                     escape_character = True
+                elif self.current_char == '\n' or '\t':
+                    string += self.current_char
                 else:
                     string += self.current_char
             self.advance()
-            escape_character = False
+
 
         self.advance()
         return Token(TT_STRING, string, pos_start, self.pos)
@@ -286,7 +292,7 @@ class Lexer:
         if self.current_char == '=':
             tok_type = TT_POWE
             self.advance()
-            
+
         return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
 
     def skip_comment(self):
