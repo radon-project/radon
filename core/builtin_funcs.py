@@ -107,24 +107,24 @@ class BuiltInFunction(BaseFunction):
     execute_is_float.arg_names = ["value"]
 
     def execute_is_string(self, exec_ctx):
-        is_number = isinstance(exec_ctx.symbol_table.get("value"), String)
-        return RTResult().success(Boolean.true if is_number else Boolean.false)
+        is_string = isinstance(exec_ctx.symbol_table.get("value"), String)
+        return RTResult().success(Boolean.true if is_string else Boolean.false)
     execute_is_string.arg_names = ["value"]
 
     def execute_is_bool(self, exec_ctx):
-        is_number = isinstance(exec_ctx.symbol_table.get("value"), Boolean)
-        return RTResult().success(Boolean.true if is_number else Boolean.false)
+        is_boolean = isinstance(exec_ctx.symbol_table.get("value"), Boolean)
+        return RTResult().success(Boolean.true if is_boolean else Boolean.false)
     execute_is_bool.arg_names = ["value"]
 
     def execute_is_array(self, exec_ctx):
-        is_number = isinstance(exec_ctx.symbol_table.get("value"), Array)
-        return RTResult().success(Boolean.true if is_number else Boolean.false)
+        is_arr = isinstance(exec_ctx.symbol_table.get("value"), Array)
+        return RTResult().success(Boolean.true if is_arr else Boolean.false)
     execute_is_array.arg_names = ["value"]
 
     def execute_is_function(self, exec_ctx):
-        is_number = isinstance(
+        is_func = isinstance(
             exec_ctx.symbol_table.get("value"), BaseFunction)
-        return RTResult().success(Boolean.true if is_number else Boolean.false)
+        return RTResult().success(Boolean.true if is_func else Boolean.false)
     execute_is_function.arg_names = ["value"]
 
     def execute_arr_append(self, exec_ctx):
@@ -212,8 +212,13 @@ class BuiltInFunction(BaseFunction):
             ))
 
         try:
+            val_ = array.elements[index.value]
+            if isinstance(val_, String):
+                return RTResult().success(
+                    String(array.elements[index.value])
+                )
             return RTResult().success(
-                array.elements[index.value]
+                Array(array.elements[index.value])
             )
         except:
             return RTResult().failure(IndexError(
@@ -262,6 +267,37 @@ class BuiltInFunction(BaseFunction):
         
     execute_arr_slice.arg_names = ["array", "start", "end"]
 
+    def execute_arr_chunk(self, exec_ctx):
+        array = exec_ctx.symbol_table.get("array")
+        value = exec_ctx.symbol_table.get("value")
+
+        if not isinstance(array, Array):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "First argument must be array",
+                exec_ctx
+            ))
+
+        if not isinstance(value, Number):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Second argument must be number",
+                exec_ctx
+            ))
+
+        try:
+            # _list = Array(array.elements[start.value:end.value])
+            _list = Array([array[i:i + value] for i in range(0, len(array), value)])
+        except:
+            return RTResult().failure(IndexError(
+                self.pos_start, self.pos_end,
+                "Could't not complete chunk",
+                exec_ctx
+            ))
+        return RTResult().success(_list)
+        
+    execute_arr_chunk.arg_names = ["array", "value"]
+
     def execute_arr_len(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
 
@@ -275,7 +311,7 @@ class BuiltInFunction(BaseFunction):
         return RTResult().success(Number(len(array_.elements)))
     execute_arr_len.arg_names = ["array"]
 
-    def execute_strlen(self, exec_ctx):
+    def execute_str_len(self, exec_ctx):
         string = exec_ctx.symbol_table.get("string")
 
         if not isinstance(string, String):
@@ -286,7 +322,73 @@ class BuiltInFunction(BaseFunction):
             ))
 
         return RTResult().success(Number(len(string.value)))
-    execute_strlen.arg_names = ["string"]
+    execute_str_len.arg_names = ["string"]
+
+    def execute_str_slice(self, exec_ctx):
+        string = exec_ctx.symbol_table.get("string")
+        start = exec_ctx.symbol_table.get("start")
+        end = exec_ctx.symbol_table.get("end")
+
+        if not isinstance(string, String):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Argument must be string",
+                exec_ctx
+            ))
+
+        if not isinstance(string, Number):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Argument must be number",
+                exec_ctx
+            ))
+
+        if not isinstance(string, Number):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Argument must be number",
+                exec_ctx
+            ))
+
+        try:
+            return RTResult().success(String(string.value[start:end]))
+        
+        except Exception as e:
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Could't able to slice",
+                exec_ctx
+            ))
+    execute_str_slice.arg_names = ["string", "start", "end"]
+
+    def execute_str_find(self, exec_ctx):
+        string = exec_ctx.symbol_table.get("string")
+        value = exec_ctx.symbol_table.get("value")
+
+        if not isinstance(string, String):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "First argument must be string",
+                exec_ctx
+            ))
+
+        if not isinstance(value, String):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Second argument must be string",
+                exec_ctx
+            ))
+
+        try:
+            return RTResult().success(
+                Number(string.value.find(value.value))
+            )
+        except:
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Could't find that index",
+                exec_ctx
+            ))
 
     def execute_int(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
@@ -318,8 +420,11 @@ class BuiltInFunction(BaseFunction):
         value = exec_ctx.symbol_table.get("value")
 
         try:
+            if isinstance(value, Array):
+                return RTResult().success(String(str(value.elements)))
             return RTResult().success(String(str(value.value)))
-        except:
+        except Exception as e:
+            # print(e)
             return RTResult().failure(RTError(
                 self.pos_start, self.pos_end,
                 "Could not convert to string",
@@ -487,10 +592,13 @@ BuiltInFunction.arr_extend = BuiltInFunction("arr_extend")
 BuiltInFunction.arr_find = BuiltInFunction("arr_find")
 BuiltInFunction.arr_slice = BuiltInFunction("arr_slice")
 BuiltInFunction.arr_len = BuiltInFunction("arr_len")
+BuiltInFunction.arr_chunk = BuiltInFunction("arr_chunk")
+
+BuiltInFunction.str_len = BuiltInFunction("str_len")
+BuiltInFunction.str_slice = BuiltInFunction("str_slice")
 
 BuiltInFunction.require = BuiltInFunction("require")
 BuiltInFunction.exit = BuiltInFunction("exit")
-BuiltInFunction.strlen = BuiltInFunction("strlen")
 BuiltInFunction.int = BuiltInFunction("int")
 BuiltInFunction.float = BuiltInFunction("float")
 BuiltInFunction.str = BuiltInFunction("str")
@@ -528,8 +636,10 @@ global_symbol_table.set("arr_extend", BuiltInFunction.arr_extend)
 global_symbol_table.set("arr_find", BuiltInFunction.arr_find)
 global_symbol_table.set("arr_slice", BuiltInFunction.arr_slice)
 global_symbol_table.set("arr_len", BuiltInFunction.arr_len)
+global_symbol_table.set("arr_chunk", BuiltInFunction.arr_chunk)
 # String methods
-global_symbol_table.set("strlen", BuiltInFunction.strlen)
+global_symbol_table.set("str_len", BuiltInFunction.str_len)
+global_symbol_table.set("str_slice", BuiltInFunction.str_slice)
 # Typecase methods
 global_symbol_table.set("int", BuiltInFunction.int)
 global_symbol_table.set("float", BuiltInFunction.float)
