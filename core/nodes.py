@@ -1,5 +1,6 @@
 '''All Nodes'''
 
+
 class NumberNode:
     def __init__(self, tok):
         self.tok = tok
@@ -67,6 +68,19 @@ class VarManipulateNode:
 
         self.pos_start = self.var_name_tok.pos_start
         self.pos_end = self.value_node.pos_end
+
+        self.child = None
+
+
+class SliceNode:
+    def __init__(self, var_name_tok, start_value_node, end_value_node, step_value_node):
+        self.var_name_tok = var_name_tok
+        self.start_value_node = start_value_node
+        self.end_value_node = end_value_node
+        self.step_value_node = step_value_node
+
+        self.pos_start = self.var_name_tok.pos_start
+        self.pos_end = self.step_value_node.pos_end
 
         self.child = None
 
