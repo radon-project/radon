@@ -84,6 +84,7 @@ TT_ARROW = 'ARROW'  # ->
 TT_NEWLINE = 'NEWLINE'  # \n
 TT_DOT = 'DOT'  # .
 TT_EOF = 'EOF'  # End Of File
+TT_SLICE = 'SLICE'  # x[1:2:3]
 
 KEYWORDS = [
     'var',
