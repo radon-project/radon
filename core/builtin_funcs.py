@@ -226,7 +226,7 @@ class BuiltInFunction(BaseFunction):
                 "Could't find that index",
                 exec_ctx
             ))
-        
+
     execute_arr_find.arg_names = ["array", "index"]
 
     def execute_arr_slice(self, exec_ctx):
@@ -264,7 +264,7 @@ class BuiltInFunction(BaseFunction):
                 exec_ctx
             ))
         return RTResult().success(_list)
-        
+
     execute_arr_slice.arg_names = ["array", "start", "end"]
 
     def execute_arr_chunk(self, exec_ctx):
@@ -287,7 +287,8 @@ class BuiltInFunction(BaseFunction):
 
         try:
             # _list = Array(array.elements[start.value:end.value])
-            _list = Array([array[i:i + value] for i in range(0, len(array), value)])
+            _list = Array([array[i:i + value]
+                          for i in range(0, len(array), value)])
         except:
             return RTResult().failure(IndexError(
                 self.pos_start, self.pos_end,
@@ -295,7 +296,7 @@ class BuiltInFunction(BaseFunction):
                 exec_ctx
             ))
         return RTResult().success(_list)
-        
+
     execute_arr_chunk.arg_names = ["array", "value"]
 
     def execute_arr_len(self, exec_ctx):
@@ -352,7 +353,7 @@ class BuiltInFunction(BaseFunction):
 
         try:
             return RTResult().success(String(string.value[start:end]))
-        
+
         except Exception as e:
             return RTResult().failure(RTError(
                 self.pos_start, self.pos_end,
