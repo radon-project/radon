@@ -85,6 +85,8 @@ class Number(Value):
     def added_to(self, other):
         if isinstance(other, Number):
             return Number(self.value + other.value).set_context(self.context), None
+        elif isinstance(other, String):
+            return String(str(self.value) + other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -127,37 +129,47 @@ class Number(Value):
 
     def get_comparison_eq(self, other):
         if isinstance(other, Number):
-            return Number(int(self.value == other.value)).set_context(self.context), None
+            return Boolean(int(self.value == other.value)).set_context(self.context), None
+        elif isinstance(other, String):
+            return Boolean(int(self.value == other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
     def get_comparison_ne(self, other):
         if isinstance(other, Number):
-            return Number(int(self.value != other.value)).set_context(self.context), None
+            return Boolean(int(self.value != other.value)).set_context(self.context), None
+        elif isinstance(other, String):
+            return Boolean(int(self.value != other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
     def get_comparison_lt(self, other):
         if isinstance(other, Number):
-            return Number(int(self.value < other.value)).set_context(self.context), None
+            return Boolean(int(self.value < other.value)).set_context(self.context), None
+        elif isinstance(other, String):
+            return Boolean(int(self.value < other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
     def get_comparison_gt(self, other):
         if isinstance(other, Number):
-            return Number(int(self.value > other.value)).set_context(self.context), None
+            return Boolean(int(self.value > other.value)).set_context(self.context), None
+        elif isinstance(other, String):
+            return Boolean(int(self.value > other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
     def get_comparison_lte(self, other):
         if isinstance(other, Number):
-            return Number(int(self.value <= other.value)).set_context(self.context), None
+            return Boolean(int(self.value <= other.value)).set_context(self.context), None
+        if isinstance(other, String):
+            return Boolean(int(self.value <= other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
     def get_comparison_gte(self, other):
         if isinstance(other, Number):
-            return Number(int(self.value >= other.value)).set_context(self.context), None
+            return Boolean(int(self.value >= other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -248,6 +260,30 @@ class Boolean(Value):
 
     def notted(self):
         return Boolean(not self.value).set_context(self.context), None
+    
+    def get_comparison_eq(self, other):
+        if isinstance(other, Boolean):
+            return Boolean(int(self.value == other.value)).set_context(self.context), None
+        elif isinstance(other, Number):
+            return Boolean(int(self.value == other.value)).set_context(self.context), None
+        elif isinstance(other, String):
+            return Boolean(int(self.value == other.value)).set_context(self.context), None
+        elif isinstance(other, Array):
+            return Boolean(int(self.value == other.elements)).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
+    
+    def get_comparison_ne(self, other):
+        if isinstance(other, Boolean):
+            return Boolean(int(self.value != other.value)).set_context(self.context), None
+        elif isinstance(other, Number):
+            return Boolean(int(self.value != other.value)).set_context(self.context), None
+        elif isinstance(other, String):
+            return Boolean(int(self.value != other.value)).set_context(self.context), None
+        elif isinstance(other, Array):
+            return Boolean(int(self.value != other.elements)).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
 
     def copy(self):
         copy = Boolean(self.value)
@@ -282,6 +318,8 @@ class String(Value):
     def added_to(self, other):
         if isinstance(other, String):
             return String(self.value + other.value).set_context(self.context), None
+        elif isinstance(other, Number):
+            return String(self.value + str(other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -293,13 +331,21 @@ class String(Value):
 
     def get_comparison_eq(self, other):
         if isinstance(other, String):
-            return Number(int(self.value == other.value)).set_context(self.context), None
+            return Boolean(int(self.value == other.value)).set_context(self.context), None
+        elif isinstance(other, Array):
+            return Boolean(int(self.value == other.elements)).set_context(self.context), None
+        elif isinstance(other, Number):
+            return Boolean(int(self.value == other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
     def get_comparison_ne(self, other):
         if isinstance(other, String):
-            return Number(int(self.value != other.value)).set_context(self.context), None
+            return Boolean(int(self.value != other.value)).set_context(self.context), None
+        elif isinstance(other, Array):
+            return Boolean(int(self.value != other.elements)).set_context(self.context), None
+        elif isinstance(other, Number):
+            return Boolean(int(self.value != other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -507,6 +553,14 @@ class Type(Value):
             self.type = 'Class'
         elif isinstance(self.variable, Instance):
             self.type = 'Instance'
+        elif isinstance(self.variable, ObjectNode):
+            self.type = 'Object'
+        elif isinstance(self.variable, PyAPI):
+            self.type = 'PyAPI'
+        elif isinstance(self.variable, Type):
+            self.type = 'Type'
+        elif self.variable.__class__.__name__ == 'BuiltInFunction':
+            self.type = 'BuiltInFunction'
         else:
             self.type = 'unknown'
 
