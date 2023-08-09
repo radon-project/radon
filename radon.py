@@ -3,6 +3,17 @@
 
 import argparse
 
+try:
+    import readline
+
+    # Enable arrow key support
+    readline.parse_and_bind('"\e[A": history-search-backward')
+    readline.parse_and_bind('"\e[B": history-search-forward')
+    readline.parse_and_bind('"\e[C": forward-char')
+    readline.parse_and_bind('"\e[D": backward-char')
+except ImportError:
+    pass
+
 import core as base_core
 
 
