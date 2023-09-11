@@ -59,6 +59,9 @@ class BuiltInFunction(BaseFunction):
             # print(value.print_to_str())
             print(value)
 
+        elif isinstance(value, Type):
+            print(value)
+
         else:
             print(value.value)
         return RTResult().success(Number.null)
@@ -486,6 +489,14 @@ class BuiltInFunction(BaseFunction):
             ))
     execute_sys_args.arg_names = []
 
+    def execute_time_now(self, exec_ctx):
+        import time # Lazy import
+
+        return RTResult().success(
+            Number(time.time())
+        )
+    execute_time_now.arg_names = []
+
     def execute_require(self, exec_ctx):
         module = exec_ctx.symbol_table.get("module")
 
@@ -607,6 +618,7 @@ BuiltInFunction.bool = BuiltInFunction("bool")
 BuiltInFunction.type = BuiltInFunction("type")
 BuiltInFunction.pyapi = BuiltInFunction("pyapi")
 BuiltInFunction.sys_args = BuiltInFunction("sys_args")
+BuiltInFunction.time_now = BuiltInFunction("time_now")
 
 
 # Setting all functions to global symbol table
@@ -650,3 +662,4 @@ global_symbol_table.set("bool", BuiltInFunction.bool)
 global_symbol_table.set("type", BuiltInFunction.type)
 global_symbol_table.set("pyapi", BuiltInFunction.pyapi)
 global_symbol_table.set("sys_args", BuiltInFunction.sys_args)
+global_symbol_table.set("time_now", BuiltInFunction.time_now)
