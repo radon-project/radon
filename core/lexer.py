@@ -320,6 +320,8 @@ class Lexer:
         self.advance()
 
         while self.current_char != '\n':
+            if self.current_char == None:
+                return
             self.advance()
 
-        self.advance()
+        #self.advance()
