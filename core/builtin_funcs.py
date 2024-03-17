@@ -62,6 +62,13 @@ class BuiltInFunction(BaseFunction):
         elif isinstance(value, Type):
             print(value)
 
+        elif isinstance(value, PyAPI):
+            try:
+                print(value.value)
+            except Exception as exe:
+                # print(exe)
+                pass
+
         else:
             print(value.value)
         return RTResult().success(Number.null)
@@ -302,6 +309,43 @@ class BuiltInFunction(BaseFunction):
 
     execute_arr_chunk.arg_names = ["array", "value"]
 
+    def execute_arr_get(self, exec_ctx):
+        array = exec_ctx.symbol_table.get("array")
+        index = exec_ctx.symbol_table.get("index")
+        
+        if not isinstance(array, Array):
+            return RTResult().failure(
+                RTError(
+                    self.pos_start,
+                    self.pos_end,
+                    "First argument must be an array",
+                    exec_ctx
+                )
+            )
+        if not isinstance(index, Number):
+            return RTResult().failure(
+                RTError(
+                    self.pos_start,
+                    self.pos_end,
+                    "Second argument must be a number",
+                    exec_ctx
+                )
+            )
+        try:
+            element = array.elements[int(index.value)]
+            return RTResult().success(element)
+        except Exception as exe:
+            return RTResult().failure(
+                RTError(
+                    self.pos_start,
+                    self.pos_end,
+                    exe,
+                    exec_ctx
+                )
+            )
+
+    execute_arr_get.arg_names = ["array", "index"]
+
     def execute_arr_len(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
 
@@ -393,6 +437,36 @@ class BuiltInFunction(BaseFunction):
                 "Could't find that index",
                 exec_ctx
             ))
+
+    def execute_str_get(self, exec_ctx):
+        string = exec_ctx.symbol_table.get("string")
+        index = exec_ctx.symbol_table.get("index")
+
+        if not isinstance(string, String):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "First argument must be string",
+                exec_ctx
+            ))
+
+        if not isinstance(index, Number):
+            return RTResult().failure(RTError(
+                self.pos_start, self.pos_end,
+                "Second argument must be number",
+                exec_ctx
+            ))
+
+        try:
+            return RTResult().success(
+                String(string.value[index.value])
+            )
+        except:
+            return RTResult().failure(IndexError(
+                self.pos_start, self.pos_end,
+                "Could't find that index",
+                exec_ctx
+            ))
+    execute_str_get.arg_names = ["string", "index"]
 
     def execute_int(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
@@ -584,12 +658,13 @@ def run(fn, text):
 
 
 # Defining builtin functions
+# I/O methods
 BuiltInFunction.print = BuiltInFunction("print")
 BuiltInFunction.print_ret = BuiltInFunction("print_ret")
 BuiltInFunction.input = BuiltInFunction("input")
 BuiltInFunction.input_int = BuiltInFunction("input_int")
 BuiltInFunction.clear = BuiltInFunction("clear")
-
+# Datatype validator methods
 BuiltInFunction.is_num = BuiltInFunction("is_num")
 BuiltInFunction.is_int = BuiltInFunction("is_int")
 BuiltInFunction.is_float = BuiltInFunction("is_float")
@@ -597,7 +672,7 @@ BuiltInFunction.is_string = BuiltInFunction("is_string")
 BuiltInFunction.is_bool = BuiltInFunction("is_bool")
 BuiltInFunction.is_array = BuiltInFunction("is_array")
 BuiltInFunction.is_fun = BuiltInFunction("is_fun")
-
+# Array methods
 BuiltInFunction.arr_append = BuiltInFunction("arr_append")
 BuiltInFunction.arr_pop = BuiltInFunction("arr_pop")
 BuiltInFunction.arr_extend = BuiltInFunction("arr_extend")
@@ -605,18 +680,23 @@ BuiltInFunction.arr_find = BuiltInFunction("arr_find")
 BuiltInFunction.arr_slice = BuiltInFunction("arr_slice")
 BuiltInFunction.arr_len = BuiltInFunction("arr_len")
 BuiltInFunction.arr_chunk = BuiltInFunction("arr_chunk")
-
+BuiltInFunction.arr_get = BuiltInFunction("arr_get")
+# String methods
 BuiltInFunction.str_len = BuiltInFunction("str_len")
 BuiltInFunction.str_slice = BuiltInFunction("str_slice")
-
-BuiltInFunction.require = BuiltInFunction("require")
-BuiltInFunction.exit = BuiltInFunction("exit")
+BuiltInFunction.str_find = BuiltInFunction("str_find")
+BuiltInFunction.str_get = BuiltInFunction("str_get")
+# Typecase methods
 BuiltInFunction.int = BuiltInFunction("int")
 BuiltInFunction.float = BuiltInFunction("float")
 BuiltInFunction.str = BuiltInFunction("str")
 BuiltInFunction.bool = BuiltInFunction("bool")
 BuiltInFunction.type = BuiltInFunction("type")
+# PyAPI methods (Python API)
 BuiltInFunction.pyapi = BuiltInFunction("pyapi")
+# System methods
+BuiltInFunction.require = BuiltInFunction("require")
+BuiltInFunction.exit = BuiltInFunction("exit")
 BuiltInFunction.sys_args = BuiltInFunction("sys_args")
 BuiltInFunction.time_now = BuiltInFunction("time_now")
 
@@ -650,16 +730,22 @@ global_symbol_table.set("arr_find", BuiltInFunction.arr_find)
 global_symbol_table.set("arr_slice", BuiltInFunction.arr_slice)
 global_symbol_table.set("arr_len", BuiltInFunction.arr_len)
 global_symbol_table.set("arr_chunk", BuiltInFunction.arr_chunk)
+global_symbol_table.set("arr_get", BuiltInFunction.arr_get)
 # String methods
 global_symbol_table.set("str_len", BuiltInFunction.str_len)
 global_symbol_table.set("str_slice", BuiltInFunction.str_slice)
+global_symbol_table.set("str_find", BuiltInFunction.str_find)
+global_symbol_table.set("str_get", BuiltInFunction.str_get)
 # Typecase methods
 global_symbol_table.set("int", BuiltInFunction.int)
 global_symbol_table.set("float", BuiltInFunction.float)
 global_symbol_table.set("str", BuiltInFunction.str)
 global_symbol_table.set("bool", BuiltInFunction.bool)
-
 global_symbol_table.set("type", BuiltInFunction.type)
+# PyAPI methods (Python API)
 global_symbol_table.set("pyapi", BuiltInFunction.pyapi)
+# System methods
+global_symbol_table.set("require", BuiltInFunction.require)
+global_symbol_table.set("exit", BuiltInFunction.exit)
 global_symbol_table.set("sys_args", BuiltInFunction.sys_args)
 global_symbol_table.set("time_now", BuiltInFunction.time_now)
