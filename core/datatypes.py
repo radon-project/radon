@@ -412,6 +412,10 @@ class Array(Value):
             new_array = self.copy()
             new_array.elements.extend(other.elements)
             return new_array, None
+        elif isinstance(other, Number):
+            new_array = self.copy()
+            new_array.elements *= other.value
+            return new_array, None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -448,7 +452,7 @@ class Array(Value):
         return len(self.elements) > 0
 
     def copy(self):
-        copy = Array(self.elements)
+        copy = Array(self.elements.copy())
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
@@ -457,6 +461,7 @@ class Array(Value):
         return ", ".join([str(x) for x in self.elements])
 
     def __repr__(self):
+        # int object is not iterable error
         return f'[{", ".join([repr(x) for x in self.elements])}]'
 
     def __iter__(self):
@@ -586,21 +591,34 @@ class PyAPI(Value):
     # def connect(self):
     #     self.value = eval(self.code)
     #     return self.value
+    # def pyapi(self):
+    #     import builtins
+    #     # Create a dictionary to serve as the namespace for the evaluated code
+    #     namespace = {
+    #         '__builtins__': builtins,
+    #         'print': print,
+    #     }
+
+    #     try:
+    #         exec(self.code, namespace)
+    #     except Exception as e:
+    #         return f"Error: {str(e)}"
+
+    #     return namespace
+
     def pyapi(self):
-        import builtins
-        # Create a dictionary to serve as the namespace for the evaluated code
-        namespace = {
-            '__builtins__': builtins,
-            'print': print,
-        }
-
+        '''This will execute python code and return the result'''
         try:
-            exec(self.code, namespace)
-        except Exception as e:
-            return f"Error: {str(e)}"
-
-        return namespace
-
+            self.value = eval(self.code)
+            return self.value
+        
+        except Exception as exe1:
+            try:
+                return exec(self.code)
+            except Exception as exe2:
+                self.value = f"Error: {str(exe2)}"
+                return self.value
+            
     def copy(self):
         copy = PyAPI(self.code)
         copy.set_pos(self.pos_start, self.pos_end)
