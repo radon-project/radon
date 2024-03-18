@@ -1,7 +1,29 @@
-# The Radon Programming Language
-
 <div align="center">
 <img src="radon.png" height=250>
+
+<h1>The Radon Programming Language</h1>
+
+<a href="https://github.com/radon-project/radon" title="GitHub stars">
+  <img src="https://img.shields.io/github/stars/radon-project/radon?style=flat&logo=github" alt="GitHub stars">
+</a>
+<a href="https://github.com/radon-project/radon" title="GitHub forks">
+  <img src="https://img.shields.io/github/forks/radon-project/radon?style=flat&logo=github" alt="GitHub forks">
+</a>
+<a href="https://github.com/radon-project/radon" title="GitHub watchers">
+  <img src="https://img.shields.io/github/watchers/radon-project/radon?style=flat&logo=github" alt="GitHub watchers">
+</a>
+<a href="https://github.com/radon-project/radon/issues" title="GitHub issues">
+  <img src="https://img.shields.io/github/issues/radon-project/radon?style=flat&logo=github" alt="GitHub issues">
+</a>
+<a href="https://github.com/radon-project/radon/pulls" title="GitHub pull requests">
+  <img src="https://img.shields.io/github/issues-pr/radon-project/radon?style=flat&logo=github" alt="GitHub pull requests">
+</a>
+<a href="https://github.com/radon-project/radon" title="Total hits">
+  <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fradon-project%2Fradon&count_bg=%2352B308&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false"/>
+  <a href="https://discord.gg/y2x4CSX7DM" title="Join the community">
+  <img src="https://img.shields.io/discord/1137834560290308306?style=flat&logo=discord&logoColor=%235865F2&label=join&link=https%3A%2F%2Fdiscord.gg%2Fy2x4CSX7DM" alt="Discord">
+</a>
+</a>
 </div>
 
 Radon is a programming language that is designed to be easy to learn and use. It is a high-level language intended to be used for general purpose programming. It is designed to be easy to learn and use, while still being powerful enough to be used for most tasks. Some of the features of Radon include:
@@ -13,7 +35,7 @@ Radon is a programming language that is designed to be easy to learn and use. It
 
 ## Installation
 
-It is currently in development state. It is not ready for use yet. But you can still try it out by cloning the repository and running the `radon-project/radon` repository. 
+It is currently in development state. It is not ready for use yet. But you can still try it out by cloning the repository and running the `radon-project/radon` repository.
 
 ```bash
 git clone https://github.com/radon-project/radon.git
@@ -68,7 +90,6 @@ radon
 ## Standard Library
 
 We are currently working on the standard library. We need contributors to help us build the standard library. If you are interested, please make contributions to the `stdlib` directory.
-
 
 ## Syntax
 
@@ -237,7 +258,7 @@ arr_slice(array, start, end)
 
 ## Contributing
 
-We need contributors to help us build the language. If you are interested, please make contributions to the `radon-project/radon` repository. 
+We need contributors to help us build the language. If you are interested, please make contributions to the `radon-project/radon` repository.
 
 Steps to contribute:
 
@@ -253,5 +274,4 @@ Before making a pull request create an issue and discuss the changes you want to
 
 ## License
 
-This project will be licensed soon. We are still deciding on the license. We will update the license as soon as we decide on the license. 
-
+This project will be licensed soon. We are still deciding on the license. We will update the license as soon as we decide on the license.
