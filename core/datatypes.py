@@ -581,43 +581,29 @@ class Type(Value):
     def __repr__(self):
         return f'<class \'{self.type}\'>'
 
-
 class PyAPI(Value):
     def __init__(self, code: str):
         super().__init__()
         self.code = code
         self.pyapi()
 
-    # def connect(self):
-    #     self.value = eval(self.code)
-    #     return self.value
-    # def pyapi(self):
-    #     import builtins
-    #     # Create a dictionary to serve as the namespace for the evaluated code
-    #     namespace = {
-    #         '__builtins__': builtins,
-    #         'print': print,
-    #     }
-
-    #     try:
-    #         exec(self.code, namespace)
-    #     except Exception as e:
-    #         return f"Error: {str(e)}"
-
-    #     return namespace
-
     def pyapi(self):
-        '''This will execute python code and return the result'''
+        '''This will execute python code and return the result. Output will be store in a output variable. To access the output, use output variable in the Python string code.'''
+
+        # Empty dictionary to store the output
+        locals_dict = {}
+
         try:
-            self.value = eval(self.code)
-            return self.value
-        
-        except Exception as exe1:
-            try:
-                return exec(self.code)
-            except Exception as exe2:
-                self.value = f"Error: {str(exe2)}"
-                return self.value
+            # Execute the code and store the output in locals_dict
+            exec(self.code, {}, locals_dict)
+
+            if 'output' in locals_dict:
+                return str(locals_dict['output'])
+            else:
+                return "No output produced."
+
+        except Exception as e:
+            return f"Error: {str(e)}"
             
     def copy(self):
         copy = PyAPI(self.code)
