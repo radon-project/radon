@@ -4,34 +4,36 @@
 
 
 def string_with_arrows(text, pos_start, pos_end):
-	result = ''
+    '''Return string with arrows'''
+    result = ''
 
-	# Calculate indices
-	idx_start = max(text.rfind('\n', 0, pos_start.idx), 0)
-	idx_end = text.find('\n', idx_start + 1)
-	if idx_end < 0: idx_end = len(text)
-	
-	# Generate each line
-	line_count = pos_end.ln - pos_start.ln + 1
-	for i in range(line_count):
-		# Calculate line columns
-		line = text[idx_start:idx_end]
-		col_start = pos_start.col if i == 0 else 0
-		col_end = pos_end.col if i == line_count - 1 else len(line) - 1
+    # Calculate indices
+    idx_start = max(text.rfind('\n', 0, pos_start.idx), 0)
+    idx_end = text.find('\n', idx_start + 1)
+    if idx_end < 0: idx_end = len(text)
+    
+    # Generate each line
+    line_count = pos_end.ln - pos_start.ln + 1
+    for i in range(line_count):
+        # Calculate line columns
+        line = text[idx_start:idx_end]
+        col_start = pos_start.col if i == 0 else 0
+        col_end = pos_end.col if i == line_count - 1 else len(line) - 1
 
-		# Append to result
-		result += line + '\n'
-		result += ' ' * col_start + '^' * (col_end - col_start)
+        # Append to result
+        result += line + '\n'
+        result += ' ' * col_start + '^' * (col_end - col_start)
 
-		# Re-calculate indices
-		idx_start = idx_end
-		idx_end = text.find('\n', idx_start + 1)
-		if idx_end < 0: idx_end = len(text)
+        # Re-calculate indices
+        idx_start = idx_end
+        idx_end = text.find('\n', idx_start + 1)
+        if idx_end < 0: idx_end = len(text)
 
-	return result.replace('\t', '')
+    return result.replace('\t', '')
 
 
 class Error:
+    '''Base Error class'''
     def __init__(self, pos_start, pos_end, error_name, details):
         self.pos_start = pos_start
         self.pos_end = pos_end
@@ -39,6 +41,7 @@ class Error:
         self.details = details
 
     def as_string(self):
+        '''Return error as string'''
         result = f'{self.error_name}: {self.details}\n'
         result += f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
         result += '\n' + \
@@ -48,31 +51,37 @@ class Error:
 
 
 class IllegalCharError(Error):
+    '''Illegal Character Error class'''
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Illegal Character', details)
 
 
 class ExpectedCharError(Error):
+    '''Expected Character Error class'''
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Expected Character', details)
 
 
 class InvalidSyntaxError(Error):
+    '''Invalid Syntax Error class'''
     def __init__(self, pos_start, pos_end, details=''):
         super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
 
 
 class IndexError(Error):
+    '''Index Error class'''
     def __init__(self, pos_start, pos_end, details=''):
         super().__init__(pos_start, pos_end, 'Index Error', details)
 
 
 class RTError(Error):
+    '''Runtime Error class'''
     def __init__(self, pos_start, pos_end, details, context):
         super().__init__(pos_start, pos_end, 'Runtime Error', details)
         self.context = context
 
     def as_string(self):
+        '''Return error as string'''
         result = self.generate_traceback()
         result += f'{self.error_name}: {self.details}'
         result += '\n' + \
@@ -81,6 +90,7 @@ class RTError(Error):
         return result
 
     def generate_traceback(self):
+        '''Generate traceback for runtime error'''
         result = ''
         pos = self.pos_start
         ctx = self.context
