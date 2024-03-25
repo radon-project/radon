@@ -69,6 +69,15 @@ class BuiltInFunction(BaseFunction):
                 # print(exe)
                 pass
 
+        elif isinstance(value, BuiltInFunction):
+            print(value)
+
+        elif isinstance(value, Class):
+            print(value)
+
+        elif isinstance(value, Instance):
+            print(value)
+
         else:
             print(value.value)
         return RTResult().success(Number.null)
@@ -536,7 +545,8 @@ class BuiltInFunction(BaseFunction):
 
         try:
             return RTResult().success(
-                PyAPI(code.value)
+                # PyAPI(code.value).pyapi()
+                String(PyAPI(code.value).pyapi())
             )
         except Exception as e:
             print(e)
