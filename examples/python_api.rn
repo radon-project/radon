@@ -1,3 +1,14 @@
-pyapi("import os; value = os.getcwd()")
+## This is an example of how to use the `pyapi()` `BuiltInFunction` in Radon
+## Syntax: pyapi("python code") -> String (output of the python code)
 
-print(value)
+var cwd = pyapi("import os; output = os.getcwd()")
+print("Current working directory: " + cwd)
+
+var files = pyapi("import os; output = os.listdir()")
+print("Files in current directory: " + files)
+
+var pi = pyapi("import math; output = math.pi")
+print("Value of pi: " + pi)
+
+var sum = pyapi("output = 2 + 2")
+print("Sum of 2 + 2: " + sum)
