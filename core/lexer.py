@@ -134,30 +134,17 @@ class Lexer:
         escape_character = False
         self.advance()
 
-        escape_characters = {
-            'n': '\n',
-            't': '\t'
-        }
-
         while self.current_char is not None and (self.current_char != '"' or escape_character):
-            if escape_character:
-                if self.current_char == 'n':
-                    string += '\n'  # Handle newline character
-                else:
-                    string += escape_characters.get(self.current_char, self.current_char)
-                escape_character = False
+            if self.current_char == '\\':
+                escape_character = True
             else:
-                if self.current_char == '\\':
-                    escape_character = True
-                elif self.current_char == '\n' or '\t':
-                    string += self.current_char
-                else:
-                    string += self.current_char
+                escape_character = False
+            string += self.current_char
             self.advance()
 
 
         self.advance()
-        return Token(TT_STRING, string, pos_start, self.pos)
+        return Token(TT_STRING, string.encode("utf-8").decode("unicode-escape"), pos_start, self.pos)
 
     def make_identifier(self):
         id_str = ''
