@@ -6,8 +6,8 @@ class Array {
     fun map(func) {
         var new_elements = []
 
-        for i = 0 to arr_len(this.list) {
-            arr_append(new_elements, func(arr_find(this.list, i)))
+        for i = 0 to this.len() {
+            arr_append(new_elements, func(arr_get(this.list, i)))
         }
 
         return new_elements
@@ -21,7 +21,6 @@ class Array {
     
     fun len() -> arr_len(this.list)
     fun is_empty() -> this.list == []
-    fun to_string() -> this.list
+    fun to_string() -> str(this.list)
     fun is_array() -> true
-    
 }
