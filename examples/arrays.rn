@@ -9,8 +9,8 @@ print(arr.to_string())
 
 print(arr.len())
 
-# arr.extend(["this", "is", "a", "array"])
-# print(arr.to_string())
+arr.extend(["this", "is", "a", "array"])
+print(arr.to_string())
 
 print(arr.find(6))
 
