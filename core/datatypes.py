@@ -98,7 +98,10 @@ class Number(Value):
 
     def multed_by(self, other):
         if isinstance(other, Number):
-            return Number(self.value * other.value).set_context(self.context), None
+            try:
+                return Number(self.value * other.value).set_context(self.context), None
+            except TypeError:
+                return Number(self.value.value * other.value.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -468,6 +471,9 @@ class Array(Value):
 
     def __getitem__(self, index):
         return self.elements[index]
+
+    def __len__(self):
+        return len(self.elements)
 
 
 class ObjectNode(Value):
