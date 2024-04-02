@@ -234,10 +234,14 @@ class BuiltInFunction(BaseFunction):
             val_ = array.elements[index.value]
             if isinstance(val_, String):
                 return RTResult().success(
-                    String(array.elements[index.value])
+                    String(val_)
+                )
+            elif isinstance(val_, Number):
+                return RTResult().success(
+                    Number(val_)
                 )
             return RTResult().success(
-                Array(array.elements[index.value])
+                Array(val_)
             )
         except:
             return RTResult().failure(IndexError(
