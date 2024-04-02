@@ -461,7 +461,6 @@ class Array(Value):
         return ", ".join([str(x) for x in self.elements])
 
     def __repr__(self):
-        # int object is not iterable error
         return f'[{", ".join([repr(x) for x in self.elements])}]'
 
     def __iter__(self):
