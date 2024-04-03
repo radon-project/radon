@@ -1,5 +1,0 @@
-
-if true {
-    var y = 420 / 0
-}
-print(y)
