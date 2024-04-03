@@ -1,6 +1,19 @@
 class System {
     fun System() {
-        var this.name = "Linux"
+        fun get_name(os_name) {
+            if os_name == "nt" {
+                return "Windows"
+            } else if os_name == "posix" {
+                return "POSIX"
+            } else if os_name == "java" {
+                return "JVM"
+            } else {
+                return "unknown"
+            }
+        }
+        var os_name = pyapi("import os; output = os.name")
+        var this.name = get_name(os_name)
+        var this.platform = pyapi("import sys; output = sys.platform")
         var this.version = "1.0"
     }
     fun getInfo() {
