@@ -142,7 +142,6 @@ class Lexer:
             string += self.current_char
             self.advance()
 
-
         self.advance()
         return Token(TT_STRING, string.encode("utf-8").decode("unicode-escape"), pos_start, self.pos)
 
@@ -304,11 +303,27 @@ class Lexer:
         return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
 
     def skip_comment(self):
+        multi_line = False
         self.advance()
 
-        while self.current_char != '\n':
-            if self.current_char == None:
-                return
+        if self.current_char == '!':
+            multi_line = True
             self.advance()
 
-        #self.advance()
+        while True:
+            if self.current_char == None:
+                return
+            if multi_line:
+                if self.current_char == '!':
+                    self.advance()
+                    if self.current_char == '#':
+                        self.advance()
+                        return
+            else:
+                if self.current_char == '\n':
+                    self.advance()
+                    return
+            self.advance()
+
+        self.advance()
+        
