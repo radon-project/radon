@@ -627,7 +627,7 @@ class BaseFunction(Value):
         new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
         return new_context
 
-    def check_args(self, arg_names, args):
+    def check_args(self, arg_names, args, defaults):
         res = RTResult()
 
         if len(args) > len(arg_names):
@@ -637,28 +637,28 @@ class BaseFunction(Value):
                 self.context
             ))
 
-        if len(args) < len(arg_names):
+        if len(args) < len(arg_names) - len(list(filter(lambda default: default is not None, defaults))):
             return res.failure(RTError(
                 self.pos_start, self.pos_end,
-                f"{len(arg_names) - len(args)} too few args passed into {self}",
+                f"{(len(arg_names) - len(list(filter(lambda default: default is not None, defaults)))) - len(args)} too few args passed into {self}",
                 self.context
             ))
 
         return res.success(None)
 
-    def populate_args(self, arg_names, args, exec_ctx):
-        for i in range(len(args)):
+    def populate_args(self, arg_names, args, defaults, exec_ctx):
+        for i in range(len(arg_names)):
             arg_name = arg_names[i]
-            arg_value = args[i]
+            arg_value = defaults[i] if i >= len(args) else args[i]
             arg_value.set_context(exec_ctx)
             exec_ctx.symbol_table.set(arg_name, arg_value)
 
-    def check_and_populate_args(self, arg_names, args, exec_ctx):
+    def check_and_populate_args(self, arg_names, args, defaults, exec_ctx):
         res = RTResult()
-        res.register(self.check_args(arg_names, args))
+        res.register(self.check_args(arg_names, args, defaults))
         if res.should_return():
             return res
-        self.populate_args(arg_names, args, exec_ctx)
+        self.populate_args(arg_names, args, defaults, exec_ctx)
         return res.success(None)
 
 
@@ -743,10 +743,11 @@ class Class(Value):
 
 
 class Function(BaseFunction):
-    def __init__(self, name, body_node, arg_names, should_auto_return):
+    def __init__(self, name, body_node, arg_names, defaults, should_auto_return):
         super().__init__(name)
         self.body_node = body_node
         self.arg_names = arg_names
+        self.defaults = defaults
         self.should_auto_return = should_auto_return
 
     def execute(self, args):
@@ -757,7 +758,7 @@ class Function(BaseFunction):
         exec_ctx = self.generate_new_context()
 
         res.register(self.check_and_populate_args(
-            self.arg_names, args, exec_ctx))
+            self.arg_names, args, self.defaults, exec_ctx))
         if res.should_return():
             return res
 
@@ -770,7 +771,10 @@ class Function(BaseFunction):
         return res.success(ret_value)
 
     def copy(self):
-        return self
+        copy = Function(self.name, self.body_node, self.arg_names, self.defaults, self.should_auto_return)
+        copy.set_context(self.context)
+        copy.set_pos(self.pos_start, self.pos_end)
+        return copy
 
     def __repr__(self):
         return f"<function {self.name}>"

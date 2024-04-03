@@ -399,8 +399,16 @@ class Interpreter:
         func_name = node.var_name_tok.value if node.var_name_tok else None
         body_node = node.body_node
         arg_names = [arg_name.value for arg_name in node.arg_name_toks]
-        func_value = Function(func_name, body_node, arg_names, node.should_auto_return).set_context(
-            context).set_pos(node.pos_start, node.pos_end)
+        defaults = []
+        for default in node.defaults:
+            if default is None:
+                defaults.append(None)
+                continue
+            default_value = res.register(self.visit(default, context))
+            if res.should_return(): return res
+            defaults.append(default_value)
+
+        func_value = Function(func_name, body_node, arg_names, defaults, node.should_auto_return).set_context(context).set_pos(node.pos_start, node.pos_end)
 
         if node.var_name_tok:
             context.symbol_table.set(func_name, func_value)
@@ -431,6 +439,14 @@ class Interpreter:
     def visit_ReturnNode(self, node, context):
         res = RTResult()
 
+        # # if out of function scope return error
+        # if not context.symbol_table.get("func"):
+        #     return RTResult().failure(STError(
+        #         node.pos_start, node.pos_end,
+        #         "'return' outside function",
+        #         context
+        #     ))
+
         if node.node_to_return:
             value = res.register(self.visit(node.node_to_return, context))
             if res.should_return():
@@ -441,6 +457,13 @@ class Interpreter:
         return res.success_return(value)
 
     def visit_ContinueNode(self, node, context):
+        # # if out of loop scope return error
+        # if not context.symbol_table.get("loop"):
+        #     return RTResult().failure(STError(
+        #         node.pos_start, node.pos_end,
+        #         "'continue' not properly in loop",
+        #         context
+        #     ))
         return RTResult().success_continue()
 
     def visit_BreakNode(self, node, context):

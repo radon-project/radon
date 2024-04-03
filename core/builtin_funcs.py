@@ -17,10 +17,10 @@ class BuiltInFunction(BaseFunction):
         exec_ctx = self.generate_new_context()
 
         method_name = f'execute_{self.name}'
-        method = getattr(self, method_name, self.no_visit_method)
+        method = getattr(self, method_name, self.no_execute_method)
 
         res.register(self.check_and_populate_args(
-            method.arg_names, args, exec_ctx))
+            method.arg_names, args, method.defaults, exec_ctx))
         if res.should_return():
             return res
 
@@ -29,7 +29,7 @@ class BuiltInFunction(BaseFunction):
             return res
         return res.success(return_value)
 
-    def no_visit_method(self, node, context):
+    def no_execute_method(self, node, context):
         raise Exception(f'No execute_{self.name} method defined')
 
     def copy(self):
@@ -43,6 +43,18 @@ class BuiltInFunction(BaseFunction):
 
     #####################################
 
+    # Decorator for built-in functions
+    @staticmethod
+    def args(arg_names, defaults=None):
+        if defaults is None:
+            defaults = [None] * len(arg_names)
+        def _args(f):
+            f.arg_names = arg_names
+            f.defaults = defaults
+            return f
+        return _args
+
+    @args(['value'])
     def execute_print(self, exec_ctx):
         value = exec_ctx.symbol_table.get('value')
 
@@ -81,17 +93,17 @@ class BuiltInFunction(BaseFunction):
         else:
             print(value.value)
         return RTResult().success(Number.null)
-    execute_print.arg_names = ['value']
 
+    @args(['value'])
     def execute_print_ret(self, exec_ctx):
         return RTResult().success(String(str(exec_ctx.symbol_table.get('value'))))
-    execute_print_ret.arg_names = ['value']
 
+    @args(['value'])
     def execute_input(self, exec_ctx):
         text = input(str(exec_ctx.symbol_table.get('value')))
         return RTResult().success(String(text))
-    execute_input.arg_names = ['value']
 
+    @args([])
     def execute_input_int(self, exec_ctx):
         while True:
             text = input()
@@ -101,51 +113,51 @@ class BuiltInFunction(BaseFunction):
             except ValueError:
                 print(f"'{text}' must be an integer. Try again!")
         return RTResult().success(Number(number))
-    execute_input_int.arg_names = []
 
+    @args([])
     def execute_clear(self, exec_ctx):
         os.system('cls' if os.name == 'nt' else 'clear')
         return RTResult().success(Number.null)
-    execute_clear.arg_names = []
 
+    @args(['value'])
     def execute_is_number(self, exec_ctx):
         is_number = isinstance(exec_ctx.symbol_table.get("value"), Number)
         return RTResult().success(Boolean.true if is_number else Boolean.false)
-    execute_is_number.arg_names = ["value"]
 
+    @args(['value'])
     def execute_is_int(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
         is_int = isinstance(value.value, int)
         return RTResult().success(Boolean.true if is_int else Boolean.false)
-    execute_is_int.arg_names = ["value"]
 
+    @args(['value'])
     def execute_is_float(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
         is_float = isinstance(value.value, float)
         return RTResult().success(Boolean.true if is_float else Boolean.false)
-    execute_is_float.arg_names = ["value"]
 
+    @args(['value'])
     def execute_is_string(self, exec_ctx):
         is_string = isinstance(exec_ctx.symbol_table.get("value"), String)
         return RTResult().success(Boolean.true if is_string else Boolean.false)
-    execute_is_string.arg_names = ["value"]
-
+    
+    @args(['value'])
     def execute_is_bool(self, exec_ctx):
         is_boolean = isinstance(exec_ctx.symbol_table.get("value"), Boolean)
         return RTResult().success(Boolean.true if is_boolean else Boolean.false)
-    execute_is_bool.arg_names = ["value"]
 
+    @args(['value'])
     def execute_is_array(self, exec_ctx):
         is_arr = isinstance(exec_ctx.symbol_table.get("value"), Array)
         return RTResult().success(Boolean.true if is_arr else Boolean.false)
-    execute_is_array.arg_names = ["value"]
 
+    @args(['value'])
     def execute_is_function(self, exec_ctx):
         is_func = isinstance(
             exec_ctx.symbol_table.get("value"), BaseFunction)
         return RTResult().success(Boolean.true if is_func else Boolean.false)
-    execute_is_function.arg_names = ["value"]
 
+    @args(['array', 'value'])
     def execute_arr_append(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
         value = exec_ctx.symbol_table.get("value")
@@ -159,8 +171,8 @@ class BuiltInFunction(BaseFunction):
 
         array_.elements.append(value)
         return RTResult().success(Number.null)
-    execute_arr_append.arg_names = ["array", "value"]
 
+    @args(['array', 'index'])
     def execute_arr_pop(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
         index = exec_ctx.symbol_table.get("index")
@@ -188,8 +200,8 @@ class BuiltInFunction(BaseFunction):
                 exec_ctx
             ))
         return RTResult().success(element)
-    execute_arr_pop.arg_names = ["array", "index"]
 
+    @args(['arrayA', 'arrayB'])
     def execute_arr_extend(self, exec_ctx):
         arrayA = exec_ctx.symbol_table.get("arrayA")
         arrayB = exec_ctx.symbol_table.get("arrayB")
@@ -210,8 +222,8 @@ class BuiltInFunction(BaseFunction):
 
         arrayA.elements.extend(arrayB.elements)
         return RTResult().success(Number.null)
-    execute_arr_extend.arg_names = ["arrayA", "arrayB"]
-
+    
+    @args(['array', 'index'])
     def execute_arr_find(self, exec_ctx):
         array = exec_ctx.symbol_table.get("array")
         index = exec_ctx.symbol_table.get("index")
@@ -250,8 +262,7 @@ class BuiltInFunction(BaseFunction):
                 exec_ctx
             ))
 
-    execute_arr_find.arg_names = ["array", "index"]
-
+    @args(['array', 'start', 'end'])
     def execute_arr_slice(self, exec_ctx):
         array = exec_ctx.symbol_table.get("array")
         start = exec_ctx.symbol_table.get("start")
@@ -288,8 +299,7 @@ class BuiltInFunction(BaseFunction):
             ))
         return RTResult().success(_list)
 
-    execute_arr_slice.arg_names = ["array", "start", "end"]
-
+    @args(['array', 'value'])
     def execute_arr_chunk(self, exec_ctx):
         array = exec_ctx.symbol_table.get("array")
         value = exec_ctx.symbol_table.get("value")
@@ -320,8 +330,7 @@ class BuiltInFunction(BaseFunction):
             ))
         return RTResult().success(_list)
 
-    execute_arr_chunk.arg_names = ["array", "value"]
-
+    @args(['array', 'index'])
     def execute_arr_get(self, exec_ctx):
         array = exec_ctx.symbol_table.get("array")
         index = exec_ctx.symbol_table.get("index")
@@ -357,8 +366,7 @@ class BuiltInFunction(BaseFunction):
                 )
             )
 
-    execute_arr_get.arg_names = ["array", "index"]
-
+    @args(['array'])
     def execute_arr_len(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
 
@@ -370,8 +378,8 @@ class BuiltInFunction(BaseFunction):
             ))
 
         return RTResult().success(Number(len(array_.elements)))
-    execute_arr_len.arg_names = ["array"]
 
+    @args(['string'])
     def execute_str_len(self, exec_ctx):
         string = exec_ctx.symbol_table.get("string")
 
@@ -383,8 +391,8 @@ class BuiltInFunction(BaseFunction):
             ))
 
         return RTResult().success(Number(len(string.value)))
-    execute_str_len.arg_names = ["string"]
 
+    @args(['string', 'start', 'end'])
     def execute_str_slice(self, exec_ctx):
         string = exec_ctx.symbol_table.get("string")
         start = exec_ctx.symbol_table.get("start")
@@ -420,8 +428,8 @@ class BuiltInFunction(BaseFunction):
                 "Could't able to slice",
                 exec_ctx
             ))
-    execute_str_slice.arg_names = ["string", "start", "end"]
 
+    @args(['string', 'value'])
     def execute_str_find(self, exec_ctx):
         string = exec_ctx.symbol_table.get("string")
         value = exec_ctx.symbol_table.get("value")
@@ -451,6 +459,7 @@ class BuiltInFunction(BaseFunction):
                 exec_ctx
             ))
 
+    @args(['string', 'index'])
     def execute_str_get(self, exec_ctx):
         string = exec_ctx.symbol_table.get("string")
         index = exec_ctx.symbol_table.get("index")
@@ -479,8 +488,8 @@ class BuiltInFunction(BaseFunction):
                 "Could't find that index",
                 exec_ctx
             ))
-    execute_str_get.arg_names = ["string", "index"]
 
+    @args(['value'])
     def execute_int(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
@@ -492,8 +501,8 @@ class BuiltInFunction(BaseFunction):
                 "Could not convert to int",
                 exec_ctx
             ))
-    execute_int.arg_names = ["value"]
 
+    @args(['value'])
     def execute_float(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
@@ -505,8 +514,8 @@ class BuiltInFunction(BaseFunction):
                 "Could not convert to float",
                 exec_ctx
             ))
-    execute_float.arg_names = ["value"]
 
+    @args(['value'])
     def execute_str(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
@@ -521,8 +530,8 @@ class BuiltInFunction(BaseFunction):
                 "Could not convert to string",
                 exec_ctx
             ))
-    execute_str.arg_names = ["value"]
 
+    @args(['value'])
     def execute_bool(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
@@ -534,16 +543,16 @@ class BuiltInFunction(BaseFunction):
                 "Could not convert to boolean",
                 exec_ctx
             ))
-    execute_bool.arg_names = ["value"]
-
+        
+    @args(['value'])
     def execute_type(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
         return RTResult().success(
             Type(value)
         )
-    execute_type.arg_names = ["value"]
 
+    @args(['code'])
     def execute_pyapi(self, exec_ctx):
         code = exec_ctx.symbol_table.get("code")
 
@@ -559,8 +568,8 @@ class BuiltInFunction(BaseFunction):
                 "Could't run the code",
                 exec_ctx
             ))
-    execute_pyapi.arg_names = ["code"]
 
+    @args([])
     def execute_sys_args(self, exec_ctx):
         from sys import argv  # Lazy import
 
@@ -575,16 +584,16 @@ class BuiltInFunction(BaseFunction):
                 "Could't run the sys_args",
                 exec_ctx
             ))
-    execute_sys_args.arg_names = []
-
+    
+    @args([])
     def execute_time_now(self, exec_ctx):
         import time # Lazy import
 
         return RTResult().success(
             Number(time.time())
         )
-    execute_time_now.arg_names = []
-
+    
+    @args(['module'])
     def execute_require(self, exec_ctx):
         module = exec_ctx.symbol_table.get("module")
 
@@ -640,11 +649,10 @@ class BuiltInFunction(BaseFunction):
         if should_exit:
             return RTResult().success_exit(Number.null)
         return RTResult().success(Number.null)
-    execute_require.arg_names = ["module"]
 
+    @args([])
     def execute_exit(self, exec_ctx):
         return RTResult().success_exit(Number.null)
-    execute_exit.arg_names = []
 
 
 def run(fn, text):

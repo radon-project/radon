@@ -842,6 +842,7 @@ class Parser:
             var_name_tok = self.current_tok
             res.register_advancement()
             self.advance()
+
             if self.current_tok.type != TT_LPAREN:
                 return res.failure(InvalidSyntaxError(
                     self.current_tok.pos_start, self.current_tok.pos_end,
@@ -858,11 +859,31 @@ class Parser:
         res.register_advancement()
         self.advance()
         arg_name_toks = []
+        defaults = []
+        hasOptionals = False
 
         if self.current_tok.type == TT_IDENTIFIER:
+            pos_start = self.current_tok.pos_start.copy()
+            pos_end = self.current_tok.pos_end.copy()
+
             arg_name_toks.append(self.current_tok)
             res.register_advancement()
             self.advance()
+
+            if self.current_tok.type == TT_EQ:
+                res.register_advancement()
+                self.advance()
+                default = res.register(self.expr())
+                if res.error: return res
+                defaults.append(default)
+                hasOptionals = True
+            elif hasOptionals:
+                return res.failure(InvalidSyntaxError(
+                pos_start, pos_end,
+                "Expected optional parameter."
+                ))
+            else:
+                defaults.append(None)
 
             while self.current_tok.type == TT_COMMA:
                 res.register_advancement()
@@ -874,14 +895,31 @@ class Parser:
                         f"Expected identifier"
                     ))
 
+                pos_start = self.current_tok.pos_start.copy()
+                pos_end = self.current_tok.pos_end.copy()
                 arg_name_toks.append(self.current_tok)
                 res.register_advancement()
                 self.advance()
 
+                if self.current_tok.type == TT_EQ:
+                    res.register_advancement()
+                    self.advance()
+                    default = res.register(self.expr())
+                    if res.error: return res
+                    defaults.append(default)
+                    hasOptionals = True
+                elif hasOptionals:
+                    return res.failure(InvalidSyntaxError(
+                        pos_start, pos_end,
+                        "Expected optional parameter."
+                    ))
+                else:
+                    defaults.append(None)
+
             if self.current_tok.type != TT_RPAREN:
                 return res.failure(InvalidSyntaxError(
                     self.current_tok.pos_start, self.current_tok.pos_end,
-                    f"Expected ',' or ')'"
+                    f"Expected ',', ')' or '='"
                 ))
         else:
             if self.current_tok.type != TT_RPAREN:
@@ -905,6 +943,7 @@ class Parser:
             return res.success(FuncDefNode(
                 var_name_tok,
                 arg_name_toks,
+                defaults,
                 body,
                 True
             ))
@@ -934,6 +973,7 @@ class Parser:
         return res.success(FuncDefNode(
             var_name_tok,
             arg_name_toks,
+            defaults,
             body,
             False
         ))
