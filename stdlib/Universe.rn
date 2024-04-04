@@ -4,7 +4,7 @@ var words = [[84, 104, 101, 32, 85, 110, 105, 118, 101, 114, 115, 101, 32, 119, 
 for i=0 to arr_len(words) {
     var temp_str = ""
     for j=0 to arr_len(arr_get(words, i)) {
-        var temp_str = temp_str + pyapi("output = chr(" + arr_get(arr_get(words, i), j) + ")")
+        nonlocal var temp_str = temp_str + pyapi("output = chr(" + arr_get(arr_get(words, i), j) + ")")
     }
     print(temp_str)
 }
