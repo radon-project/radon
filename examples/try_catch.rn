@@ -1,0 +1,15 @@
+# Try Catch examples
+
+try {
+    10/0
+    print("from try block")
+} catch as err {
+    print(err) # Division by zero
+    print("from catch block")
+}
+
+try {
+    undefined_variable_access
+} catch as error {
+    print(error) # 'undefined_variable_access' is not defined
+}
