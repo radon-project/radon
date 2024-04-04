@@ -106,6 +106,9 @@ KEYWORDS = [
     'break',
     'class',
     'include',
+    'try',
+    'catch',
+    'as',
 ]
 
 
