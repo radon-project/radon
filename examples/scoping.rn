@@ -1,3 +1,12 @@
+
+var x = 69
+if true {
+    var y = 20
+    nonlocal var x = x + y
+    print(x)
+}
+print(x)
+
 # NOTE: this is supposed to fail
 if true {
     var y = 420

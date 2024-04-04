@@ -146,48 +146,12 @@ class Parser:
         res = ParseResult()
 
         if self.current_tok.matches(TT_KEYWORD, 'var'):
+            return self.var_assign(False)
+        
+        elif self.current_tok.matches(TT_KEYWORD, 'nonlocal'):
             res.register_advancement()
             self.advance()
-
-            if self.current_tok.type != TT_IDENTIFIER:
-                return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected identifier"
-                ))
-
-            var_name = self.current_tok
-            res.register_advancement()
-            self.advance()
-
-            extra_names = []
-
-            while self.current_tok.type == TT_DOT:
-                res.register_advancement()
-                self.advance()
-
-                if self.current_tok.type != TT_IDENTIFIER:
-                    return res.failure(InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end,
-                        "Expected identifier"
-                    ))
-
-                extra_names.append(self.current_tok)
-
-                res.register_advancement()
-                self.advance()
-
-            if self.current_tok.type != TT_EQ:
-                return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected '='"
-                ))
-
-            res.register_advancement()
-            self.advance()
-            expr = res.register(self.expr())
-            if res.error:
-                return res
-            return res.success(VarAssignNode(var_name, expr, extra_names))
+            return self.var_assign(True)
 
         elif self.current_tok.matches(TT_KEYWORD, 'include'):
             res.register_advancement()
@@ -216,6 +180,51 @@ class Parser:
             ))
 
         return res.success(node)
+
+    def var_assign(self, is_nonlocal=False):
+        res = ParseResult()
+        res.register_advancement()
+        self.advance()
+
+        if self.current_tok.type != TT_IDENTIFIER:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected identifier"
+            ))
+
+        var_name = self.current_tok
+        res.register_advancement()
+        self.advance()
+
+        extra_names = []
+
+        while self.current_tok.type == TT_DOT:
+            res.register_advancement()
+            self.advance()
+
+            if self.current_tok.type != TT_IDENTIFIER:
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected identifier"
+                ))
+
+            extra_names.append(self.current_tok)
+
+            res.register_advancement()
+            self.advance()
+
+        if self.current_tok.type != TT_EQ:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected '='"
+            ))
+
+        res.register_advancement()
+        self.advance()
+        expr = res.register(self.expr())
+        if res.error:
+            return res
+        return res.success(VarAssignNode(var_name, expr, extra_names, is_nonlocal=is_nonlocal))
 
     def comp_expr(self):
         res = ParseResult()
@@ -1083,6 +1092,12 @@ class SymbolTable:
         if value == None and self.parent:
             return self.parent.get(name)
         return value
+    
+    def set_nonlocal(self, name, value):
+        if name not in self.symbols and self.parent:
+            self.parent.set_nonlocal(name, value)
+        else:
+            self.set(name, value)
 
     def set(self, name, value):
         self.symbols[name] = value

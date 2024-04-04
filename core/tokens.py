@@ -106,6 +106,7 @@ KEYWORDS = [
     'break',
     'class',
     'include',
+    'nonlocal',
 ]
 
 

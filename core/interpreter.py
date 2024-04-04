@@ -96,6 +96,8 @@ class Interpreter:
         return res.success(value)
 
     def visit_VarAssignNode(self, node, context):
+        set_method = SymbolTable.set_nonlocal if node.is_nonlocal else SymbolTable.set
+
         res = RTResult()
         var_name = node.var_name_tok.value
         value = res.register(self.visit(node.value_node, context))
@@ -134,10 +136,10 @@ class Interpreter:
                         context
                     ))
 
-            prev.symbol_table.set(name, value)
+            set_method(prev.symbol_table, name, value)
             return res.success(value)
 
-        context.symbol_table.set(var_name, value)
+        set_method(context.symbol_table, var_name, value)
         return res.success(value)
 
     def visit_VarManipulateNode(self, node, context):
