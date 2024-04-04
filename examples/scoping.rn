@@ -1,0 +1,5 @@
+# NOTE: this is supposed to fail
+if true {
+    var y = 420
+}
+print(y)

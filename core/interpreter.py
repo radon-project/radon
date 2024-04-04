@@ -12,6 +12,11 @@ class Interpreter:
         method = getattr(self, method_name, self.no_visit_method)
         return method(node, context)
 
+    def visit_block(self, node, context):
+        new_context = Context("<block scope>", context, node.pos_start)
+        new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
+        return self.visit(node, new_context)
+
     def no_visit_method(self, node, context):
         raise Exception(f'No visit_{type(node).__name__} method defined')
 
@@ -300,14 +305,14 @@ class Interpreter:
                 return res
 
             if condition_value.is_true():
-                expr_value = res.register(self.visit(expr, context))
+                expr_value = res.register(self.visit_block(expr, context))
                 if res.should_return():
                     return res
                 return res.success(Number.null if should_return_null else expr_value)
 
         if node.else_case:
             expr, should_return_null = node.else_case
-            expr_value = res.register(self.visit(expr, context))
+            expr_value = res.register(self.visit_block(expr, context))
             if res.should_return():
                 return res
             return res.success(Number.null if should_return_null else expr_value)
@@ -345,7 +350,7 @@ class Interpreter:
             context.symbol_table.set(node.var_name_tok.value, Number(i))
             i += step_value.value
 
-            value = res.register(self.visit(node.body_node, context))
+            value = res.register(self.visit_block(node.body_node, context))
             if res.should_return() and res.loop_should_continue == False and res.loop_should_break == False:
                 return res
 
@@ -375,7 +380,7 @@ class Interpreter:
             if not condition.is_true():
                 break
 
-            value = res.register(self.visit(node.body_node, context))
+            value = res.register(self.visit_block(node.body_node, context))
             if res.should_return() and res.loop_should_continue == False and res.loop_should_break == False:
                 return res
 
