@@ -39,6 +39,7 @@ class Error:
         self.pos_end = pos_end
         self.error_name = error_name
         self.details = details
+        self.value = details
 
     def as_string(self):
         '''Return error as string'''
@@ -48,6 +49,15 @@ class Error:
             string_with_arrows(self.pos_start.ftxt,
                                self.pos_start, self.pos_end)
         return result
+    
+    def set_pos(self, pos_start=None, pos_end=None):
+        return self
+
+    def __repr__(self) -> str:
+        return f'{self.error_name}: {self.details}'
+    
+    def copy(self):
+        return __class__(self.pos_start, self.pos_end, self.error_name, self.details)
 
 
 class IllegalCharError(Error):
@@ -101,3 +111,22 @@ class RTError(Error):
             ctx = ctx.parent
 
         return 'Traceback (most recent call last):\n' + result
+
+    def set_context(self, context=None):
+        return self
+    
+    def copy(self):
+        return __class__(self.pos_start, self.pos_end, self.details, self.context)
+
+class TryError(RTError):
+    def __init__(self, pos_start, pos_end, details, context, prev_error):
+        super().__init__(pos_start, pos_end, details, context)
+        self.prev_error = prev_error 
+
+    def generate_traceback(self):
+        result = ""
+        if self.prev_error:
+            result += self.prev_error.as_string()
+        result += "\nDuring the handling of the above error, another error occurred:\n\n"
+        return result + super().generate_traceback()
+    
