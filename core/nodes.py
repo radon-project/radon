@@ -225,6 +225,17 @@ class BreakNode:
         self.child = None
 
 
+class TryNode:
+    def __init__(self, try_block, exc_iden, catch_block, pos_start, pos_end):
+        self.try_block = try_block
+        self.exc_iden = exc_iden
+        self.catch_block = catch_block
+
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+        self.child = None
+
 class ClassNode:
     def __init__(self, class_name_tok, body_nodes, pos_start, pos_end):
         self.class_name_tok = class_name_tok

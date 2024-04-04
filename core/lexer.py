@@ -321,9 +321,7 @@ class Lexer:
                         return
             else:
                 if self.current_char == '\n':
-                    self.advance()
                     return
             self.advance()
 
-        self.advance()
         

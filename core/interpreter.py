@@ -476,6 +476,25 @@ class Interpreter:
     def visit_BreakNode(self, node, context):
         return RTResult().success_break()
 
+    def visit_TryNode(self, node: TryNode, context):
+        res = RTResult()
+        res.register(self.visit(node.try_block, context))
+        handled_error = res.error
+        if res.should_return() and res.error is None: return res
+        elif handled_error is not None:
+            var_name = node.exc_iden.value
+            context.symbol_table.set(var_name, res.error)
+            res.error = None
+
+            res.register(self.visit(node.catch_block, context))
+            if res.error:
+                return res.failure(TryError(
+                    res.error.pos_start, res.error.pos_end, res.error.details, res.error.context, handled_error
+                ))
+            return res.success(Number.null)
+        else:
+            return res.success(Number.null)
+
     def visit_ClassNode(self, node, context):
         res = RTResult()
 
