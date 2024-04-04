@@ -9,15 +9,17 @@ CURRENT_DIR = None
 STDLIBS = [
     'Argparser',
     'Array',
+    'Colorlib',
     'Math',
     'System',
     'String',
+    'Universe', # ester egg
     'Winlib',
 ]
 
 
 # CONSTANTS
-DIGITS = '0123456789'
+DIGITS = string.digits
 LETTERS = string.ascii_letters
 LETTERS_DIGITS = LETTERS + DIGITS
 
