@@ -44,11 +44,6 @@ def shell():
 
             if error:
                 print(error.as_string())
-            elif result:
-                if len(result.elements) == 1:
-                    print(repr(result.elements[0]))
-                else:
-                    print(repr(result))
 
             if should_exit:
                 break
@@ -71,11 +66,6 @@ if args.source:
 
     if error:
         print(error.as_string())
-    elif result:
-        if len(result.elements) == 1:
-            print(repr(result.elements[0]))
-        else:
-            print(repr(result))
 
     if should_exit:
         exit()
@@ -86,11 +76,6 @@ elif args.command:
 
     if error:
         print(error.as_string())
-    elif result:
-        if len(result.elements) == 1:
-            print(repr(result.elements[0]))
-        else:
-            print(repr(result))
 
 elif args.version:
     print(base_core.__version__)
