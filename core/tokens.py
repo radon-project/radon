@@ -20,8 +20,8 @@ STDLIBS = [
 
 # CONSTANTS
 DIGITS = string.digits
-LETTERS = string.ascii_letters
-LETTERS_DIGITS = LETTERS + DIGITS
+LETTERS = string.ascii_letters + '$_'
+VALID_IDENTIFIERS = LETTERS + DIGITS
 
 
 class Position:
