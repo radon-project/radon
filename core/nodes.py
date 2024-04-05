@@ -236,6 +236,17 @@ class TryNode:
 
         self.child = None
 
+class ForInNode:
+    def __init__(self, var_name_tok, iterable_node, body_node, pos_start, pos_end, should_return_null):
+        self.var_name_tok = var_name_tok
+        self.iterable_node = iterable_node
+        self.body_node = body_node
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        self.should_return_null = should_return_null
+
+        self.child = None
+
 class ClassNode:
     def __init__(self, class_name_tok, body_nodes, pos_start, pos_end):
         self.class_name_tok = class_name_tok
