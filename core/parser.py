@@ -39,6 +39,14 @@ class ParseResult:
             self.error = error
         return self
 
+    def copy(self):
+        res = ParseResult()
+        res.error = self.error
+        res.node = self.node
+        res.last_registered_advance_count = self.last_registered_advance_count
+        res.advance_count = self.advance_count
+        res.to_reverse_count = self.to_reverse_count
+        return res
 
 class Parser:
     def __init__(self, tokens):
@@ -135,6 +143,20 @@ class Parser:
             self.advance(res)
             try_node = res.register(self.try_statement())
             return res.success(try_node)
+
+        if self.current_tok.type == TT_IDENTIFIER:
+            tmp_res = res.copy()
+            possible_var_name = self.current_tok
+
+            self.advance(tmp_res)
+            if self.current_tok.type == TT_EQ:
+                self.advance(tmp_res)
+                expr = tmp_res.register(self.expr())
+                if tmp_res.error: return tmp_res
+                return tmp_res.success(VarAssignNode(possible_var_name, expr, is_nonlocal=True))
+            else:
+                # Rollback
+                self.reverse(amount=(tmp_res.advance_count - res.advance_count))
 
         expr = res.register(self.expr())
         if res.error:
