@@ -2,7 +2,11 @@
 var x = 69
 if true {
     var y = 20
+<<<<<<< HEAD
     x = x + y
+=======
+    nonlocal var x = x + y
+>>>>>>> f3ebbbc (add: way to set variables not in the current scope)
     print(x)
 }
 print(x)
