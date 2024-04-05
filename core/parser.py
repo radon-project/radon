@@ -79,6 +79,13 @@ class Parser:
             ))
         return res
 
+    def skip_newlines(self):
+        res = ParseResult()
+        while self.current_tok.type == TT_NEWLINE:
+            self.advance(res)
+
+        return res
+
     ###################################
 
     def statements(self):
@@ -478,6 +485,7 @@ class Parser:
         res = ParseResult()
         element_nodes = []
         pos_start = self.current_tok.pos_start.copy()
+        self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
@@ -587,8 +595,8 @@ class Parser:
         self.advance(res)
 
         condition = res.register(self.expr())
-        if res.error:
-            return res
+        if res.error: return res
+        self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
@@ -685,6 +693,7 @@ class Parser:
             else:
                 step_value = None
 
+        self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
@@ -735,7 +744,8 @@ class Parser:
         if res.error:
             return res
 
-        # if not self.current_tok.matches(TT_KEYWORD, 'then'):
+        self.skip_newlines()
+
         if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -790,6 +800,7 @@ class Parser:
         class_name_tok = self.current_tok
 
         self.advance(res)
+        self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
@@ -925,6 +936,7 @@ class Parser:
                 True
             ))
 
+        self.skip_newlines()
         if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -956,6 +968,7 @@ class Parser:
     def try_statement(self):
         res = ParseResult()
         pos_start = self.current_tok.pos_start.copy()
+        self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
@@ -975,6 +988,7 @@ class Parser:
             ))
         
         self.advance(res)
+        self.skip_newlines()
 
         if self.current_tok.matches(TT_KEYWORD, 'catch'):
             self.advance(res)
@@ -995,6 +1009,10 @@ class Parser:
 
             exc_iden = self.current_tok
             self.advance(res)
+            #self.skip_newlines()
+
+            while self.current_tok.type == TT_NEWLINE:
+                self.advance(res)
 
             if self.current_tok.type != TT_LBRACE:
                 return res.failure(InvalidSyntaxError(
