@@ -57,6 +57,12 @@ class Value:
 
     def notted(self, other):
         return None, self.illegal_operation(other)
+    
+    def iter(self):
+        return Iterator(self.gen)
+
+    def gen(self):
+        yield RTResult().failure(self.illegal_operation())
 
     def execute(self, args):
         return RTResult().failure(self.illegal_operation())
@@ -76,6 +82,29 @@ class Value:
             self.context
         )
 
+
+class Iterator(Value):
+    def __init__(self, generator):
+        super().__init__()
+        self.it = generator()
+
+    def iter(self):
+        return self
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return next(self.it)
+
+    def __str__(self):
+        return '<iterator>'
+
+    def __repr__(self):
+        return str(self)
+
+    def copy(self):
+        return Iterator(self.it)
 
 class Number(Value):
     def __init__(self, value):
@@ -352,6 +381,10 @@ class String(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
+    def gen(self):
+        for char in self.value:
+            yield RTResult().success(String(char))
+
     def is_true(self):
         return len(self.value) > 0
 
@@ -450,6 +483,10 @@ class Array(Value):
             return Boolean(int(self.elements != other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
+
+    def gen(self):
+        for element in self.elements:
+            yield RTResult().success(element)
 
     def is_true(self):
         return len(self.elements) > 0

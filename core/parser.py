@@ -671,6 +671,7 @@ class Parser:
 
     def for_expr(self):
         res = ParseResult()
+        pos_start = self.current_tok.pos_start.copy()
 
         if not self.current_tok.matches(TT_KEYWORD, 'for'):
             return res.failure(InvalidSyntaxError(
@@ -693,82 +694,92 @@ class Parser:
         # self.advance()
         self.advance(res)
 
-        if self.current_tok.type != TT_EQ:
+        # if self.current_tok.type != TT_EQ:
+        #     return res.failure(InvalidSyntaxError(
+        #         self.current_tok.pos_start, self.current_tok.pos_end,
+        #         f"Expected '='"
+        #     ))
+
+        # # res.register_advancement()
+        # # self.advance()
+        # self.advance(res)
+
+        # start_value = res.register(self.expr())
+        # if res.error:
+        #     return res
+
+        is_for_in = False
+
+        if self.current_tok.type != TT_EQ and not self.current_tok.matches(TT_KEYWORD, "in"):
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                f"Expected '='"
+                f"Expected '=' or 'in'"
             ))
 
-        # res.register_advancement()
-        # self.advance()
-        self.advance(res)
-
-        start_value = res.register(self.expr())
-        if res.error:
-            return res
-
-        if not self.current_tok.matches(TT_KEYWORD, 'to'):
-            return res.failure(InvalidSyntaxError(
-                self.current_tok.pos_start, self.current_tok.pos_end,
-                f"Expected 'to'"
-            ))
-
-        # res.register_advancement()
-        # self.advance()
-        self.advance(res)
-
-        end_value = res.register(self.expr())
-        if res.error:
-            return res
-
-        if self.current_tok.matches(TT_KEYWORD, 'step'):
-            # res.register_advancement()
-            # self.advance()
+        elif self.current_tok.matches(TT_KEYWORD, "in"):
+            self.advance(res)
+            is_for_in = True
+            iterable_node = res.register(self.expr())
+            if res.error: return res
+        else:
             self.advance(res)
 
-            step_value = res.register(self.expr())
-            if res.error:
-                return res
-        else:
-            step_value = None
+            start_value = res.register(self.expr())
+            if res.error: return res
 
-        # if not self.current_tok.matches(TT_KEYWORD, 'then'):
+            if not self.current_tok.matches(TT_KEYWORD, 'to'):
+                return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                f"Expected 'to'"
+                ))
+            
+            self.advance(res)
+            end_value = res.register(self.expr())
+            if res.error: return res
+
+            if self.current_tok.matches(TT_KEYWORD, 'step'):
+                self.advance(res)
+
+                step_value = res.register(self.expr())
+                if res.error: return res
+            else:
+                step_value = None
+
+
         if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
                 "Expected '{'"
             ))
 
-        # res.register_advancement()
-        # self.advance()
-        self.advance(res)
+        # self.advance(res)
 
         if self.current_tok.type == TT_LBRACE:
-            # res.register_advancement()
-            # self.advance()
             self.advance(res)
 
             body = res.register(self.statements())
             if res.error:
                 return res
 
-            # if not self.current_tok.matches(TT_KEYWORD, 'end'):
             if self.current_tok.type != TT_RBRACE:
                 return res.failure(InvalidSyntaxError(
                     self.current_tok.pos_start, self.current_tok.pos_end,
                     "Expected '}'"
                 ))
 
-            # res.register_advancement()
-            # self.advance()
+            pos_end = self.current_tok.pos_end.copy()
             self.advance(res)
 
+            if is_for_in:
+                return res.success(ForInNode(var_name, iterable_node, body, pos_start, pos_end, True))
             return res.success(ForNode(var_name, start_value, end_value, step_value, body, True))
 
         body = res.register(self.statement())
-        if res.error:
-            return res
+        if res.error: return res
+        pos_end = self.current_tok.pos_end.copy()
 
+        if is_for_in:
+            return res.success(ForInNode(var_name, iterable_node, body, pos_start, pos_end, False))
         return res.success(ForNode(var_name, start_value, end_value, step_value, body, False))
 
     def while_expr(self):

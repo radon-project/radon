@@ -109,6 +109,7 @@ KEYWORDS = [
     'try',
     'catch',
     'as',
+    'in',
 ]
 
 

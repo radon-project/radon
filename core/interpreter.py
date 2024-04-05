@@ -493,6 +493,29 @@ class Interpreter:
         else:
             return res.success(Number.null)
 
+    def visit_ForInNode(self, node, context):
+        res = RTResult()
+        var_name = node.var_name_tok.value
+        body = node.body_node
+        should_return_null = node.should_return_null
+
+        iterable = res.register(self.visit(node.iterable_node, context))
+        it = iterable.iter()
+
+        elements = []
+
+        for it_res in it:
+            element = res.register(it_res)
+            if res.should_return(): return res
+
+            context.symbol_table.set(var_name, element)
+
+            elements.append(res.register(self.visit(body, context)))
+            if res.should_return(): return res
+
+        if should_return_null: return res.success(Number.null)
+        return res.success(elements)
+
     def visit_ClassNode(self, node, context):
         res = RTResult()
 
