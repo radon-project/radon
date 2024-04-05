@@ -109,7 +109,6 @@ KEYWORDS = [
     'try',
     'catch',
     'as',
-    'nonlocal',
 ]
 
 

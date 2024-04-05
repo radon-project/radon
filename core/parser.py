@@ -171,11 +171,6 @@ class Parser:
 
         if self.current_tok.matches(TT_KEYWORD, 'var'):
             return self.var_assign(False)
-        
-        elif self.current_tok.matches(TT_KEYWORD, 'nonlocal'):
-            res.register_advancement()
-            self.advance(res)
-            return self.var_assign(True)
 
         elif self.current_tok.matches(TT_KEYWORD, 'include'):
             self.advance(res)
