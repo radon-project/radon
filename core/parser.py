@@ -335,18 +335,19 @@ class Parser:
     def atom(self):
         res = ParseResult()
         tok = self.current_tok
+        node = None
 
         if tok.type in (TT_INT, TT_FLOAT):
             self.advance(res)
-            return res.success(NumberNode(tok))
+            node = NumberNode(tok)
 
         elif tok.type == TT_STRING:
             self.advance(res)
-            return res.success(StringNode(tok))
+            node = StringNode(tok)
 
         elif tok.type == TT_IDENTIFIER:
             self.advance(res)
-            return res.success(VarAccessNode(tok))
+            node = VarAccessNode(tok)
 
         elif tok.type == TT_LPAREN:
             self.advance(res)
@@ -355,7 +356,7 @@ class Parser:
                 return res
             if self.current_tok.type == TT_RPAREN:
                 self.advance(res)
-                return res.success(expr)
+                node = expr
             else:
                 return res.failure(InvalidSyntaxError(
                     self.current_tok.pos_start, self.current_tok.pos_end,
@@ -366,42 +367,82 @@ class Parser:
             list_expr = res.register(self.list_expr())
             if res.error:
                 return res
-            return res.success(list_expr)
+            node = list_expr
 
         elif tok.matches(TT_KEYWORD, 'if'):
             if_expr = res.register(self.if_expr())
             if res.error:
                 return res
-            return res.success(if_expr)
+            node = if_expr
 
         elif tok.matches(TT_KEYWORD, 'for'):
             for_expr = res.register(self.for_expr())
             if res.error:
                 return res
-            return res.success(for_expr)
+            node = for_expr
 
         elif tok.matches(TT_KEYWORD, 'while'):
             while_expr = res.register(self.while_expr())
             if res.error:
                 return res
-            return res.success(while_expr)
+            node = while_expr
 
         elif tok.matches(TT_KEYWORD, 'fun'):
             func_def = res.register(self.func_def())
             if res.error:
                 return res
-            return res.success(func_def)
+            node = func_def
 
         elif tok.matches(TT_KEYWORD, 'class'):
             class_node = res.register(self.class_node())
             if res.error:
                 return res
-            return res.success(class_node)
+            node = class_node
 
-        return res.failure(InvalidSyntaxError(
-            tok.pos_start, tok.pos_end,
-            "Expected int, float, identifier, '+', '-', '(', '[', if', 'for', 'while', 'fun'"
-        ))
+        if node is None:
+            return res.failure(InvalidSyntaxError(
+                tok.pos_start, tok.pos_end,
+                "Expected int, float, identifier, '+', '-', '(', '[', if', 'for', 'while', 'fun'"
+            ))
+
+        if self.current_tok.type == TT_LSQUARE:
+            self.advance(res)
+
+            # handle empty call [] errors here
+            if self.current_tok.type == TT_RSQUARE:
+                self.advance(res)
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected expression inside []"
+                ))
+
+            # [index_start:index_end:index_step] or [index_start:index_end] or [index_start]
+            if self.current_tok.type != TT_INT:
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected int"
+                ))
+
+            index = []
+            while self.current_tok.type != TT_RSQUARE:
+                index.append(res.register(self.expr()))
+                if res.error: return res
+
+                if self.current_tok.type == TT_COLON:
+                    self.advance(res)
+                else:
+                    break
+
+            if self.current_tok.type != TT_RSQUARE:
+                return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected ']'"
+                ))
+            
+            self.advance(res)
+            return res.success(IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, *index))
+
+        return res.success(node)
 
     def list_expr(self):
         res = ParseResult()
