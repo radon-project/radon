@@ -1,5 +1,8 @@
-from core.errors import *
 from core.parser import RTResult, Context, SymbolTable
+from core.errors import (
+    RTError,
+    IndexError as IndexErr,
+)
 
 
 class Value:
@@ -63,6 +66,9 @@ class Value:
 
     def gen(self):
         yield RTResult().failure(self.illegal_operation())
+    
+    def get_index(self, index):
+        return None, self.illegal_operation(index)
 
     def execute(self, args):
         return RTResult().failure(self.illegal_operation())
@@ -385,6 +391,44 @@ class String(Value):
         for char in self.value:
             yield RTResult().success(String(char))
 
+    def get_index(self, index_start, index_end=None, index_step=None):
+        if not isinstance(index_start, Number):
+            return None, self.illegal_operation(index_start)
+        
+        if index_end != None and not isinstance(index_end, Number):
+            return None, self.illegal_operation(index_end)
+        
+        if index_step != None and not isinstance(index_step, Number):
+            return None, self.illegal_operation(index_step)
+
+        if (index_end != None) and (index_step != None):
+            try:
+                return String(self.value[index_start.value:index_end.value:index_step.value]), None
+            except IndexError:
+                return None, RTError(
+                    index_start.pos_start, index_end.pos_end,
+                    f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
+                    self.context
+                )
+        elif index_end != None:
+            try:
+                return String(self.value[index_start.value:index_end.value]), None
+            except IndexError:
+                return None, RTError(
+                    index_start.pos_start, index_end.pos_end,
+                    f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
+                    self.context
+                )
+            
+        try:
+            return String(self.value[index_start.value]), None
+        except IndexError:
+            return None, RTError(
+                index_start.pos_start, index_start.pos_end,
+                f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
+                self.context
+            )
+
     def is_true(self):
         return len(self.value) > 0
 
@@ -419,6 +463,7 @@ class Array(Value):
     def __init__(self, elements):
         super().__init__()
         self.elements = elements
+        self.value = elements # For matching with other conventions in the code base
 
     def added_to(self, other):
         new_array = self.copy()
@@ -487,6 +532,99 @@ class Array(Value):
     def gen(self):
         for element in self.elements:
             yield RTResult().success(element)
+
+    # def get_index(self, index):
+    #     if not isinstance(index, Number):
+    #         return None, self.illegal_operation(index)
+    #     try:
+    #         return self.elements[index.value], None
+    #     except IndexError:
+    #         return None, RTError(
+    #             index.pos_start, index.pos_end,
+    #             f"Cannot retrieve element {index} from list {self!r} because it is out of bounds.",
+    #             self.context
+    #         )
+
+    def get_index(self, index_start, index_end=None, index_step=None):
+        if not isinstance(index_start, Number):
+            return None, self.illegal_operation(index_start)
+        
+        if index_end != None and not isinstance(index_end, Number):
+            return None, self.illegal_operation(index_end)
+        
+        if index_step != None and not isinstance(index_step, Number):
+            return None, self.illegal_operation(index_step)
+
+        if (index_end != None) and (index_step != None):
+            try:
+                # return String(self.value[index_start.value:index_end.value:index_step.value]), None
+                if isinstance(self.value[index_start.value:index_end.value:index_step.value], str):
+                    return String(self.value[index_start.value:index_end.value:index_step.value]), None
+                elif isinstance(self.value[index_start.value:index_end.value:index_step.value], int):
+                    return Number(self.value[index_start.value:index_end.value:index_step.value]), None
+                elif isinstance(self.value[index_start.value:index_end.value:index_step.value], float):
+                    return Number(self.value[index_start.value:index_end.value:index_step.value]), None
+                elif isinstance(self.value[index_start.value:index_end.value:index_step.value], bool):
+                    return Boolean(self.value[index_start.value:index_end.value:index_step.value]), None
+                elif isinstance(self.value[index_start.value:index_end.value:index_step.value], list):
+                    return Array(self.value[index_start.value:index_end.value:index_step.value]), None
+            except (IndexError, TypeError):
+                return None, RTError(
+                    index_start.pos_start, index_end.pos_end,
+                    f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
+                    self.context
+                )
+        elif index_end != None:
+            try:
+                if isinstance(self.value[index_start.value:index_end.value], str):
+                    return String(self.value[index_start.value:index_end.value]), None
+                elif isinstance(self.value[index_start.value:index_end.value], Number):
+                    return Number(self.value[index_start.value:index_end.value]), None
+                elif isinstance(self.value[index_start.value:index_end.value], float):
+                    return Number(self.value[index_start.value:index_end.value]), None
+                elif isinstance(self.value[index_start.value:index_end.value], bool):
+                    return Boolean(self.value[index_start.value:index_end.value]), None
+                elif isinstance(self.value[index_start.value:index_end.value], list):
+                    return Array(self.value[index_start.value:index_end.value]), None
+                else:
+                    return None, RTError(
+                        index_start.pos_start, index_end.pos_end,
+                        f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
+                        self.context
+                    )
+            except (IndexError, TypeError):
+                return None, RTError(
+                    index_start.pos_start, index_end.pos_end,
+                    f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
+                    self.context
+                )
+            
+        try:
+            # return String(self.value[index_start.value]), None
+            if isinstance(self.value[index_start.value], str):
+                return String(self.value[index_start.value]), None
+            elif isinstance(self.value[index_start.value], Number):
+                return Number(self.value[index_start.value]), None
+            elif isinstance(self.value[index_start.value], float):
+                return Number(self.value[index_start.value]), None
+            elif isinstance(self.value[index_start.value], bool):
+                return Boolean(self.value[index_start.value]), None
+            elif isinstance(self.value[index_start.value], list):
+                return Array(self.value[index_start.value]), None
+            elif isinstance(self.value[index_start.value], String):
+                return String(self.value[index_start.value]), None
+            else:
+                return None, RTError(
+                    index_start.pos_start, index_start.pos_end,
+                    f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
+                    self.context
+                )
+        except (TypeError, IndexError):
+            return None, RTError(
+                index_start.pos_start, index_start.pos_end,
+                f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
+                self.context
+            )
 
     def is_true(self):
         return len(self.elements) > 0
