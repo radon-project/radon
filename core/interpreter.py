@@ -516,6 +516,32 @@ class Interpreter:
         if should_return_null: return res.success(Number.null)
         return res.success(elements)
 
+    def visit_IndexGetNode(self, node, context):
+        res = RTResult()
+        indexee = res.register(self.visit(node.indexee, context))
+        if res.should_return(): return res
+
+        index_start = res.register(self.visit(node.index_start, context))
+        if res.should_return(): return res
+
+        if node.index_end != None:
+            index_end = res.register(self.visit(node.index_end, context))
+            if res.should_return(): return res
+
+        if node.index_step != None:
+            index_step = res.register(self.visit(node.index_step, context))
+            if res.should_return(): return res
+
+        if node.index_end != None and node.index_step != None:
+            result, error = indexee.get_index(index_start, index_end, index_step)
+        elif node.index_end != None:
+            result, error = indexee.get_index(index_start, index_end)
+        else:
+            result, error = indexee.get_index(index_start)
+
+        if error: return res.failure(error)
+        return res.success(result)
+
     def visit_ClassNode(self, node, context):
         res = RTResult()
 

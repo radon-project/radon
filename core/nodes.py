@@ -246,6 +246,18 @@ class ForInNode:
 
         self.child = None
 
+
+class IndexGetNode:
+    def __init__(self, pos_start, pos_end, indexee, index_start, index_end = None, index_step = None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        self.indexee = indexee
+        self.index_start = index_start
+        self.index_end = index_end
+        self.index_step = index_step
+
+        self.child = None
+
 class ClassNode:
     def __init__(self, class_name_tok, body_nodes, pos_start, pos_end):
         self.class_name_tok = class_name_tok
