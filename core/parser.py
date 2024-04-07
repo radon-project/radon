@@ -137,7 +137,7 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, 'break'):
             self.advance(res)
             return res.success(BreakNode(pos_start, self.current_tok.pos_start.copy()))
-        
+
         if self.current_tok.matches(TT_KEYWORD, 'try'):
             self.advance(res)
             try_node = res.register(self.try_statement())
@@ -169,7 +169,36 @@ class Parser:
     def expr(self):
         res = ParseResult()
 
-        if self.current_tok.matches(TT_KEYWORD, 'var'):
+        var_assign_node = res.try_register(self.assign_expr())
+        if var_assign_node: return res.success(var_assign_node)
+        else: self.reverse(res.to_reverse_count)
+
+        node = res.register(self.bin_op(self.comp_expr, ((TT_KEYWORD, 'AND'), (TT_KEYWORD, 'OR'))))
+
+        if res.error:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[' or 'not'"
+            ))
+
+        return res.success(node)
+    
+    def assign_expr(self):
+        res = ParseResult()
+
+        if self.current_tok.type != TT_IDENTIFIER:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[' or 'not'"
+            ))
+
+        var_name_tok = self.current_tok
+        self.advance(res)
+        
+        # handle class properties
+        extra_names = []
+
+        while self.current_tok.type == TT_DOT:
             self.advance(res)
 
             if self.current_tok.type != TT_IDENTIFIER:
@@ -178,45 +207,21 @@ class Parser:
                     "Expected identifier"
                 ))
 
-            var_name = self.current_tok
+            extra_names.append(self.current_tok)
             self.advance(res)
+        #####
 
-            extra_names = []
-
-            while self.current_tok.type == TT_DOT:
-                self.advance(res)
-
-                if self.current_tok.type != TT_IDENTIFIER:
-                    return res.failure(InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end,
-                        "Expected identifier"
-                    ))
-
-                extra_names.append(self.current_tok)
-                self.advance(res)
-
-            if self.current_tok.type != TT_EQ:
-                return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected '='"
-                ))
-
-            self.advance(res)
-            expr = res.register(self.expr())
-            if res.error:
-                return res
-            return res.success(VarAssignNode(var_name, expr, extra_names))
-
-        node = res.register(self.bin_op(
-            self.comp_expr, ((TT_KEYWORD, 'and'), (TT_KEYWORD, 'or'))))
-
-        if res.error:
+        if self.current_tok.type != TT_EQ:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected 'var', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[' or 'not'"
+                "Expected '='"
             ))
 
-        return res.success(node)
+        self.advance(res)
+        assign_expr = res.register(self.expr())
+        if res.error: return res
+
+        return res.success(VarAssignNode(var_name_tok, assign_expr, extra_names))
 
     def comp_expr(self):
         res = ParseResult()
@@ -1021,10 +1026,7 @@ class Parser:
 
             exc_iden = self.current_tok
             self.advance(res)
-            #self.skip_newlines()
-
-            while self.current_tok.type == TT_NEWLINE:
-                self.advance(res)
+            self.skip_newlines()
 
             if self.current_tok.type != TT_LBRACE:
                 return res.failure(InvalidSyntaxError(
