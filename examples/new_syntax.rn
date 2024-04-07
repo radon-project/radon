@@ -16,7 +16,7 @@
 # }
 # 
 # fun main() {
-#     var num = Num()
+#     num = Num()
 #     print(num.is_even(2))
 #     
 # }
@@ -31,7 +31,7 @@
 
 # PASSED
 # while true {
-#     var usr = input("> ")
+#     usr = input("> ")
 #     if usr == "exit" {
 #         break
 #     }
@@ -51,19 +51,19 @@
 
 # PASSED
 # fun something() -> true
-# var a = fun () -> print("this is")
+# a = fun () -> print("this is")
 # a()
 
 ############################################
 
 
 # FAILING
-# var obj = {
+# obj = {
 #     "name" : "John",
 #     "age"  : 30,
 #     "city" : "New York"
 # }
 
-# var i = 3
+# i = 3
 # i += 4
 # print(i)

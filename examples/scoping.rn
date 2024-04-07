@@ -1,5 +1,8 @@
 # NOTE: this is supposed to fail
+m = 69
 if true {
-    var y = 420
+    y = 420
+    m = y + m
+    print(m)
 }
-print(y)
+print(m)

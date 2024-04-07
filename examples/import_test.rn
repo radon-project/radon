@@ -4,7 +4,7 @@
 
 # require("Math")
 
-# var math = Math()
+# math = Math()
 # print(math.PI) # Ligal
 
 # print(Math().PI) # Illigal
@@ -16,7 +16,7 @@
 
 # require("System")
 
-# var sys = System()
+# sys = System()
 # print(sys.getInfo())
 
 
@@ -33,10 +33,16 @@
 
 # require("String")
 
+#!
 include "String"
 
-var data = "Hello World !"
-var str = String(data)
+data = "Hello World !"
+str = String(data)
 
-print(str.length())
+print(str.len())
 
+!#
+include Math
+
+math = Math()
+print(math.PI) # Ligal

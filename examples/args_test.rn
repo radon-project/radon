@@ -1,6 +1,6 @@
 include Argparser
 
-var parser = Argparser("Utility Tool", "A simple utility tool.")
+parser = Argparser("Utility Tool", "A simple utility tool.")
 
 # Callback function
 fun version() -> "1.0.0"

@@ -9,8 +9,8 @@ fun find(list, value) {
     return -1
 }
 
-# var list = [1, 2, 3, 4, 5]
-# var index = find(list, 3)
+# list = [1, 2, 3, 4, 5]
+# index = find(list, 3)
 # print(index)
 
 fun iseven(num) -> if (num%2) == 0 { print("even") } else { print("odd") }
