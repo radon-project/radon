@@ -202,10 +202,10 @@ class Parser:
                     "Expected string or identifier"
                 ))
 
-            file_name = self.current_tok
+            module = self.current_tok
             self.advance(res)
 
-            return res.success(IncludeNode(file_name))
+            return res.success(IncludeNode(module))
 
         node = res.register(self.bin_op(
             self.comp_expr, ((TT_KEYWORD, 'and'), (TT_KEYWORD, 'or'))))

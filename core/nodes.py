@@ -86,11 +86,11 @@ class SliceNode:
 
 
 class IncludeNode:
-    def __init__(self, module_tok):
-        self.module_tok = module_tok
+    def __init__(self, module):
+        self.module = module
 
-        self.pos_start = self.module_tok.pos_start
-        self.pos_end = self.module_tok.pos_end
+        self.pos_start = self.module.pos_start
+        self.pos_end = self.module.pos_end
 
         self.child = None
 

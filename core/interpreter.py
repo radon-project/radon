@@ -177,7 +177,7 @@ class Interpreter:
         res = RTResult()
         exec_ctx = context
 
-        module = node.module_tok.value
+        module = node.module.value
 
         try:
             if module not in STDLIBS:

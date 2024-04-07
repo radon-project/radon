@@ -655,7 +655,7 @@ class BuiltInFunction(BaseFunction):
         return RTResult().success_exit(Number.null)
 
 
-def run(fn, text):
+def run(fn, text, context=None, entry_pos=None, return_result=False):
     from core.interpreter import Interpreter  # Lazy import
 
     # Generate tokens
@@ -672,10 +672,16 @@ def run(fn, text):
 
     # Run program
     interpreter = Interpreter()
-    context = Context('<program>')
-    context.symbol_table = global_symbol_table
+    # context = Context('<program>')
+    # context.symbol_table = global_symbol_table
+    context = Context('<program>', context, entry_pos)
+    if context.parent is None:
+        context.symbol_table = global_symbol_table
+    else:
+        context.symbol_table = context.parent.symbol_table
     result = interpreter.visit(ast.node, context)
 
+    if return_result: return result
     return result.value, result.error, result.should_exit
 
 
