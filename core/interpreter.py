@@ -110,7 +110,7 @@ class Interpreter:
             if not nd:
                 return res.failure(RTError(
                     node.pos_start, node.pos_end,
-                    f"'{name}' not defined",
+                    f"'{var_name}' not defined",
                     context
                 ))
 
