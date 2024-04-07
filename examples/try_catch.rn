@@ -1,9 +1,12 @@
 # Try Catch examples
 
-try {
+try
+{
     10/0
     print("from try block")
-} catch as err {
+} 
+catch as err
+{
     print(err) # Division by zero
     print("from catch block")
 }

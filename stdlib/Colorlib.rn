@@ -1,6 +1,6 @@
 class Colorlib {
     fun Colorlib() {
-        var this.nothing = null
+        this.nothing = null
     }
 
     fun white(text) -> "\u001B[37m" + text + "\u001B[0m"

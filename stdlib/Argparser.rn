@@ -3,16 +3,16 @@ include Array
 class Argparser {
     fun Argparser(name, help) {
         # Program name
-        var this.name = name 
+        this.name = name 
         
         # Program help text
-        var this.help = help
+        this.help = help
         
         # Command line arguments
-        var this.args = sys_args()
+        this.args = sys_args()
 
         # Added command lists
-        var this.commands = []
+        this.commands = []
     }
 
     fun to_string() -> "<class 'Argparser'>"
@@ -35,9 +35,9 @@ class Argparser {
     fun get_help() {
         # This will return the help text for -h or --help argument
 
-        var file_name = str(arr_find(args, 2))
-        var title = "usage: " + file_name + "\n\n" + name + "\n\n"
-        var options = "options: "
+        file_name = str(arr_find(args, 2))
+        title = "usage: " + file_name + "\n\n" + name + "\n\n"
+        options = "options: "
 
         return title + options
     }
@@ -47,19 +47,19 @@ class Argparser {
         for i=0 to arr_len(this.get_commands()) {
 
             # Get the commands array
-            var cmd = arr_find(this.get_commands(), i)
+            cmd = arr_find(this.get_commands(), i)
 
             # Get the name of the command as an array
-            var final_arg = arr_slice(cmd, 0, 1)
+            final_arg = arr_slice(cmd, 0, 1)
 
             # Get the input command name as array
-            var g_arg = arr_slice(this.get_args(), 0, 1)
+            g_arg = arr_slice(this.get_args(), 0, 1)
             
             if final_arg == g_arg {
                 print("Got it")
 
-                # var action = arr_find(cmd, 3)
-                # var n = arr_find(cmd, 2)
+                # action = arr_find(cmd, 3)
+                # n = arr_find(cmd, 2)
                 # print(n)
                 # if n != 0 {
                 #     for i=0 to int(n) {

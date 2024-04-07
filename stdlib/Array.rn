@@ -1,10 +1,10 @@
 class Array {
     fun Array(list) {
-        var this.list = list
+        this.list = list
     }
 
     fun map(func) {
-        var new_elements = []
+        new_elements = []
 
         for i = 0 to this.len() {
             arr_append(new_elements, func(arr_get(this.list, i)))

@@ -1,7 +1,7 @@
 include Colorlib
 
 
-var color = Colorlib() # Create a new instance of the Color class
+color = Colorlib() # Create a new instance of the Color class
 
 # Print colored text to the console using the colorlib library
 print(color.white("My name is John Doe"))
