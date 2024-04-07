@@ -143,6 +143,21 @@ class Parser:
             try_node = res.register(self.try_statement())
             return res.success(try_node)
 
+        if self.current_tok.matches(TT_KEYWORD, 'include'):
+            self.advance(res)
+
+            if self.current_tok.type != TT_STRING and \
+                    self.current_tok.type != TT_IDENTIFIER:
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected string or identifier"
+                ))
+
+            module = self.current_tok
+            self.advance(res)
+
+            return res.success(IncludeNode(module))
+
         expr = res.register(self.expr())
         if res.error:
             return res.failure(InvalidSyntaxError(
@@ -191,21 +206,6 @@ class Parser:
             if res.error:
                 return res
             return res.success(VarAssignNode(var_name, expr, extra_names))
-
-        elif self.current_tok.matches(TT_KEYWORD, 'include'):
-            self.advance(res)
-
-            if self.current_tok.type != TT_STRING and \
-                    self.current_tok.type != TT_IDENTIFIER:
-                return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected string or identifier"
-                ))
-
-            module = self.current_tok
-            self.advance(res)
-
-            return res.success(IncludeNode(module))
 
         node = res.register(self.bin_op(
             self.comp_expr, ((TT_KEYWORD, 'and'), (TT_KEYWORD, 'or'))))
