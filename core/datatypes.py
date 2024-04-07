@@ -70,6 +70,9 @@ class Value:
     def get_index(self, index):
         return None, self.illegal_operation(index)
 
+    def set_index(self, index, value):
+        return None, self.illegal_operation(index, value)
+
     def execute(self, args):
         return RTResult().failure(self.illegal_operation())
 
@@ -79,15 +82,24 @@ class Value:
     def is_true(self):
         return False
 
-    def illegal_operation(self, other=None):
-        if not other:
-            other = self
+    # def illegal_operation(self, other=None):
+    #     if not other:
+    #         other = self
+    #     return RTError(
+    #         self.pos_start, other.pos_end,
+    #         'Illegal operation',
+    #         self.context
+    #     )
+
+    def illegal_operation(self, *others):
+        if len(others) == 0:
+            others = self,
+
         return RTError(
-            self.pos_start, other.pos_end,
+            self.pos_start, others[-1].pos_end,
             'Illegal operation',
             self.context
         )
-
 
 class Iterator(Value):
     def __init__(self, generator):
@@ -722,9 +734,9 @@ class Type(Value):
         if isinstance(self.variable, String):
             self.type = 'String'
         elif isinstance(self.variable, Number):
-            if isinstance(self.variable, int):
+            if isinstance(self.variable.value, int):
                 self.type = 'Number.Int'
-            elif isinstance(self.variable, float):
+            elif isinstance(self.variable.value, float):
                 self.type = 'Number.Float'
             else:
                 self.type = 'Number'
