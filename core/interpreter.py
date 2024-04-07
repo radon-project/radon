@@ -190,10 +190,11 @@ class Interpreter:
                     ))
                 module_file = module.split("/")[-1]
                 module_path = os.path.dirname(os.path.realpath(module))
+                print(module_file, module_path)
 
                 global CURRENT_DIR
-                if CURRENT_DIR is None:
-                    CURRENT_DIR = module_path
+                # if CURRENT_DIR is None:
+                CURRENT_DIR = module_path
 
                 module = os.path.join(CURRENT_DIR, module_file)
             else:
