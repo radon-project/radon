@@ -46,6 +46,8 @@ class Parser:
         self.tok_idx = -1
         dummy = ParseResult()
         self.advance(dummy)
+        self.in_func = 0
+        self.in_loop = 0
 
     def advance(self, res: ParseResult):
         self.tok_idx += 1
@@ -123,6 +125,11 @@ class Parser:
         pos_start = self.current_tok.pos_start.copy()
 
         if self.current_tok.matches(TT_KEYWORD, 'return'):
+            if not self.in_func:
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Return statement must be inside a function"
+                ))
             self.advance(res)
 
             expr = res.try_register(self.expr())
@@ -131,10 +138,20 @@ class Parser:
             return res.success(ReturnNode(expr, pos_start, self.current_tok.pos_start.copy()))
 
         if self.current_tok.matches(TT_KEYWORD, 'continue'):
+            if not self.in_loop:
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Continue statement must be inside a loop"
+                ))
             self.advance(res)
             return res.success(ContinueNode(pos_start, self.current_tok.pos_start.copy()))
 
         if self.current_tok.matches(TT_KEYWORD, 'break'):
+            if not self.in_loop:
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Break statement must be inside a loop"
+                ))
             self.advance(res)
             return res.success(BreakNode(pos_start, self.current_tok.pos_start.copy()))
 
@@ -381,19 +398,25 @@ class Parser:
             node = if_expr
 
         elif tok.matches(TT_KEYWORD, 'for'):
+            self.in_loop += 1
             for_expr = res.register(self.for_expr())
+            self.in_loop -= 1
             if res.error:
                 return res
             node = for_expr
 
         elif tok.matches(TT_KEYWORD, 'while'):
+            self.in_loop += 1
             while_expr = res.register(self.while_expr())
+            self.in_loop -= 1
             if res.error:
                 return res
             node = while_expr
 
         elif tok.matches(TT_KEYWORD, 'fun'):
+            self.in_func += 1
             func_def = res.register(self.func_def())
+            self.in_func -= 1
             if res.error:
                 return res
             node = func_def
