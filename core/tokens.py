@@ -89,7 +89,6 @@ TT_EOF = 'EOF'  # End Of File
 TT_SLICE = 'SLICE'  # x[1:2:3]
 
 KEYWORDS = [
-    'var',
     'and',
     'or',
     'not',
