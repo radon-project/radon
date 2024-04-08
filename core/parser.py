@@ -190,7 +190,7 @@ class Parser:
         if var_assign_node: return res.success(var_assign_node)
         else: self.reverse(res.to_reverse_count)
 
-        node = res.register(self.bin_op(self.comp_expr, ((TT_KEYWORD, 'AND'), (TT_KEYWORD, 'OR'))))
+        node = res.register(self.bin_op(self.comp_expr, ((TT_KEYWORD, 'and'), (TT_KEYWORD, 'or'))))
 
         if res.error:
             return res.failure(InvalidSyntaxError(
@@ -308,12 +308,12 @@ class Parser:
 
     def call(self):
         res = ParseResult()
-        atom = res.register(self.atom())
+        index = res.register(self.atom())
         if res.error:
             return res
 
         while self.current_tok.type == TT_DOT:
-            child = atom
+            child = index
             self.advance(res)
 
             child_ = res.register(self.call())
@@ -351,8 +351,8 @@ class Parser:
                     ))
 
                 self.advance(res)
-            return res.success(CallNode(atom, arg_nodes))
-        return res.success(atom)
+            return res.success(CallNode(index, arg_nodes))
+        return res.success(index)
 
     def atom(self):
         res = ParseResult()
@@ -463,11 +463,20 @@ class Parser:
 
             if self.current_tok.type != TT_RSQUARE:
                 return res.failure(InvalidSyntaxError(
-                self.current_tok.pos_start, self.current_tok.pos_end,
+                tok.pos_start, self.current_tok.pos_end,
                 "Expected ']'"
                 ))
             
             self.advance(res)
+
+            if self.current_tok.type == TT_EQ:
+                self.advance(res)
+
+                value = res.register(self.expr())
+                if res.error: return res
+
+                return res.success(IndexSetNode(node, index[0], value, tok.pos_start, self.current_tok.pos_end))
+            
             return res.success(IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, *index))
 
         return res.success(node)

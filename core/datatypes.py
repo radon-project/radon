@@ -441,6 +441,21 @@ class String(Value):
                 self.context
             )
 
+    def set_index(self, index, value):
+        if not isinstance(index, Number):
+            return None, self.illegal_operation(index)
+        if not isinstance(value, String):
+            return None, self.illegal_operation(value)
+        try:
+            self.value = self.value[:index.value] + value.value + self.value[index.value + 1:]
+        except IndexError:
+            return None, RTError(
+                index.pos_start, index.pos_end,
+                f"Cannot set character {index} from string {self!r} to {value!r} because it is out of bounds.",
+                self.context
+            )
+        return self, None
+
     def is_true(self):
         return len(self.value) > 0
 
@@ -545,18 +560,6 @@ class Array(Value):
         for element in self.elements:
             yield RTResult().success(element)
 
-    # def get_index(self, index):
-    #     if not isinstance(index, Number):
-    #         return None, self.illegal_operation(index)
-    #     try:
-    #         return self.elements[index.value], None
-    #     except IndexError:
-    #         return None, RTError(
-    #             index.pos_start, index.pos_end,
-    #             f"Cannot retrieve element {index} from list {self!r} because it is out of bounds.",
-    #             self.context
-    #         )
-
     def get_index(self, index_start, index_end=None, index_step=None):
         if not isinstance(index_start, Number):
             return None, self.illegal_operation(index_start)
@@ -638,11 +641,24 @@ class Array(Value):
                 self.context
             )
 
+    def set_index(self, index, value):
+        if not isinstance(index, Number):
+            return None, self.illegal_operation(index)
+        try:
+            self.elements[index.value] = value
+        except IndexError:
+            return None, RTError(
+                index.pos_start, index.pos_end,
+                f"Cannot set element {index} from list {self!r} to {value!r} because it is out of bounds.",
+                self.context
+            )
+        return self, None
+
     def is_true(self):
         return len(self.elements) > 0
 
     def copy(self):
-        copy = Array(self.elements.copy())
+        copy = Array(self.elements)
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
