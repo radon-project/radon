@@ -543,6 +543,22 @@ class Interpreter:
         if error: return res.failure(error)
         return res.success(result)
 
+    def visit_IndexSetNode(self, node, context):
+        res = RTResult()
+        indexee = res.register(self.visit(node.indexee, context))
+        if res.should_return(): return res
+
+        index = res.register(self.visit(node.index, context))
+        if res.should_return(): return res
+
+        value = res.register(self.visit(node.value, context))
+        if res.should_return(): return res
+
+        result, error = indexee.set_index(index, value)
+        if error: return res.failure(error)
+
+        return res.success(result)
+
     def visit_ClassNode(self, node, context):
         res = RTResult()
 
