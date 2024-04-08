@@ -258,6 +258,17 @@ class IndexGetNode:
 
         self.child = None
 
+
+class IndexSetNode:
+    def __init__(self, indexee, index, value, pos_start, pos_end):
+        self.indexee = indexee
+        self.index = index
+        self.value = value
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+        self.child = None
+
 class ClassNode:
     def __init__(self, class_name_tok, body_nodes, pos_start, pos_end):
         self.class_name_tok = class_name_tok
