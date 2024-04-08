@@ -1,7 +1,7 @@
 # Slicing
 
 # Array of Numbers slicing
-var my_arr = [1,2,3,4,5,6,7,8,9,0]
+my_arr = [1,2,3,4,5,6,7,8,9,0]
 print(my_arr[0])
 print(my_arr[0:5])
 print(my_arr[0:9:2])
@@ -9,14 +9,14 @@ print(my_arr[0:9:2])
 # print(my_arr[-1])
 
 # Array of Strings slicing
-var my_str_arr = ["This", "is", "an", "example", "string"]
+my_str_arr = ["This", "is", "an", "example", "string"]
 print(my_str_arr[0])
 print(my_str_arr[0:3])
 print(my_str_arr[0:5:2])
 # print(my_str_arr[])
 
 # Complex Array slicing
-var my_complex_arr = [1, "This", 2, "is", 3, "an", 4, "example", 5, "string", 4.64, 2.4556, 324.2345]
+my_complex_arr = [1, "This", 2, "is", 3, "an", 4, "example", 5, "string", 4.64, 2.4556, 324.2345]
 print(my_complex_arr[0])
 print(my_complex_arr[11])
 print(my_complex_arr[0:9:1])
@@ -24,7 +24,7 @@ print(my_complex_arr[0:10:2])
 # print(my_complex_arr[])
 
 # String slicing
-var my_str = "This is an example string"
+my_str = "This is an example string"
 
 print(my_str[0:4:1])
 print(my_str[5:7])
@@ -34,3 +34,14 @@ print(my_str[9])
 # Straight forward slicing
 print("string"[0:3])
 print([1,2,3,4,5,6,7,8,9,0][0:5])
+
+
+# updating values in array
+my_arr = [1,2,3,4,5,6,7,8,9,0]
+my_arr[0] = 10
+print(my_arr)
+
+# updating values in string
+my_str = "This is an example string"
+new_str = my_str[19] = "S"
+print(new_str)
