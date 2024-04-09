@@ -66,6 +66,7 @@ if args.source:
 
     if error:
         print(error.as_string())
+        exit(1)
 
     if should_exit:
         exit()
