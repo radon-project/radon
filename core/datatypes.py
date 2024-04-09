@@ -871,19 +871,86 @@ class Instance(Value):
         self.parent_class = parent_class
         self.symbol_table = None
 
+    def operator(self, operator, *args):
+        res = RTResult()
+        method = self.symbol_table.symbols.get(operator, None)
+
+        if method == None or not isinstance(method, Function):
+            return res.failure(RTError(
+                self.pos_start, self.pos_end,
+                f"Function '{self.name}' not defined",
+                self.context
+            ))
+
+        value = res.register(method.execute(list(args)))
+        if res.should_return():
+            return None, res.error
+        return value, None
+
+    def added_to(self, other):
+        return self.operator("__add__", other)
+
+    def subbed_by(self, other):
+        return self.operator("__sub__", other)
+
+    def multed_by(self, other):
+        return self.operator("__mul__", other)
+
+    def dived_by(self, other):
+        return self.operator("__div__", other)
+
+    def powed_by(self, other):
+        return self.operator("__pow__", other)
+
+    def get_comparison_eq(self, other):
+        return self.operator("__eq__", other)
+
+    def get_comparison_ne(self, other):
+        return self.operator("__ne__", other)
+
+    def get_comparison_lt(self, other):
+        return self.operator("__lt__", other)
+
+    def get_comparison_gt(self, other):
+        return self.operator("__gt__", other)
+
+    def get_comparison_lte(self, other):
+        return self.operator("__lte__", other)
+
+    def get_comparison_gte(self, other):
+        return self.operator("__gte__", other)
+
+    def anded_by(self, other):
+        return self.operator("__and__", other)
+
+    def ored_by(self, other):
+        return self.operator("__or__", other)
+
+    def notted(self, other):
+        return self.operator("__not__", other)
+    
+    def gen(self):
+        # TODO: change this when we have generator functions
+        return self.operator("__iter__", other).gen()
+    
+    def get_index(self, index):
+        return self.operator("__getitem__", other)
+
+    def set_index(self, index, value):
+        return self.operator("__setitem__", other)
+
+    def execute(self, args):
+        return self.operator("__call__", other)
+
+    def is_true(self):
+        return self.operator("__truthy__", other)
+
     def copy(self):
         return self
 
     def __repr__(self):
+        # TODO: make this overloadable as well
         return f"<instance of class {self.parent_class.name}>"
-
-    def print_to_str(self):
-        res = self.symbol_table.get('to_object').execute('')
-        return res.should_return()
-        # return res.should_return()
-        # get the to_object() from parent_class and return the return value of it
-        # return self.symbol_table.get(self.parent_class.name).to_object()
-
 
 class Class(Value):
     def __init__(self, name, symbol_table):
@@ -923,7 +990,7 @@ class Class(Value):
 
         inst.symbol_table.set('this', inst)
 
-        method = inst.symbol_table.symbols[self.name] if self.name in inst.symbol_table.symbols else None
+        method = inst.symbol_table.symbols.get("__constructor__", None)
 
         if method == None or not isinstance(method, Function):
             return res.failure(RTError(
