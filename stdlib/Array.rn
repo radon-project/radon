@@ -1,5 +1,5 @@
 class Array {
-    fun Array(list) {
+    fun __constructor__(list) {
         this.list = list
     }
 
