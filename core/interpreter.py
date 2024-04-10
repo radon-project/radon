@@ -58,7 +58,7 @@ class Interpreter:
                 return res
 
         return res.success(
-            ObjectNode(elements).set_context(context).set_pos(
+            HashMapNode(elements).set_context(context).set_pos(
                 node.pos_start, node.pos_end)
         )
 
@@ -445,14 +445,6 @@ class Interpreter:
     def visit_ReturnNode(self, node, context):
         res = RTResult()
 
-        # # if out of function scope return error
-        # if not context.symbol_table.get("func"):
-        #     return RTResult().failure(STError(
-        #         node.pos_start, node.pos_end,
-        #         "'return' outside function",
-        #         context
-        #     ))
-
         if node.node_to_return:
             value = res.register(self.visit(node.node_to_return, context))
             if res.should_return():
@@ -463,13 +455,6 @@ class Interpreter:
         return res.success_return(value)
 
     def visit_ContinueNode(self, node, context):
-        # # if out of loop scope return error
-        # if not context.symbol_table.get("loop"):
-        #     return RTResult().failure(STError(
-        #         node.pos_start, node.pos_end,
-        #         "'continue' not properly in loop",
-        #         context
-        #     ))
         return RTResult().success_continue()
 
     def visit_BreakNode(self, node, context):
@@ -522,6 +507,10 @@ class Interpreter:
         indexee = res.register(self.visit(node.indexee, context))
         if res.should_return(): return res
 
+        if isinstance(indexee, HashMap):
+            value = indexee.values.get(node.index_start.value)
+            return res.success(value)
+
         index_start = res.register(self.visit(node.index_start, context))
         if res.should_return(): return res
 
@@ -548,6 +537,13 @@ class Interpreter:
         indexee = res.register(self.visit(node.indexee, context))
         if res.should_return(): return res
 
+        # if isinstance(indexee, HashMap):
+        #     # value = indexee.values.get(node.index_start.value)
+        #     # return res.success(value)
+        #     # set new value to hashmap
+        #     indexee.values[node.index] = node.value
+        #     return res.success(node.indexee)
+
         index = res.register(self.visit(node.index, context))
         if res.should_return(): return res
 
@@ -558,6 +554,28 @@ class Interpreter:
         if error: return res.failure(error)
 
         return res.success(result)
+
+    def visit_HashMapNode(self, node, context):
+        res = RTResult()
+        values = {}
+
+        for key_node, value_node in node.pairs:
+            key = res.register(self.visit(key_node, context))
+            if res.should_return(): return res
+
+            if not isinstance(key, String):
+                return res.failure(RTError(
+                    key_node.pos_start, key_node.pos_end,
+                    f"Non-string key for hashmap: '{key!r}'",
+                    context
+                ))
+
+            value = res.register(self.visit(value_node, context))
+            if res.should_return(): return res
+
+            values[key.value] = value
+
+        return res.success(HashMap(values))
 
     def visit_ClassNode(self, node, context):
         res = RTResult()
