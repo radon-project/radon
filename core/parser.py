@@ -1233,6 +1233,12 @@ class RTResult:
             self.should_exit
         )
 
+    def __repr__(self):
+        return f"RTResult(value={self.value}, " \
+               f"error={self.error}, return={self.func_return_value}, " \
+               f"continue={self.loop_should_continue}, break={self.loop_should_break}, " \
+               f"exit={self.should_exit})"
+
 
 class Context:
     def __init__(self, display_name, parent=None, parent_entry_pos=None):

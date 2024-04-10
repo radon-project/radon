@@ -1,4 +1,4 @@
 class Winlib {
-    fun Winlib() -> 0
+    fun __constructor__() -> 0
 
 }

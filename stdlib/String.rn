@@ -1,6 +1,6 @@
 class String {
     # The constructor method
-    fun String(value) {
+    fun __constructor__(value) {
         this.value = str(value)
         
         # Builtin attributes

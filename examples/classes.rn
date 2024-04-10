@@ -1,5 +1,5 @@
 class Person {
-	fun Person(name) {
+	fun __constructor__(name) {
 		this.name = name
 	}
 	fun Format() {
@@ -23,7 +23,7 @@ print("This message will never ever show up! Isn't that wacky?!")
 
 
 class Some {
-    fun Some() {
+    fun __constructor__() {
         this.name = "something"
         this.value = 45
     }

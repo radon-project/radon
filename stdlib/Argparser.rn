@@ -1,7 +1,7 @@
 include Array
 
 class Argparser {
-    fun Argparser(name, help) {
+    fun __constructor__(name, help) {
         # Program name
         this.name = name 
         

@@ -1,7 +1,8 @@
 # The Math class provides all types of math functionalites for radon language.
 
+# This would be a good use case for static methods
 class Math {
-    fun Math() {
+    fun __constructor__() {
         this.PI = 3.14159265358979323846
     }
 

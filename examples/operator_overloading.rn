@@ -1,0 +1,32 @@
+
+class WrongOp {
+    fun __constructor__(x) {
+        this.x = x
+    }
+
+    fun __add__(other) {
+        return WrongOp(this.x * other.x)
+    }
+
+    fun __sub__(other) {
+        return WrongOp(this.x / other.x)
+    }
+
+    fun dump(name = null) {
+        if name == null {
+            print("WrongOp("+this.x+")")
+        } else {
+            print(name+" = WrongOp("+this.x+")")
+        }
+    }
+}
+
+a = WrongOp(69)
+a.dump("a")
+b = WrongOp(420)
+b.dump("b")
+
+c = a + b
+c.dump("a + b")
+d = a - b
+d.dump("a - b")

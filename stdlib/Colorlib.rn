@@ -1,5 +1,5 @@
 class Colorlib {
-    fun Colorlib() {
+    fun __constructor__() {
         this.nothing = null
     }
 

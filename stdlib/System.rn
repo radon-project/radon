@@ -1,5 +1,5 @@
 class System {
-    fun System() {
+    fun __constructor__() {
         fun get_name(os_name) {
             if os_name == "nt" {
                 return "Windows"
