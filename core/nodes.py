@@ -269,6 +269,16 @@ class IndexSetNode:
 
         self.child = None
 
+
+class HashMapNode:
+    def __init__(self, pairs, pos_start, pos_end):
+        self.pairs = pairs
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+        self.child = None
+
+
 class ClassNode:
     def __init__(self, class_name_tok, body_nodes, pos_start, pos_end):
         self.class_name_tok = class_name_tok

@@ -1,4 +1,5 @@
 from core.parser import RTResult, Context, SymbolTable
+from core.tokens import Position
 from core.errors import (
     RTError,
     IndexError as IndexErr,
@@ -679,63 +680,60 @@ class Array(Value):
         return len(self.elements)
 
 
-class ObjectNode(Value):
-    def __init__(self, elements):
+class HashMap(Value):
+    def __init__(self, values):
         super().__init__()
-        self.elements = elements
+        self.values = values
+        self.value = values # For matching with other conventions in the code base
 
     def added_to(self, other):
-        new_object = self.copy()
-        new_object.elements.append(other)
-        return new_object, None
+        if not isinstance(other, HashMap):
+            return None, self.illegal_operation(other)
 
-    def subbed_by(self, other):
-        if isinstance(other, String):
-            new_object = self.copy()
-            try:
-                del new_object.elements[other.value]
-                return new_object, None
-            except:
-                return None, RTError(
-                    other.pos_start, other.pos_end,
-                    'Element at this index could not be removed from object because index is out of bounds',
-                    self.context
-                )
-        else:
-            return None, Value.illegal_operation(self, other)
+        new_dict = self.copy()
+        for key, value in other.values.items():
+            new_dict.values[key] = value
 
-    def multed_by(self, other):
-        if isinstance(other, ObjectNode):
-            new_object = self.copy()
-            new_object.elements.extend(other.elements)
-            return new_object, None
-        else:
-            return None, Value.illegal_operation(self, other)
+        return new_dict, None
 
-    def dived_by(self, other):
-        if isinstance(other, String):
-            try:
-                return self.elements[other.value], None
-            except:
-                return None, RTError(
-                    other.pos_start, other.pos_end,
-                    'Element at this index could not be retrieved from object because index is out of bounds',
-                    self.context
-                )
-        else:
-            return None, Value.illegal_operation(self, other)
+    def gen(self):
+        fake_pos = Position(0, 0, 0, "<hashmap key>", "<native code>")
+        for key in self.values.keys():
+            key_as_value = String(key).set_pos(fake_pos, fake_pos).set_context(self.context)
+            yield RTResult().success(key_as_value)
+
+    def get_index(self, index):
+        if not isinstance(index, String):
+            return None, self.illegal_operation(index)
+
+        try:
+            return self.values[index.value], None
+        except KeyError:
+            return None, RTError(
+                self.pos_start, self.pos_end,
+                f"Could not find key {index!r} in dict {self!r}",
+                self.context
+            )
+
+    def set_index(self, index, value):
+        if not isinstance(index, String):
+            return None, self.illegal_operation(index)
+
+        self.values[index.value] = value
+
+        return self, None
 
     def copy(self):
-        copy = ObjectNode(self.elements)
+        copy = HashMap(self.values)
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
-
+    
     def __str__(self):
-        return ", ".join([str(x) for x in self.elements])
+        return ", ".join([str(x) for x in self.values])
 
     def __repr__(self):
-        return f'{{{", ".join([repr(x) for x in self.elements])}}}'
+        return f'{{{", ".join([repr(x) for x in self.values])}}}'
 
 
 class Type(Value):
@@ -766,8 +764,8 @@ class Type(Value):
             self.type = 'Class'
         elif isinstance(self.variable, Instance):
             self.type = 'Instance'
-        elif isinstance(self.variable, ObjectNode):
-            self.type = 'Object'
+        elif isinstance(self.variable, HashMap):
+            self.type = 'HashMap'
         elif isinstance(self.variable, PyAPI):
             self.type = 'PyAPI'
         elif isinstance(self.variable, Type):

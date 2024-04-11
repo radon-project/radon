@@ -179,7 +179,7 @@ class Parser:
         if res.error:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected 'return', 'continue', 'break', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '%', '(', '[' or 'not'"
+                "Expected 'return', 'continue', 'break', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '%', '(', '[', '{', or 'not'"
             ))
         return res.success(expr)
 
@@ -195,7 +195,7 @@ class Parser:
         if res.error:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[' or 'not'"
+                "Expected 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[', '{', or 'not'"
             ))
 
         return res.success(node)
@@ -206,7 +206,7 @@ class Parser:
         if self.current_tok.type != TT_IDENTIFIER:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[' or 'not'"
+                "Expected 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[', '{', or 'not'"
             ))
 
         var_name_tok = self.current_tok
@@ -334,7 +334,7 @@ class Parser:
                 if res.error:
                     return res.failure(InvalidSyntaxError(
                         self.current_tok.pos_start, self.current_tok.pos_end,
-                        "Expected ')', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[' or 'not'"
+                        "Expected ')', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[', '{', or 'not'"
                     ))
 
                 while self.current_tok.type == TT_COMMA:
@@ -386,10 +386,10 @@ class Parser:
                 ))
 
         elif tok.type == TT_LSQUARE:
-            list_expr = res.register(self.list_expr())
+            array_expr = res.register(self.array_expr())
             if res.error:
                 return res
-            node = list_expr
+            node = array_expr
 
         elif tok.matches(TT_KEYWORD, 'if'):
             if_expr = res.register(self.if_expr())
@@ -427,6 +427,11 @@ class Parser:
                 return res
             node = class_node
 
+        elif tok.type == TT_LBRACE:
+            hashmap_expr = res.register(self.hashmap_expr())
+            if res.error: return res
+            node = hashmap_expr
+
         if node is None:
             return res.failure(InvalidSyntaxError(
                 tok.pos_start, tok.pos_end,
@@ -445,6 +450,38 @@ class Parser:
                 ))
 
             # [index_start:index_end:index_step] or [index_start:index_end] or [index_start]
+
+            # if it's a HashMap it will be key as string get and set 
+            if self.current_tok.type == TT_STRING or \
+                self.current_tok.type == TT_IDENTIFIER:
+
+                if self.current_tok.type == TT_IDENTIFIER:
+                    # get the value from identifier token type
+                    key = res.register(self.expr())
+                    if res.error: return res
+
+                elif self.current_tok.type == TT_STRING:
+                    key = self.current_tok
+
+                self.advance(res)
+
+                if self.current_tok.type != TT_RSQUARE:
+                    return res.failure(InvalidSyntaxError(
+                        tok.pos_start, self.current_tok.pos_end,
+                        "Expected ']'"
+                    ))
+                self.advance(res)
+
+                if self.current_tok.type == TT_EQ:
+                    self.advance(res)
+
+                    value = res.register(self.expr())
+                    if res.error: return res
+
+                    return res.success(IndexSetNode(node, key, value, tok.pos_start, self.current_tok.pos_end))
+
+                return res.success(IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, key))
+
             if self.current_tok.type != TT_INT:
                 return res.failure(InvalidSyntaxError(
                     self.current_tok.pos_start, self.current_tok.pos_end,
@@ -481,7 +518,7 @@ class Parser:
 
         return res.success(node)
 
-    def list_expr(self):
+    def array_expr(self):
         res = ParseResult()
         element_nodes = []
         pos_start = self.current_tok.pos_start.copy()
@@ -501,7 +538,7 @@ class Parser:
             if res.error:
                 return res.failure(InvalidSyntaxError(
                     self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected ']', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[' or 'not'"
+                    "Expected ']', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[', '{' or 'not'"
                 ))
 
             while self.current_tok.type == TT_COMMA:
@@ -525,13 +562,11 @@ class Parser:
             self.current_tok.pos_end.copy()
         ))
 
-    def object_expr(self):
-        from core.datatypes import ObjectNode # Lazy import
 
+    def hashmap_expr(self):
         res = ParseResult()
-        element_nodes = []
+        pairs = []
         pos_start = self.current_tok.pos_start.copy()
-        self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(
@@ -539,36 +574,62 @@ class Parser:
                 "Expected '{'"
             ))
 
-        if self.current_tok.type == TT_LBRACE:
+        self.advance(res)
+        self.skip_newlines()
+
+        if self.current_tok.type == TT_RBRACE:
             self.advance(res)
         else:
-            element_nodes.append(res.register(self.expr()))
-            if res.error:
+            key = res.register(self.expr())
+            if res.error: return res
+
+            if self.current_tok.type != TT_COLON:
                 return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected '}', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[' or 'not'"
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected ':'"
                 ))
+
+            self.advance(res)
+
+            value = res.register(self.expr())
+            if res.error: return res
+
+            pairs.append((key, value))
 
             while self.current_tok.type == TT_COMMA:
                 self.advance(res)
+                self.skip_newlines()
 
-                element_nodes.append(res.register(self.expr()))
-                if res.error:
-                    return res
+                key = res.register(self.expr())
+                if res.error: return res
 
+                if self.current_tok.type != TT_COLON:
+                    return res.failure(InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end,
+                        "Expected ':'"
+                    ))
+
+                self.advance(res)
+
+                value = res.register(self.expr())
+                if res.error: return res
+
+                pairs.append((key, value))
+
+            self.skip_newlines()
             if self.current_tok.type != TT_RBRACE:
                 return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected ',' or '}'"
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected ',' or '}'"
                 ))
 
             self.advance(res)
 
-        return res.success(ObjectNode(
-            element_nodes,
-            pos_start,
-            self.current_tok.pos_end.copy()
-        ))
+            return res.success(HashMapNode(
+                pairs,
+                pos_start,
+                self.current_tok.pos_end.copy()
+            ))
 
     def if_expr(self):
         res = ParseResult()
