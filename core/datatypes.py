@@ -874,11 +874,11 @@ class Instance(Value):
         method = self.symbol_table.symbols.get(operator, None)
 
         if method == None or not isinstance(method, Function):
-            return res.failure(RTError(
+            return None, RTError(
                 self.pos_start, self.pos_end,
-                f"Function '{self.name}' not defined",
+                f"Function '{operator}' not defined",
                 self.context
-            ))
+            )
 
         value = res.register(method.execute(list(args)))
         if res.should_return():
