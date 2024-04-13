@@ -861,7 +861,7 @@ class Parser:
                 "Expected '{'"
             ))
 
-        self.advance(res)
+        # self.advance(res)
 
         if self.current_tok.type == TT_LBRACE:
 
