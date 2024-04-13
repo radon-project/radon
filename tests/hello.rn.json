@@ -1,5 +1,1 @@
-{
-    "code": 0,
-    "stdout": "Hello, World!\n",
-    "stderr": ""
-}
+{"code": 0, "stdout": "Hello, World!\n", "stderr": ""}
