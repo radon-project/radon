@@ -1,0 +1,14 @@
+
+try {
+    print("Hello, World!")
+} catch as _ {
+    print("never run")
+}
+
+try {
+    1 / 0
+} catch as _ {
+    print("Division by zero")
+}
+
+print("END")

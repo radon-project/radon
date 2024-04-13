@@ -65,7 +65,7 @@ def run_tests(directory="tests") -> int:
 def record_tests(directory="tests") -> int:
     for test in os.listdir(directory):
         if not test.endswith(".rn"): continue
-        print("Recording {test!r}...", end="", flush=True)
+        print(f"Recording {test!r}...", end="", flush=True)
         output = run_test(f"{directory}/{test}")
         json_file = f"{directory}/{test}.json"
         output.dump(json_file)
