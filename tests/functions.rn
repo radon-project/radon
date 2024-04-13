@@ -1,0 +1,26 @@
+
+fun f(x = 10) {
+    return x * x
+}
+
+print(f(2))
+print(f(3))
+print(f())
+
+print("----------------------")
+
+fun higher_order(f, l) {
+    for x in l {
+        print(f(x))
+    }
+    fun nested(x) {
+        return f(x)
+    }
+    return nested
+}
+
+g = higher_order(f, [4, 7, 2, 4, 3])
+print(g(50))
+
+print("END")
+

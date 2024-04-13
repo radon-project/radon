@@ -1,0 +1,37 @@
+
+class Foo {
+    fun __constructor__(x) {
+        this.x = x
+    }
+
+    fun get_x() {
+        return this.x
+    }
+
+    fun set_x(x) {
+        this.x = x
+    }
+
+    fun dump() {
+        print("Foo("+this.x+")")
+    }
+
+    fun __add__(other) {
+        return Foo(this.x + other.x)
+    }
+}
+
+a = Foo(34)
+b = Foo(35)
+a.dump()
+b.dump()
+
+c = a + b
+c.dump()
+
+print(c.get_x())
+
+c.set_x(42)
+c.dump()
+
+print("END")
