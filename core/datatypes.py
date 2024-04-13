@@ -990,7 +990,7 @@ class BaseClass(Value, ABC):
 
 class Class(BaseClass):
     def __init__(self, name, symbol_table):
-        super().__init__()
+        super().__init__(name)
         self.name = name
         self.symbol_table = symbol_table
 
@@ -1010,6 +1010,8 @@ class Class(BaseClass):
         for name in self.symbol_table.symbols:
             inst.symbol_table.set(name, self.symbol_table.symbols[name].copy())
 
+        exec_ctx = Context(f"<class {self.name}>", self.context, self.pos_start)
+        exec_ctx.symbol_table = inst.symbol_table
         for name in inst.symbol_table.symbols:
             inst.symbol_table.symbols[name].set_context(exec_ctx)
 
@@ -1017,6 +1019,7 @@ class Class(BaseClass):
         return res.success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
 
     def init(self, inst, args):
+        res = RTResult()
         method = inst.symbol_table.symbols.get("__constructor__", None)
 
         if method == None or not isinstance(method, Function):
