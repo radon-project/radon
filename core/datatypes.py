@@ -4,6 +4,7 @@ from core.errors import (
     RTError,
     IndexError as IndexErr,
 )
+from abc import ABC, abstractmethod
 
 
 class Value:
@@ -82,15 +83,6 @@ class Value:
 
     def is_true(self):
         return False
-
-    # def illegal_operation(self, other=None):
-    #     if not other:
-    #         other = self
-    #     return RTError(
-    #         self.pos_start, other.pos_end,
-    #         'Illegal operation',
-    #         self.context
-    #     )
 
     def illegal_operation(self, *others):
         if len(others) == 0:
@@ -862,28 +854,14 @@ class BaseFunction(Value):
         self.populate_args(arg_names, args, defaults, exec_ctx)
         return res.success(None)
 
-
-class Instance(Value):
-    def __init__(self, parent_class):
+class BaseInstance(Value, ABC):
+    def __init__(self, parent_class, symbol_table):
         super().__init__()
         self.parent_class = parent_class
-        self.symbol_table = None
+        self.symbol_table = SymbolTable(symbol_table)
 
-    def operator(self, operator, *args):
-        res = RTResult()
-        method = self.symbol_table.symbols.get(operator, None)
-
-        if method == None or not isinstance(method, Function):
-            return None, RTError(
-                self.pos_start, self.pos_end,
-                f"Function '{operator}' not defined",
-                self.context
-            )
-
-        value = res.register(method.execute(list(args)))
-        if res.should_return():
-            return None, res.error
-        return value, None
+    @abstractmethod
+    def operator(self, operator, *args): ...
 
     def added_to(self, other):
         return self.operator("__add__", other)
@@ -946,22 +924,44 @@ class Instance(Value):
     def copy(self):
         return self
 
+class Instance(BaseInstance):
+    def __init__(self, parent_class):
+        super().__init__(parent_class, None)
+
+    def operator(self, operator, *args):
+        res = RTResult()
+        method = self.symbol_table.symbols.get(operator, None)
+
+        if method == None or not isinstance(method, Function):
+            return None, RTError(
+                self.pos_start, self.pos_end,
+                f"Function '{operator}' not defined",
+                self.context
+            )
+
+        value = res.register(method.execute(list(args)))
+        if res.should_return():
+            return None, res.error
+        return value, None
+
     def __repr__(self):
         # TODO: make this overloadable as well
         return f"<instance of class {self.parent_class.name}>"
 
-class Class(Value):
-    def __init__(self, name, symbol_table):
+class BaseClass(Value, ABC):
+    def __init__(self, name):
         super().__init__()
         self.name = name
-        self.symbol_table = symbol_table
+
+    @abstractmethod
+    def get(self, name): ...
 
     def dived_by(self, other):
         if not isinstance(other, String):
             return None, self.illegal_operation(other)
 
-        value = self.symbol_table.get(other.value)
-        if not value:
+        value = self.get(other.value)
+        if value == None:
             return None, RTError(
                 self.pos_start, self.pos_end,
                 f"'{other.value}' is not defined",
@@ -970,16 +970,43 @@ class Class(Value):
 
         return value, None
 
+    @abstractmethod
+    def create(self, args): ...
+
+    @abstractmethod
+    def init(self, inst, args): ...
+
     def execute(self, args):
         res = RTResult()
 
-        exec_ctx = Context(self.name, self.context, self.pos_start)
+        inst = res.register(self.create(args))
+        if res.should_return(): return res
+
+        res.register(self.init(inst, args))
+        if res.should_return(): return res
+        return res.success(inst)
+    
+    def copy(self): return self
+
+class Class(BaseClass):
+    def __init__(self, name, symbol_table):
+        super().__init__()
+        self.name = name
+        self.symbol_table = symbol_table
+
+    def get(self, name):
+        method = self.symbol_table.symbols.get(name, None)
+        if method == None:
+            return None
+        return method
+
+    def create(self, args):
+        res = RTResult()
 
         # TODO: Some issue here when direct accessing class methods without instantiation
         inst = Instance(self)
         inst.symbol_table = SymbolTable(self.symbol_table)
 
-        exec_ctx.symbol_table = inst.symbol_table
         for name in self.symbol_table.symbols:
             inst.symbol_table.set(name, self.symbol_table.symbols[name].copy())
 
@@ -987,7 +1014,9 @@ class Class(Value):
             inst.symbol_table.symbols[name].set_context(exec_ctx)
 
         inst.symbol_table.set('this', inst)
+        return res.success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
 
+    def init(self, inst, args):
         method = inst.symbol_table.symbols.get("__constructor__", None)
 
         if method == None or not isinstance(method, Function):
@@ -1001,14 +1030,10 @@ class Class(Value):
         if res.should_return():
             return res
 
-        return res.success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
-
-    def copy(self):
-        return self
+        return res.success(None)
 
     def __repr__(self):
         return f"<class {self.name}>"
-
 
 class Function(BaseFunction):
     def __init__(self, name, body_node, arg_names, defaults, should_auto_return):

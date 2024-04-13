@@ -2,6 +2,7 @@ from core.errors import *
 from core.parser import *
 from core.datatypes import *
 from core.builtin_funcs import run
+import core.builtin_classes
 
 import os
 
@@ -75,13 +76,6 @@ class Interpreter:
             ))
 
         if node.child:
-            if not isinstance(value, Instance) and not isinstance(value, Class):
-                return res.failure(RTError(
-                    node.pos_start, node.pos_end,
-                    f"Value must be instance of class or class",
-                    context
-                ))
-
             new_context = Context(value.parent_class.name,
                                   context, node.pos_start)
             new_context.symbol_table = value.symbol_table
