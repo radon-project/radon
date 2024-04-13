@@ -8,16 +8,30 @@ from core.lexer import *
 import os
 
 
+# Decorator for built-in functions
+def args(arg_names, defaults=None):
+    if defaults is None:
+        defaults = [None] * len(arg_names)
+    def _args(f):
+        f.arg_names = arg_names
+        f.defaults = defaults
+        return f
+    return _args
+
 class BuiltInFunction(BaseFunction):
-    def __init__(self, name):
+    def __init__(self, name, func=None):
         super().__init__(name)
+        self.func = func
 
     def execute(self, args):
         res = RTResult()
         exec_ctx = self.generate_new_context()
 
-        method_name = f'execute_{self.name}'
-        method = getattr(self, method_name, self.no_execute_method)
+        if self.func is None:
+            method_name = f'execute_{self.name}'
+            method = getattr(self, method_name, self.no_execute_method)
+        else:
+            method = self.func
 
         res.register(self.check_and_populate_args(
             method.arg_names, args, method.defaults, exec_ctx))
@@ -29,30 +43,17 @@ class BuiltInFunction(BaseFunction):
             return res
         return res.success(return_value)
 
-    def no_execute_method(self, node, context):
+    @args([])
+    def no_execute_method(self, context):
         raise Exception(f'No execute_{self.name} method defined')
 
     def copy(self):
-        copy = BuiltInFunction(self.name)
-        copy.set_context(self.context)
-        copy.set_pos(self.pos_start, self.pos_end)
-        return copy
+        return self
 
     def __repr__(self):
         return f"<built-in function {self.name}>"
 
     #####################################
-
-    # Decorator for built-in functions
-    @staticmethod
-    def args(arg_names, defaults=None):
-        if defaults is None:
-            defaults = [None] * len(arg_names)
-        def _args(f):
-            f.arg_names = arg_names
-            f.defaults = defaults
-            return f
-        return _args
 
     @args(['value'])
     def execute_print(self, exec_ctx):
