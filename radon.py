@@ -52,6 +52,8 @@ def shell():
 
 
 parser = argparse.ArgumentParser(description='Radon programming language')
+parser.add_argument('-p', '--hide-file-paths',
+                    help="Don't show file paths in error messages", action='store_true')
 parser.add_argument('-s', '--source', type=str,
                     help='Radon source file', nargs='*')
 parser.add_argument('-c', '--command', type=str,
@@ -62,7 +64,7 @@ args = parser.parse_args()
 
 if args.source:
     result, error, should_exit = base_core.run(
-        '<stdin>', f'require("{args.source[0]}")')
+        '<stdin>', f'require("{args.source[0]}")', hide_paths=args.hide_file_paths)
 
     if error:
         print(error.as_string())

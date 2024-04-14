@@ -27,7 +27,7 @@ class Output(NamedTuple):
             }, f)
 
 def run_test(test: str) -> Output:
-    proc = subprocess.run([sys.executable, "radon.py", "-s", test], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.run([sys.executable, "radon.py", "--hide-file-paths", "-s", test], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return Output(proc.returncode, proc.stdout.decode("utf-8"), proc.stderr.decode("utf-8"))
 
 def run_tests(directory="tests") -> int:
