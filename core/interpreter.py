@@ -97,7 +97,7 @@ class Interpreter:
             return res
 
         if node.extra_names != []:
-
+            assert node.qualifier is None
             nd = context.symbol_table.get(var_name)
             prev = None
 
@@ -131,7 +131,7 @@ class Interpreter:
             prev.symbol_table.set(name, value)
             return res.success(value)
 
-        context.symbol_table.set(var_name, value)
+        context.symbol_table.set(var_name, value, node.qualifier)
         return res.success(value)
 
     def visit_VarManipulateNode(self, node, context):
