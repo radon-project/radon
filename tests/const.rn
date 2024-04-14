@@ -1,0 +1,7 @@
+
+const x = 69
+
+print(x)
+x = 10
+print(x)
+
