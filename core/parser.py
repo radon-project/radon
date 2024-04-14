@@ -204,7 +204,7 @@ class Parser:
         res = ParseResult()
 
         qualifier = None
-        if self.current_tok.matches(TT_KEYWORD, 'global') or self.current_tok.matches(TT_KEYWORD, 'nonlocal'):
+        if self.current_tok.type == TT_KEYWORD and self.current_tok.value in ('global', 'nonlocal', 'const'):
             qualifier = self.current_tok
             self.advance(res)
 
@@ -1261,6 +1261,7 @@ class Context:
 class SymbolTable:
     def __init__(self, parent=None):
         self.symbols = {}
+        self.consts = set()
         self.parent = parent
 
     @property
@@ -1274,6 +1275,12 @@ class SymbolTable:
         return value
 
     def set(self, name, value, qualifier=None):
+        if name in self.consts:
+            return RTResult().failure(RTError(
+                value.pos_start, value.pos_end,
+                f"Cannot reassign to constant {name}",
+                value.context
+            ))
         match qualifier:
             case None:
                 self.symbols[name] = value
@@ -1287,8 +1294,12 @@ class SymbolTable:
                     self.symbols[name] = value
                 else:
                     self.parent.set(name, value, qualifier)
+            case Token(TT_KEYWORD, "const"):
+                self.symbols[name] = value
+                self.consts.add(name)
             case _:
                 assert False, "invalid qualifier"
+        return RTResult().success(None)
 
     def remove(self, name):
         del self.symbols[name]

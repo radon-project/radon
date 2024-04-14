@@ -128,10 +128,12 @@ class Interpreter:
                         context
                     ))
 
-            prev.symbol_table.set(name, value)
+            res.register(prev.symbol_table.set(name, value))
+            if res.should_return(): return res
             return res.success(value)
 
-        context.symbol_table.set(var_name, value, node.qualifier)
+        res.register(context.symbol_table.set(var_name, value, node.qualifier))
+        if res.should_return(): return res
         return res.success(value)
 
     def visit_VarManipulateNode(self, node, context):

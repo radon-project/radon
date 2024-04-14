@@ -111,6 +111,7 @@ KEYWORDS = [
     'in',
     'nonlocal',
     'global',
+    'const',
 ]
 
 
