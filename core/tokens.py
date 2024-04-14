@@ -109,10 +109,13 @@ KEYWORDS = [
     'catch',
     'as',
     'in',
+    'nonlocal',
+    'global',
 ]
 
 
 class Token:
+    __match_args__ = "type", "value"
     def __init__(self, type_, value=None, pos_start=None, pos_end=None):
         self.type = type_
         self.value = value

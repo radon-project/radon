@@ -203,6 +203,11 @@ class Parser:
     def assign_expr(self):
         res = ParseResult()
 
+        qualifier = None
+        if self.current_tok.matches(TT_KEYWORD, 'global') or self.current_tok.matches(TT_KEYWORD, 'nonlocal'):
+            qualifier = self.current_tok
+            self.advance(res)
+
         if self.current_tok.type != TT_IDENTIFIER:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -216,6 +221,11 @@ class Parser:
         extra_names = []
 
         while self.current_tok.type == TT_DOT:
+            if qualifier is not None:
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    f"Dotted assignment must not be {qualifier.value}"
+                ))
             self.advance(res)
 
             if self.current_tok.type != TT_IDENTIFIER:
@@ -238,7 +248,7 @@ class Parser:
         assign_expr = res.register(self.expr())
         if res.error: return res
 
-        return res.success(VarAssignNode(var_name_tok, assign_expr, extra_names))
+        return res.success(VarAssignNode(var_name_tok, assign_expr, extra_names, qualifier))
 
     def comp_expr(self):
         res = ParseResult()
@@ -1253,14 +1263,32 @@ class SymbolTable:
         self.symbols = {}
         self.parent = parent
 
+    @property
+    def is_global(self):
+        return self.parent is None
+
     def get(self, name):
         value = self.symbols.get(name, None)
         if value == None and self.parent:
             return self.parent.get(name)
         return value
 
-    def set(self, name, value):
-        self.symbols[name] = value
+    def set(self, name, value, qualifier=None):
+        match qualifier:
+            case None:
+                self.symbols[name] = value
+            case Token(TT_KEYWORD, "nonlocal"):
+                if name in self.symbols:
+                    self.symbols[name] = value
+                else:
+                    self.parent.set(name, value, qualifier)
+            case Token(TT_KEYWORD, "global"):
+                if self.is_global:
+                    self.symbols[name] = value
+                else:
+                    self.parent.set(name, value, qualifier)
+            case _:
+                assert False, "invalid qualifier"
 
     def remove(self, name):
         del self.symbols[name]
