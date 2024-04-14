@@ -5,9 +5,9 @@ if exists("b:current_syntax")
     finish
 endif
 
-syntax keyword radonKW var and or not if elif else for to step while fun return
-syntax keyword radonKW continue break class include try catch as in
-syntax keyword radonKW null false true
+syntax keyword radonKW const and or not if elif else for to step while fun return
+syntax keyword radonKW continue break class include try catch as in nonlocal global
+syntax keyword radonKW null false true this
 highlight link radonKW Keyword
 
 syntax keyword radonBuiltinFunc print print_ret input input_int clear cls require exit
