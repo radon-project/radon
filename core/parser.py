@@ -1262,6 +1262,11 @@ class SymbolTable:
     def __init__(self, parent=None):
         self.symbols = {}
         self.parent = parent
+        self.is_function = False
+
+    @property
+    def is_global(self):
+        return self.parent is None
 
     def get(self, name):
         value = self.symbols.get(name, None)
@@ -1276,7 +1281,10 @@ class SymbolTable:
             case Token(TT_KEYWORD, "nonlocal"):
                 assert False, "not implemented"
             case Token(TT_KEYWORD, "global"):
-                assert False, "not implemented"
+                if self.is_global:
+                    self.symbols[name] = value
+                else:
+                    self.parent.set(name, value, qualifier)
             case _:
                 assert False, "invalid qualifier"
 
