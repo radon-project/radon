@@ -631,6 +631,8 @@ class BuiltInFunction(BaseFunction):
             with open(module, "r") as f:
                 script = f.read()
         except Exception as e:
+            if run.hide_paths:
+                module = "[REDACTED]"
             return RTResult().failure(RTError(
                 self.pos_start, self.pos_end,
                 f"Failed to load script \"{module}\"\n" + str(e),
@@ -640,6 +642,8 @@ class BuiltInFunction(BaseFunction):
         _, error, should_exit = run(module, script)
 
         if error:
+            if run.hide_paths:
+                module = "[REDACTED]"
             return RTResult().failure(RTError(
                 self.pos_start, self.pos_end,
                 f"Failed to finish executing script \"{module}\"\n" +
@@ -656,20 +660,28 @@ class BuiltInFunction(BaseFunction):
         return RTResult().success_exit(Number.null)
 
 
-def run(fn, text, context=None, entry_pos=None, return_result=False):
+def run(fn, text, context=None, entry_pos=None, return_result=False, hide_paths=False):
+    def prepare_error(error):
+        if hide_paths and error:
+            error.pos_start.fn = "[REDACTED]"
+            error.pos_end.fn = "[REDACTED]"
+        return error
+
     from core.interpreter import Interpreter  # Lazy import
+    if hide_paths or run.hide_paths:
+        hide_paths = run.hide_paths = True # Once hidden, forever hidden
 
     # Generate tokens
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
     if error:
-        return None, error, False
+        return None, prepare_error(error), False
 
     # Generate AST
     parser = Parser(tokens)
     ast = parser.parse()
     if ast.error:
-        return None, ast.error, False
+        return None, prepare_error(ast.error), False
 
     # Run program
     interpreter = Interpreter()
@@ -683,8 +695,8 @@ def run(fn, text, context=None, entry_pos=None, return_result=False):
     result = interpreter.visit(ast.node, context)
 
     if return_result: return result
-    return result.value, result.error, result.should_exit
-
+    return result.value, prepare_error(result.error), result.should_exit
+run.hide_paths = False
 
 # Defining builtin functions
 # I/O methods
