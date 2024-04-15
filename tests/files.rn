@@ -1,0 +1,32 @@
+
+f = File("hello.txt", "w")
+f.write("Hello, World!")
+f.close()
+
+f = File("hello.txt", "r")
+print("------------")
+print(f.read())
+print("------------")
+f.close()
+
+f = File("hello.txt") # No mode == "r"
+print("|> " + f.read(4) + " <|")
+print("|> " + f.read(4) + " <|")
+f.close()
+print("------------")
+
+print("Testing error messages...")
+try {
+    # I messed up the error message and I wanted to make sure
+    # it never happens again, so I'm putting it in a test
+    File(69)
+} catch as e {
+    print(e)
+}
+
+try {
+    File("hello", 69)
+} catch as e {
+    print(e)
+}
+
