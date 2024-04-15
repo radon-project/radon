@@ -1,1 +1,1 @@
-{"code": 0, "stdout": "Foo(34)\nFoo(35)\nFoo(69)\n69\nFoo(42)\ni am static\nEND\n", "stderr": ""}
+{"code": 0, "stdout": "Foo(34)\nFoo(35)\nFoo(69)\n69\nFoo(42)\ni am static\ni am static const\nEND\n", "stderr": ""}

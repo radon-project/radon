@@ -204,6 +204,9 @@ class Parser:
     def assign_expr(self):
         res = ParseResult()
 
+        if self.current_tok.matches(TT_KEYWORD, 'static'):
+            self.advance(res)
+
         qualifier = None
         if self.current_tok.type == TT_KEYWORD and self.current_tok.value in ('global', 'nonlocal', 'const'):
             qualifier = self.current_tok

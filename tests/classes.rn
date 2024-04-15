@@ -23,6 +23,7 @@ class Foo {
     static fun i_am_static() {
         print("i am static")
     }
+    static const c = "i am static const"
 }
 
 a = Foo(34)
@@ -39,5 +40,6 @@ c.set_x(42)
 c.dump()
 
 Foo.i_am_static()
+print(Foo.c)
 
 print("END")
