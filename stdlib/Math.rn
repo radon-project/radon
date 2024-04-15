@@ -4,7 +4,7 @@ class Math {
     fun __constructor__() {
         1 / (0 and "Cannot instantiate `Math` class")
     }
-    static fun pi() -> 3.14159265358979323846
+    static const PI = 3.14159265358979323846
 
     static fun to_string() -> "<class 'math'>"
     static fun sqrt(number) -> number ^ 0.5

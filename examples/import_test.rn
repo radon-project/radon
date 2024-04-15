@@ -44,4 +44,4 @@ print(str.len())
 !#
 include Math
 
-print(Math.pi()) # Ligal
+print(Math.PI) # Ligal
