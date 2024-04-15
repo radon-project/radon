@@ -48,6 +48,7 @@ class Parser:
         self.advance(dummy)
         self.in_func = 0
         self.in_loop = 0
+        self.in_class = 0
 
     def advance(self, res: ParseResult):
         self.tok_idx += 1
@@ -202,6 +203,9 @@ class Parser:
     
     def assign_expr(self):
         res = ParseResult()
+
+        if self.current_tok.matches(TT_KEYWORD, 'static'):
+            self.advance(res)
 
         qualifier = None
         if self.current_tok.type == TT_KEYWORD and self.current_tok.value in ('global', 'nonlocal', 'const'):
@@ -423,7 +427,7 @@ class Parser:
                 return res
             node = while_expr
 
-        elif tok.matches(TT_KEYWORD, 'fun'):
+        elif tok.matches(TT_KEYWORD, 'fun') or tok.matches(TT_KEYWORD, 'static'):
             self.in_func += 1
             func_def = res.register(self.func_def())
             self.in_func -= 1
@@ -432,7 +436,9 @@ class Parser:
             node = func_def
 
         elif tok.matches(TT_KEYWORD, 'class'):
+            self.in_class += 1
             class_node = res.register(self.class_node())
+            self.in_class -= 1
             if res.error:
                 return res
             node = class_node
@@ -947,6 +953,11 @@ class Parser:
     def func_def(self):
         res = ParseResult()
 
+        static = False
+        if self.current_tok.matches(TT_KEYWORD, 'static'):
+            self.advance(res)
+            static = True
+
         if not self.current_tok.matches(TT_KEYWORD, 'fun'):
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -1053,7 +1064,8 @@ class Parser:
                 arg_name_toks,
                 defaults,
                 body,
-                True
+                True,
+                static=static,
             ))
 
         self.skip_newlines()
@@ -1082,7 +1094,8 @@ class Parser:
             arg_name_toks,
             defaults,
             body,
-            False
+            False,
+            static=static,
         ))
 
     def try_statement(self):
@@ -1262,6 +1275,7 @@ class SymbolTable:
     def __init__(self, parent=None):
         self.symbols = {}
         self.consts = set()
+        self.statics = set()
         self.parent = parent
 
     @property
@@ -1300,6 +1314,13 @@ class SymbolTable:
             case _:
                 assert False, "invalid qualifier"
         return RTResult().success(None)
+
+    def set_static(self, name, value, qualifier=None):
+        res = RTResult()
+        value = res.register(self.set(name, value, qualifier))
+        if res.should_return(): return res
+        self.statics.add(name)
+        return res.success(value)
 
     def remove(self, name):
         del self.symbols[name]

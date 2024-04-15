@@ -76,7 +76,17 @@ class Interpreter:
             ))
 
         if node.child:
-            new_context = Context(value.parent_class.name,
+            if isinstance(value, BaseClass):
+                name = value.name
+            elif isinstance(value, BaseInstance):
+                name = value.parent_class.name
+            else:
+                return res.failure(RTError(
+                    node.pos_start, node.pos_end,
+                    f"Dotted attribute access may only be used on classes and instances for now",
+                    context
+                ))
+            new_context = Context(name,
                                   context, node.pos_start)
             new_context.symbol_table = value.symbol_table
 
@@ -413,7 +423,10 @@ class Interpreter:
         func_value = Function(func_name, body_node, arg_names, defaults, node.should_auto_return).set_context(context).set_pos(node.pos_start, node.pos_end)
 
         if node.var_name_tok:
-            context.symbol_table.set(func_name, func_value)
+            if node.static:
+                context.symbol_table.set_static(func_name, func_value)
+            else:
+                context.symbol_table.set(func_name, func_value)
 
         return res.success(func_value)
 
@@ -587,3 +600,4 @@ class Interpreter:
             context).set_pos(node.pos_start, node.pos_end)
         context.symbol_table.set(node.class_name_tok.value, cls_)
         return res.success(cls_)
+
