@@ -112,6 +112,7 @@ KEYWORDS = [
     'nonlocal',
     'global',
     'const',
+    'static',
 ]
 
 

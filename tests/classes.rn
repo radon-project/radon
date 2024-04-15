@@ -19,6 +19,10 @@ class Foo {
     fun __add__(other) {
         return Foo(this.x + other.x)
     }
+
+    static fun i_am_static() {
+        print("i am static")
+    }
 }
 
 a = Foo(34)
@@ -33,5 +37,7 @@ print(c.get_x())
 
 c.set_x(42)
 c.dump()
+
+Foo.i_am_static()
 
 print("END")
