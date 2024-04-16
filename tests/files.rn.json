@@ -1,1 +1,1 @@
-{"code": 0, "stdout": "------------\nHello, World!\n------------\n|> Hell <|\n|> o, W <|\n------------\nTesting error messages...\nPath must be a string\nMode must be a string\n", "stderr": ""}
+{"code": 0, "stdout": "------------\nHello, World!\n------------\n|> Hell <|\n|> o, W <|\n------------\nTesting error messages...\nExpected String for argument 0 (0-based) of File.constructor(), got Number instead\nExpected String for argument 1 (0-based) of File.constructor(), got Number instead\n", "stderr": ""}

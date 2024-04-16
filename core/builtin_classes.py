@@ -84,26 +84,58 @@ def method(f):
     f.__is_method__ = True
     return f
 
+# Decorator to check argument types
+def check(types, defaults=None):
+    if defaults is None:
+        defaults = [None] * len(types)
+    def _deco(f):
+        def wrapper(self, args):
+            res = RTResult()
+            func_name = f.__name__
+            class_name = self.parent_class.name
+            full_func_name = f"{class_name}.{func_name}()"
+    
+            # Check arg count
+            if len(args) > len(types):
+                return res.failure(
+                    RTError(
+                        self.pos_start,
+                        self.pos_end,
+                        f"{len(args) - len(types)} too many args passed into {full_func_name}",
+                        self.context))
+    
+            if len(args) < len(types) - len(list(filter(lambda default: default is not None, defaults))):
+                return res.failure(
+                    RTError(
+                        self.pos_start,
+                        self.pos_end,
+                        f"{(len(types) - len(list(filter(lambda default: default is not None, defaults)))) - len(args)} too few args passed into {full_func_name}",
+                        self.context))
+    
+            # Populate defaults
+            real_args = []
+            for i, typ in enumerate(types):
+                arg = defaults[i] if i >= len(args) else args[i]
+                assert arg is not None, "We should have already errored"
+                if not isinstance(arg, typ):
+                    return res.failure(
+                        RTError(
+                            self.pos_start,
+                            self.pos_end,
+                            f"Expected {typ.__name__} for argument {i} (0-based) of {full_func_name}, got {arg.__class__.__name__} instead",
+                            self.context))
+                real_args.append(arg)
+            return res.success(f(self, *real_args))
+        wrapper.__name__ = f.__name__
+        return wrapper
+    return _deco
 
 class FileObject(BuiltInObject):
     @operator("__constructor__")
-    def constructor(self, args):
+    @check([String, String], [None, String("r")])
+    def constructor(self, path, mode):
         res = RTResult()
-
-        if len(args) not in [1, 2]:
-            return res.failure(
-                RTError(args[0].pos_start, args[0].pos_end, "Invalid number of arguments", args[0].context)
-            )
-
-        path = args[0]
-        if not isinstance(path, String):
-            return res.failure(RTError(path.pos_start, path.pos_end, "Path must be a string", path.context))
-        mode = args[1] if len(args) > 1 else String("r")
-        if not isinstance(mode, String):
-            return res.failure(RTError(path.pos_start, path.pos_end, "Mode must be a string", path.context))
-
         self.file = open(path.value, mode.value)
-
         return res.success(None)
 
     @args(["count"], [Number(-1)])
@@ -150,6 +182,5 @@ class FileObject(BuiltInObject):
         self = ctx.symbol_table.get("this")
         self.file.close()
         return res.success(Number.null)
-
 
 global_symbol_table.set("File", BuiltInClass("File", FileObject))
