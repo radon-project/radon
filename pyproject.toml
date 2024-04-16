@@ -1,0 +1,18 @@
+[tool.ruff]
+line-length = 120
+target-version = 'py311'
+respect-gitignore = false
+
+[tool.ruff.lint]
+flake8-quotes = {inline-quotes = 'single', multiline-quotes = 'double'}
+isort = { known-first-party = ['core'] }
+mccabe = { max-complexity = 10 }
+pydocstyle = { convention = 'google' }
+
+[tool.ruff.format]
+quote-style = 'double'
+docstring-code-format = true
+skip-magic-trailing-comma = true
+
+[tool.codespell]
+skip = '.git,.vscode,.venv/*'
