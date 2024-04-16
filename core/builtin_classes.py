@@ -3,6 +3,7 @@ from core.datatypes import *
 from core.parser import RTResult
 from core.builtin_funcs import global_symbol_table, args, BuiltInFunction
 
+
 class BuiltInClass(BaseClass):
     def __init__(self, name, instance_class):
         super().__init__(name)
@@ -15,7 +16,8 @@ class BuiltInClass(BaseClass):
     def init(self, inst, args):
         res = RTResult()
         _, error = inst.operator("__constructor__", args)
-        if error: return res.failure(error)
+        if error:
+            return res.failure(error)
         return res.success(None)
 
     def get(self, name):
@@ -23,6 +25,7 @@ class BuiltInClass(BaseClass):
 
     def __repr__(self):
         return f"<built-in class {self.name}>"
+
 
 class BuiltInInstance(BaseInstance):
     def __init__(self, parent_class):
@@ -37,17 +40,19 @@ class BuiltInInstance(BaseInstance):
             return None, self.illegal_operation(*args)
         res = RTResult()
         value = res.register(op(self, *args))
-        if res.should_return(): return None, res.error
+        if res.should_return():
+            return None, res.error
         return value, None
 
 
 class BuiltInObjectMeta(type):
     def __new__(cls, class_name, bases, attrs):
-        if class_name == "BuiltInObject": return type.__new__(cls, class_name, bases, attrs)
+        if class_name == "BuiltInObject":
+            return type.__new__(cls, class_name, bases, attrs)
 
         operators = {}
         symbols = {}
-        for (name, value) in attrs.items():
+        for name, value in attrs.items():
             if hasattr(value, "__operator__"):
                 operators[value.__operator__] = value
             elif hasattr(value, "__is_method__") and value.__is_method__:
@@ -61,19 +66,24 @@ class BuiltInObjectMeta(type):
         attrs["__operators__"] = operators
         return type.__new__(cls, class_name, bases, attrs)
 
+
 class BuiltInObject(metaclass=BuiltInObjectMeta):
     pass
+
 
 # Decorators for methods and operators
 def operator(dunder):
     def _deco(f):
         f.__operator__ = dunder
         return f
+
     return _deco
+
 
 def method(f):
     f.__is_method__ = True
     return f
+
 
 class FileObject(BuiltInObject):
     @operator("__constructor__")
@@ -81,7 +91,9 @@ class FileObject(BuiltInObject):
         res = RTResult()
 
         if len(args) not in [1, 2]:
-            return res.failure(RTError(args[0].pos_start, args[0].pos_end, "Invalid number of arguments", args[0].context))
+            return res.failure(
+                RTError(args[0].pos_start, args[0].pos_end, "Invalid number of arguments", args[0].context)
+            )
 
         path = args[0]
         if not isinstance(path, String):
@@ -110,7 +122,9 @@ class FileObject(BuiltInObject):
                 value = self.file.read(count.value)
             return res.success(String(value))
         except OSError as e:
-            return res.failure(RTError(count.pos_start, count.pos_end, f"Could not read from file: {e.strerror}", count.context))
+            return res.failure(
+                RTError(count.pos_start, count.pos_end, f"Could not read from file: {e.strerror}", count.context)
+            )
 
     @args(["data"])
     @method
@@ -125,7 +139,9 @@ class FileObject(BuiltInObject):
             bytes_written = self.file.write(data.value)
             return res.success(Number(bytes_written))
         except OSError as e:
-            return res.failure(RTError(count.pos_start, count.pos_end, f"Could not read from file: {e.strerror}", count.context))
+            return res.failure(
+                RTError(data.pos_start, data.pos_end, f"Could not read from file: {e.strerror}", data.context)
+            )
 
     @args([])
     @method
@@ -134,5 +150,6 @@ class FileObject(BuiltInObject):
         self = ctx.symbol_table.get("this")
         self.file.close()
         return res.success(Number.null)
+
 
 global_symbol_table.set("File", BuiltInClass("File", FileObject))
