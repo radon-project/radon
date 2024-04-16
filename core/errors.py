@@ -130,3 +130,9 @@ class TryError(RTError):
         result += "\nDuring the handling of the above error, another error occurred:\n\n"
         return result + super().generate_traceback()
     
+
+class VError(RTError):
+    '''Value Error class'''
+    def __init__(self, pos_start, pos_end, details, context):
+        super().__init__(pos_start, pos_end, 'Value Error', details)
+        self.context = context
