@@ -1,17 +1,17 @@
 # The Math class provides all types of math functionalites for radon language.
 
-# This would be a good use case for static methods
 class Math {
     fun __constructor__() {
-        this.PI = 3.14159265358979323846
+        1 / (0 and "Cannot instantiate `Math` class")
     }
+    static const PI = 3.14159265358979323846
 
-    fun to_string() -> "<class 'math'>"
-    fun sqrt(number) -> number ^ 0.5
-    fun pow(base, power) -> base ^ power
-    fun mod(a, b) -> a % b
+    static fun to_string() -> "<class 'math'>"
+    static fun sqrt(number) -> number ^ 0.5
+    static fun pow(base, power) -> base ^ power
+    static fun mod(a, b) -> a % b
 
-    fun factorial(number) {
+    static fun factorial(number) {
         if number == 0 {
             return 1
         } 
@@ -19,7 +19,7 @@ class Math {
     }
     
     # Same as mod, but implemented in pure radon.
-    fun modulas(a, b) {
+    static fun modulas(a, b) {
         frac = a / b
         if frac > 0 {
             floor = int(frac) 
@@ -30,7 +30,7 @@ class Math {
     }
 
     # Same as pow, but implemented in pure radon.
-    fun power(n, p) {
+    static fun power(n, p) {
         result = n
         for i=1 to p {
             result = result * n
@@ -39,7 +39,7 @@ class Math {
     }
 
     # Sine implementation in radon.
-    fun sin(n) {
+    static fun sin(n) {
         n = n % (2 * this.PI)
         
         if n < 0 {

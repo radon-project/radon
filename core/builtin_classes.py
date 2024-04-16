@@ -14,8 +14,8 @@ class BuiltInClass(BaseClass):
 
     def init(self, inst, args):
         res = RTResult()
-        res.register(inst.operator("__constructor__", args))
-        if res.should_return(): return res
+        _, error = inst.operator("__constructor__", args)
+        if error: return res.failure(error)
         return res.success(None)
 
     def get(self, name):
@@ -38,7 +38,7 @@ class BuiltInInstance(BaseInstance):
         res = RTResult()
         value = res.register(op(self, *args))
         if res.should_return(): return None, res.error
-        return res.success(value)
+        return value, None
 
 
 class BuiltInObjectMeta(type):
@@ -79,11 +79,18 @@ class FileObject(BuiltInObject):
     @operator("__constructor__")
     def constructor(self, args):
         res = RTResult()
+
+        if len(args) not in [1, 2]:
+            return res.failure(RTError(args[0].pos_start, args[0].pos_end, "Invalid number of arguments", args[0].context))
+
         path = args[0]
         if not isinstance(path, String):
-            return res.failute(RTError(path.pos_start, path.pos_end, "Path must be a string", path.context))
+            return res.failure(RTError(path.pos_start, path.pos_end, "Path must be a string", path.context))
+        mode = args[1] if len(args) > 1 else String("r")
+        if not isinstance(mode, String):
+            return res.failure(RTError(path.pos_start, path.pos_end, "Mode must be a string", path.context))
 
-        self.file = open(path.value, "r")
+        self.file = open(path.value, mode.value)
 
         return res.success(None)
 
@@ -102,7 +109,22 @@ class FileObject(BuiltInObject):
             else:
                 value = self.file.read(count.value)
             return res.success(String(value))
-        except OsError as e:
+        except OSError as e:
+            return res.failure(RTError(count.pos_start, count.pos_end, f"Could not read from file: {e.strerror}", count.context))
+
+    @args(["data"])
+    @method
+    def write(ctx):
+        res = RTResult()
+        self = ctx.symbol_table.get("this")
+        data = ctx.symbol_table.get("data")
+        if not isinstance(data, String):
+            return res.failure(RTError(data.pos_start, data.pos_end, "Data must be a string", data.context))
+
+        try:
+            bytes_written = self.file.write(data.value)
+            return res.success(Number(bytes_written))
+        except OSError as e:
             return res.failure(RTError(count.pos_start, count.pos_end, f"Could not read from file: {e.strerror}", count.context))
 
     @args([])

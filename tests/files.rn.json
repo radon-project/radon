@@ -1,0 +1,1 @@
+{"code": 0, "stdout": "------------\nHello, World!\n------------\n|> Hell <|\n|> o, W <|\n------------\nTesting error messages...\nPath must be a string\nMode must be a string\n", "stderr": ""}
