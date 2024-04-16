@@ -18,29 +18,28 @@ import core as base_core
 
 
 def shell():
-    print(f'Radon {base_core.__version__}\nType to exit()')
+    print(f"Radon {base_core.__version__}\nType to exit()")
     brace_count = 0
 
     while True:
         try:
-            text = input('>>> ')
+            text = input(">>> ")
             if text.strip() == "":
                 continue
 
-            if text.strip()[-1] == '{':
+            if text.strip()[-1] == "{":
                 brace_count += 1
                 while True:
-                    text += '\n' + input('... ')
-                    if text.strip()[-1] == '{':
+                    text += "\n" + input("... ")
+                    if text.strip()[-1] == "{":
                         brace_count += 1
-                    elif text.strip()[-1] == '}' or \
-                            text.strip()[0] == '}':
+                    elif text.strip()[-1] == "}" or text.strip()[0] == "}":
                         brace_count -= 1
 
                     if brace_count == 0:
                         break
 
-            result, error, should_exit = base_core.run('<stdin>', text)
+            (result, error, should_exit) = base_core.run("<stdin>", text)
 
             if error:
                 print(error.as_string())
@@ -48,23 +47,20 @@ def shell():
             if should_exit:
                 break
         except KeyboardInterrupt:
-            print('KeyboardInterrupt')
+            print("KeyboardInterrupt")
 
 
-parser = argparse.ArgumentParser(description='Radon programming language')
-parser.add_argument('-p', '--hide-file-paths',
-                    help="Don't show file paths in error messages", action='store_true')
-parser.add_argument('-s', '--source', type=str,
-                    help='Radon source file', nargs='*')
-parser.add_argument('-c', '--command', type=str,
-                    help='Command to execute as string')
-parser.add_argument('-v', '--version', help='Version info',
-                    action='store_true')
+parser = argparse.ArgumentParser(description="Radon programming language")
+parser.add_argument("-p", "--hide-file-paths", help="Don't show file paths in error messages", action="store_true")
+parser.add_argument("-s", "--source", type=str, help="Radon source file", nargs="*")
+parser.add_argument("-c", "--command", type=str, help="Command to execute as string")
+parser.add_argument("-v", "--version", help="Version info", action="store_true")
 args = parser.parse_args()
 
 if args.source:
-    result, error, should_exit = base_core.run(
-        '<stdin>', f'require("{args.source[0]}")', hide_paths=args.hide_file_paths)
+    (result, error, should_exit) = base_core.run(
+        "<stdin>", f'require("{args.source[0]}")', hide_paths=args.hide_file_paths
+    )
 
     if error:
         print(error.as_string())
@@ -75,7 +71,7 @@ if args.source:
 
 
 elif args.command:
-    result, error, should_exit = base_core.run('<stdin>', args.command)
+    (result, error, should_exit) = base_core.run("<stdin>", args.command)
 
     if error:
         print(error.as_string())

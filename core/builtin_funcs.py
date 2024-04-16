@@ -1,5 +1,4 @@
 from core.errors import *
-# from core.parser import *
 from core.tokens import *
 from core.datatypes import *
 from core.parser import Parser
@@ -12,11 +11,14 @@ import os
 def args(arg_names, defaults=None):
     if defaults is None:
         defaults = [None] * len(arg_names)
+
     def _args(f):
         f.arg_names = arg_names
         f.defaults = defaults
         return f
+
     return _args
+
 
 class BuiltInFunction(BaseFunction):
     def __init__(self, name, func=None):
@@ -28,13 +30,12 @@ class BuiltInFunction(BaseFunction):
         exec_ctx = self.generate_new_context()
 
         if self.func is None:
-            method_name = f'execute_{self.name}'
+            method_name = f"execute_{self.name}"
             method = getattr(self, method_name, self.no_execute_method)
         else:
             method = self.func
 
-        res.register(self.check_and_populate_args(
-            method.arg_names, args, method.defaults, exec_ctx))
+        res.register(self.check_and_populate_args(method.arg_names, args, method.defaults, exec_ctx))
         if res.should_return():
             return res
 
@@ -45,7 +46,7 @@ class BuiltInFunction(BaseFunction):
 
     @args([])
     def no_execute_method(self, context):
-        raise Exception(f'No execute_{self.name} method defined')
+        raise Exception(f"No execute_{self.name} method defined")
 
     def copy(self):
         return self
@@ -55,9 +56,9 @@ class BuiltInFunction(BaseFunction):
 
     #####################################
 
-    @args(['value'])
+    @args(["value"])
     def execute_print(self, exec_ctx):
-        value = exec_ctx.symbol_table.get('value')
+        value = exec_ctx.symbol_table.get("value")
 
         if isinstance(value, String):
             print(str(value.value))
@@ -95,13 +96,13 @@ class BuiltInFunction(BaseFunction):
             print(value.value)
         return RTResult().success(Number.null)
 
-    @args(['value'])
+    @args(["value"])
     def execute_print_ret(self, exec_ctx):
-        return RTResult().success(String(str(exec_ctx.symbol_table.get('value'))))
+        return RTResult().success(String(str(exec_ctx.symbol_table.get("value"))))
 
-    @args(['value'])
+    @args(["value"])
     def execute_input(self, exec_ctx):
-        text = input(str(exec_ctx.symbol_table.get('value')))
+        text = input(str(exec_ctx.symbol_table.get("value")))
         return RTResult().success(String(text))
 
     @args([])
@@ -117,406 +118,264 @@ class BuiltInFunction(BaseFunction):
 
     @args([])
     def execute_clear(self, exec_ctx):
-        os.system('cls' if os.name == 'nt' else 'clear')
+        os.system("cls" if os.name == "nt" else "clear")
         return RTResult().success(Number.null)
 
-    @args(['value'])
+    @args(["value"])
     def execute_is_number(self, exec_ctx):
         is_number = isinstance(exec_ctx.symbol_table.get("value"), Number)
         return RTResult().success(Boolean.true if is_number else Boolean.false)
 
-    @args(['value'])
+    @args(["value"])
     def execute_is_int(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
         is_int = isinstance(value.value, int)
         return RTResult().success(Boolean.true if is_int else Boolean.false)
 
-    @args(['value'])
+    @args(["value"])
     def execute_is_float(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
         is_float = isinstance(value.value, float)
         return RTResult().success(Boolean.true if is_float else Boolean.false)
 
-    @args(['value'])
+    @args(["value"])
     def execute_is_string(self, exec_ctx):
         is_string = isinstance(exec_ctx.symbol_table.get("value"), String)
         return RTResult().success(Boolean.true if is_string else Boolean.false)
-    
-    @args(['value'])
+
+    @args(["value"])
     def execute_is_bool(self, exec_ctx):
         is_boolean = isinstance(exec_ctx.symbol_table.get("value"), Boolean)
         return RTResult().success(Boolean.true if is_boolean else Boolean.false)
 
-    @args(['value'])
+    @args(["value"])
     def execute_is_array(self, exec_ctx):
         is_arr = isinstance(exec_ctx.symbol_table.get("value"), Array)
         return RTResult().success(Boolean.true if is_arr else Boolean.false)
 
-    @args(['value'])
+    @args(["value"])
     def execute_is_function(self, exec_ctx):
-        is_func = isinstance(
-            exec_ctx.symbol_table.get("value"), BaseFunction)
+        is_func = isinstance(exec_ctx.symbol_table.get("value"), BaseFunction)
         return RTResult().success(Boolean.true if is_func else Boolean.false)
 
-    @args(['array', 'value'])
+    @args(["array", "value"])
     def execute_arr_append(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
         value = exec_ctx.symbol_table.get("value")
 
         if not isinstance(array_, Array):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "First argument must be array",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx))
 
         array_.elements.append(value)
         return RTResult().success(Number.null)
 
-    @args(['array', 'index'])
+    @args(["array", "index"])
     def execute_arr_pop(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
         index = exec_ctx.symbol_table.get("index")
 
         if not isinstance(array_, Array):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "First argument must be array",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx))
 
         if not isinstance(index, Number):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Second argument must be number",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Second argument must be number", exec_ctx))
 
         try:
             element = array_.elements.pop(index.value)
         except:
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                'Element at this index could not be removed from array because index is out of bounds',
-                exec_ctx
-            ))
+            return RTResult().failure(
+                RTError(
+                    self.pos_start,
+                    self.pos_end,
+                    "Element at this index could not be removed from array because index is out of bounds",
+                    exec_ctx,
+                )
+            )
         return RTResult().success(element)
 
-    @args(['arrayA', 'arrayB'])
+    @args(["arrayA", "arrayB"])
     def execute_arr_extend(self, exec_ctx):
         arrayA = exec_ctx.symbol_table.get("arrayA")
         arrayB = exec_ctx.symbol_table.get("arrayB")
 
         if not isinstance(arrayA, Array):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "First argument must be array",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx))
 
         if not isinstance(arrayB, Array):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Second argument must be array",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Second argument must be array", exec_ctx))
 
         arrayA.elements.extend(arrayB.elements)
         return RTResult().success(Number.null)
-    
-    @args(['array', 'index'])
+
+    @args(["array", "index"])
     def execute_arr_find(self, exec_ctx):
         array = exec_ctx.symbol_table.get("array")
         index = exec_ctx.symbol_table.get("index")
 
         if not isinstance(array, Array):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "First argument must be array",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx))
 
         if not isinstance(index, Number):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Second argument must be number",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Second argument must be number", exec_ctx))
 
         try:
             val_ = array.elements[index.value]
             if isinstance(val_, String):
-                return RTResult().success(
-                    String(val_)
-                )
+                return RTResult().success(String(val_))
             elif isinstance(val_, Number):
-                return RTResult().success(
-                    Number(val_)
-                )
-            return RTResult().success(
-                Array(val_)
-            )
+                return RTResult().success(Number(val_))
+            return RTResult().success(Array(val_))
         except:
-            return RTResult().failure(IndexError(
-                self.pos_start, self.pos_end,
-                "Could't find that index",
-                exec_ctx
-            ))
+            return RTResult().failure(IndexError(self.pos_start, self.pos_end, "Could't find that index", exec_ctx))
 
-    @args(['array', 'start', 'end'])
+    @args(["array", "start", "end"])
     def execute_arr_slice(self, exec_ctx):
         array = exec_ctx.symbol_table.get("array")
         start = exec_ctx.symbol_table.get("start")
         end = exec_ctx.symbol_table.get("end")
 
         if not isinstance(array, Array):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "First argument must be array",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx))
 
         if not isinstance(start, Number):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Second argument must be number",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Second argument must be number", exec_ctx))
 
         if not isinstance(end, Number):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Third argument must be number",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Third argument must be number", exec_ctx))
 
         try:
-            _list = Array(array.elements[start.value:end.value])
+            _list = Array(array.elements[start.value : end.value])
         except:
-            return RTResult().failure(IndexError(
-                self.pos_start, self.pos_end,
-                "Could't find that index",
-                exec_ctx
-            ))
+            return RTResult().failure(IndexError(self.pos_start, self.pos_end, "Could't find that index", exec_ctx))
         return RTResult().success(_list)
 
-    @args(['array', 'value'])
+    @args(["array", "value"])
     def execute_arr_chunk(self, exec_ctx):
         array = exec_ctx.symbol_table.get("array")
         value = exec_ctx.symbol_table.get("value")
 
         if not isinstance(array, Array):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "First argument must be array",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx))
 
         if not isinstance(value, Number):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Second argument must be number",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Second argument must be number", exec_ctx))
 
         try:
             # _list = Array(array.elements[start.value:end.value])
-            _list = Array([array[i:i + value]
-                          for i in range(0, len(array), value)])
+            _list = Array([array[i : i + value] for i in range(0, len(array), value)])
         except:
-            return RTResult().failure(IndexError(
-                self.pos_start, self.pos_end,
-                "Could't not complete chunk",
-                exec_ctx
-            ))
+            return RTResult().failure(IndexError(self.pos_start, self.pos_end, "Could't not complete chunk", exec_ctx))
         return RTResult().success(_list)
 
-    @args(['array', 'index'])
+    @args(["array", "index"])
     def execute_arr_get(self, exec_ctx):
         array = exec_ctx.symbol_table.get("array")
         index = exec_ctx.symbol_table.get("index")
-        
+
         if not isinstance(array, Array):
             return RTResult().failure(
-                RTError(
-                    self.pos_start,
-                    self.pos_end,
-                    "First argument must be an array",
-                    exec_ctx
-                )
+                RTError(self.pos_start, self.pos_end, "First argument must be an array", exec_ctx)
             )
         if not isinstance(index, Number):
             return RTResult().failure(
-                RTError(
-                    self.pos_start,
-                    self.pos_end,
-                    "Second argument must be a number",
-                    exec_ctx
-                )
+                RTError(self.pos_start, self.pos_end, "Second argument must be a number", exec_ctx)
             )
         try:
             element = array.elements[int(index.value)]
             return RTResult().success(element)
         except Exception as exe:
-            return RTResult().failure(
-                RTError(
-                    self.pos_start,
-                    self.pos_end,
-                    exe,
-                    exec_ctx
-                )
-            )
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, exe, exec_ctx))
 
-    @args(['array'])
+    @args(["array"])
     def execute_arr_len(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
 
         if not isinstance(array_, Array):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Argument must be array",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Argument must be array", exec_ctx))
 
         return RTResult().success(Number(len(array_.elements)))
 
-    @args(['string'])
+    @args(["string"])
     def execute_str_len(self, exec_ctx):
         string = exec_ctx.symbol_table.get("string")
 
         if not isinstance(string, String):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Argument must be string",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Argument must be string", exec_ctx))
 
         return RTResult().success(Number(len(string.value)))
 
-    @args(['string', 'start', 'end'])
+    @args(["string", "start", "end"])
     def execute_str_slice(self, exec_ctx):
         string = exec_ctx.symbol_table.get("string")
         start = exec_ctx.symbol_table.get("start")
         end = exec_ctx.symbol_table.get("end")
 
         if not isinstance(string, String):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Argument must be string",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Argument must be string", exec_ctx))
 
         if not isinstance(string, Number):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Argument must be number",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Argument must be number", exec_ctx))
 
         if not isinstance(string, Number):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Argument must be number",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Argument must be number", exec_ctx))
 
         try:
             return RTResult().success(String(string.value[start:end]))
 
         except Exception as e:
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Could't able to slice",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could't able to slice", exec_ctx))
 
-    @args(['string', 'value'])
+    @args(["string", "value"])
     def execute_str_find(self, exec_ctx):
         string = exec_ctx.symbol_table.get("string")
         value = exec_ctx.symbol_table.get("value")
 
         if not isinstance(string, String):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "First argument must be string",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "First argument must be string", exec_ctx))
 
         if not isinstance(value, String):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Second argument must be string",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Second argument must be string", exec_ctx))
 
         try:
-            return RTResult().success(
-                Number(string.value.find(value.value))
-            )
+            return RTResult().success(Number(string.value.find(value.value)))
         except:
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Could't find that index",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could't find that index", exec_ctx))
 
-    @args(['string', 'index'])
+    @args(["string", "index"])
     def execute_str_get(self, exec_ctx):
         string = exec_ctx.symbol_table.get("string")
         index = exec_ctx.symbol_table.get("index")
 
         if not isinstance(string, String):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "First argument must be string",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "First argument must be string", exec_ctx))
 
         if not isinstance(index, Number):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Second argument must be number",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Second argument must be number", exec_ctx))
 
         try:
-            return RTResult().success(
-                String(string.value[index.value])
-            )
+            return RTResult().success(String(string.value[index.value]))
         except:
-            return RTResult().failure(IndexError(
-                self.pos_start, self.pos_end,
-                "Could't find that index",
-                exec_ctx
-            ))
+            return RTResult().failure(IndexError(self.pos_start, self.pos_end, "Could't find that index", exec_ctx))
 
-    @args(['value'])
+    @args(["value"])
     def execute_int(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
         try:
             return RTResult().success(Number(int(value.value)))
         except:
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Could not convert to int",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could not convert to int", exec_ctx))
 
-    @args(['value'])
+    @args(["value"])
     def execute_float(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
         try:
             return RTResult().success(Number(float(value.value)))
         except:
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Could not convert to float",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could not convert to float", exec_ctx))
 
-    @args(['value'])
+    @args(["value"])
     def execute_str(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
@@ -526,34 +385,24 @@ class BuiltInFunction(BaseFunction):
             return RTResult().success(String(str(value.value)))
         except Exception as e:
             # print(e)
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Could not convert to string",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could not convert to string", exec_ctx))
 
-    @args(['value'])
+    @args(["value"])
     def execute_bool(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
         try:
             return RTResult().success(Boolean(bool(value.value)))
         except:
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Could not convert to boolean",
-                exec_ctx
-            ))
-        
-    @args(['value'])
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could not convert to boolean", exec_ctx))
+
+    @args(["value"])
     def execute_type(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
-        return RTResult().success(
-            Type(value)
-        )
+        return RTResult().success(Type(value))
 
-    @args(['code'])
+    @args(["code"])
     def execute_pyapi(self, exec_ctx):
         code = exec_ctx.symbol_table.get("code")
 
@@ -564,58 +413,40 @@ class BuiltInFunction(BaseFunction):
             )
         except Exception as e:
             print(e)
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Could't run the code",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could't run the code", exec_ctx))
 
     @args([])
     def execute_sys_args(self, exec_ctx):
         from sys import argv  # Lazy import
 
         try:
-            return RTResult().success(
-                Array(argv)
-            )
+            return RTResult().success(Array(argv))
         except Exception as e:
             print(e)
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Could't run the sys_args",
-                exec_ctx
-            ))
-    
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could't run the sys_args", exec_ctx))
+
     @args([])
     def execute_time_now(self, exec_ctx):
-        import time # Lazy import
+        import time  # Lazy import
 
-        return RTResult().success(
-            Number(time.time())
-        )
-    
-    @args(['module'])
+        return RTResult().success(Number(time.time()))
+
+    @args(["module"])
     def execute_require(self, exec_ctx):
         module = exec_ctx.symbol_table.get("module")
 
         if not isinstance(module, String):
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                "Second argument must be string",
-                exec_ctx
-            ))
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Second argument must be string", exec_ctx))
 
         module = module.value
 
         try:
             if module not in STDLIBS:
-                file_extension = module.split("/")[-1].split('.')[-1]
+                file_extension = module.split("/")[-1].split(".")[-1]
                 if file_extension != "rn":
-                    return RTResult().failure(RTError(
-                        self.pos_start, self.pos_end,
-                        "A Radon script must have a .rn extension",
-                        exec_ctx
-                    ))
+                    return RTResult().failure(
+                        RTError(self.pos_start, self.pos_end, "A Radon script must have a .rn extension", exec_ctx)
+                    )
                 module_file = module.split("/")[-1]
                 module_path = os.path.dirname(os.path.realpath(module))
 
@@ -626,30 +457,30 @@ class BuiltInFunction(BaseFunction):
                 module = os.path.join(CURRENT_DIR, module_file)
             else:
                 # For STDLIB modules
-                module = os.path.join(BASE_DIR, 'stdlib', f'{module}.rn')
+                module = os.path.join(BASE_DIR, "stdlib", f"{module}.rn")
 
             with open(module, "r") as f:
                 script = f.read()
         except Exception as e:
             if run.hide_paths:
                 module = "[REDACTED]"
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                f"Failed to load script \"{module}\"\n" + str(e),
-                exec_ctx
-            ))
+            return RTResult().failure(
+                RTError(self.pos_start, self.pos_end, f'Failed to load script "{module}"\n' + str(e), exec_ctx)
+            )
 
         _, error, should_exit = run(module, script)
 
         if error:
             if run.hide_paths:
                 module = "[REDACTED]"
-            return RTResult().failure(RTError(
-                self.pos_start, self.pos_end,
-                f"Failed to finish executing script \"{module}\"\n" +
-                error.as_string(),
-                exec_ctx
-            ))
+            return RTResult().failure(
+                RTError(
+                    self.pos_start,
+                    self.pos_end,
+                    f'Failed to finish executing script "{module}"\n' + error.as_string(),
+                    exec_ctx,
+                )
+            )
 
         if should_exit:
             return RTResult().success_exit(Number.null)
@@ -668,8 +499,9 @@ def run(fn, text, context=None, entry_pos=None, return_result=False, hide_paths=
         return error
 
     from core.interpreter import Interpreter  # Lazy import
+
     if hide_paths or run.hide_paths:
-        hide_paths = run.hide_paths = True # Once hidden, forever hidden
+        hide_paths = run.hide_paths = True  # Once hidden, forever hidden
 
     # Generate tokens
     lexer = Lexer(fn, text)
@@ -687,15 +519,18 @@ def run(fn, text, context=None, entry_pos=None, return_result=False, hide_paths=
     interpreter = Interpreter()
     # context = Context('<program>')
     # context.symbol_table = global_symbol_table
-    context = Context('<program>', context, entry_pos)
+    context = Context("<program>", context, entry_pos)
     if context.parent is None:
         context.symbol_table = global_symbol_table
     else:
         context.symbol_table = context.parent.symbol_table
     result = interpreter.visit(ast.node, context)
 
-    if return_result: return result
+    if return_result:
+        return result
     return result.value, prepare_error(result.error), result.should_exit
+
+
 run.hide_paths = False
 
 # Defining builtin functions

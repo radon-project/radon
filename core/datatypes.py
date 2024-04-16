@@ -1,9 +1,7 @@
 from core.parser import RTResult, Context, SymbolTable
 from core.tokens import Position
-from core.errors import (
-    RTError,
-    IndexError as IndexErr,
-)
+from core.errors import RTError, IndexError as IndexErr
+
 from abc import ABC, abstractmethod
 
 
@@ -62,13 +60,13 @@ class Value:
 
     def notted(self, other):
         return None, self.illegal_operation(other)
-    
+
     def iter(self):
         return Iterator(self.gen)
 
     def gen(self):
         yield RTResult().failure(self.illegal_operation())
-    
+
     def get_index(self, index):
         return None, self.illegal_operation(index)
 
@@ -79,20 +77,17 @@ class Value:
         return RTResult().failure(self.illegal_operation())
 
     def copy(self):
-        raise Exception('No copy method defined')
+        raise Exception("No copy method defined")
 
     def is_true(self):
         return False
 
     def illegal_operation(self, *others):
         if len(others) == 0:
-            others = self,
+            others = (self,)
 
-        return RTError(
-            self.pos_start, others[-1].pos_end,
-            'Illegal operation',
-            self.context
-        )
+        return RTError(self.pos_start, others[-1].pos_end, "Illegal operation", self.context)
+
 
 class Iterator(Value):
     def __init__(self, generator):
@@ -109,13 +104,14 @@ class Iterator(Value):
         return next(self.it)
 
     def __str__(self):
-        return '<iterator>'
+        return "<iterator>"
 
     def __repr__(self):
         return str(self)
 
     def copy(self):
         return Iterator(self.it)
+
 
 class Number(Value):
     def __init__(self, value):
@@ -148,11 +144,7 @@ class Number(Value):
     def dived_by(self, other):
         if isinstance(other, Number):
             if other.value == 0:
-                return None, RTError(
-                    other.pos_start, other.pos_end,
-                    'Division by zero',
-                    self.context
-                )
+                return None, RTError(other.pos_start, other.pos_end, "Division by zero", self.context)
 
             return Number(self.value / other.value).set_context(self.context), None
         else:
@@ -160,7 +152,7 @@ class Number(Value):
 
     def powed_by(self, other):
         if isinstance(other, Number):
-            return Number(self.value ** other.value).set_context(self.context), None
+            return Number(self.value**other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -237,11 +229,7 @@ class Number(Value):
     def divide_equals(self, other):
         if isinstance(other, Number):
             if other.value == 0:
-                return None, RTError(
-                    other.pos_start, other.pos_end,
-                    'Division by zero',
-                    self.context
-                )
+                return None, RTError(other.pos_start, other.pos_end, "Division by zero", self.context)
 
             return Number(self.value / other.value).set_context(self.context), None
         else:
@@ -255,7 +243,7 @@ class Number(Value):
 
     def power_equals(self, other):
         if isinstance(other, Number):
-            return Number(self.value ** other.value).set_context(self.context), None
+            return Number(self.value**other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -303,7 +291,7 @@ class Boolean(Value):
 
     def notted(self):
         return Boolean(not self.value).set_context(self.context), None
-    
+
     def get_comparison_eq(self, other):
         if isinstance(other, Boolean):
             return Boolean(int(self.value == other.value)).set_context(self.context), None
@@ -315,7 +303,7 @@ class Boolean(Value):
             return Boolean(int(self.value == other.elements)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
-    
+
     def get_comparison_ne(self, other):
         if isinstance(other, Boolean):
             return Boolean(int(self.value != other.value)).set_context(self.context), None
@@ -399,39 +387,42 @@ class String(Value):
     def get_index(self, index_start, index_end=None, index_step=None):
         if not isinstance(index_start, Number):
             return None, self.illegal_operation(index_start)
-        
+
         if index_end != None and not isinstance(index_end, Number):
             return None, self.illegal_operation(index_end)
-        
+
         if index_step != None and not isinstance(index_step, Number):
             return None, self.illegal_operation(index_step)
 
         if (index_end != None) and (index_step != None):
             try:
-                return String(self.value[index_start.value:index_end.value:index_step.value]), None
+                return String(self.value[index_start.value : index_end.value : index_step.value]), None
             except IndexError:
                 return None, RTError(
-                    index_start.pos_start, index_end.pos_end,
+                    index_start.pos_start,
+                    index_end.pos_end,
                     f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
-                    self.context
+                    self.context,
                 )
         elif index_end != None:
             try:
-                return String(self.value[index_start.value:index_end.value]), None
+                return String(self.value[index_start.value : index_end.value]), None
             except IndexError:
                 return None, RTError(
-                    index_start.pos_start, index_end.pos_end,
+                    index_start.pos_start,
+                    index_end.pos_end,
                     f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
-                    self.context
+                    self.context,
                 )
-            
+
         try:
             return String(self.value[index_start.value]), None
         except IndexError:
             return None, RTError(
-                index_start.pos_start, index_start.pos_end,
+                index_start.pos_start,
+                index_start.pos_end,
                 f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
-                self.context
+                self.context,
             )
 
     def set_index(self, index, value):
@@ -440,12 +431,13 @@ class String(Value):
         if not isinstance(value, String):
             return None, self.illegal_operation(value)
         try:
-            self.value = self.value[:index.value] + value.value + self.value[index.value + 1:]
+            self.value = self.value[: index.value] + value.value + self.value[index.value + 1 :]
         except IndexError:
             return None, RTError(
-                index.pos_start, index.pos_end,
+                index.pos_start,
+                index.pos_end,
                 f"Cannot set character {index} from string {self!r} to {value!r} because it is out of bounds.",
-                self.context
+                self.context,
             )
         return self, None
 
@@ -483,7 +475,7 @@ class Array(Value):
     def __init__(self, elements):
         super().__init__()
         self.elements = elements
-        self.value = elements # For matching with other conventions in the code base
+        self.value = elements  # For matching with other conventions in the code base
 
     def added_to(self, other):
         new_array = self.copy()
@@ -501,9 +493,10 @@ class Array(Value):
                 return new_array, None
             except:
                 return None, RTError(
-                    other.pos_start, other.pos_end,
-                    'Element at this index could not be removed from array because index is out of bounds',
-                    self.context
+                    other.pos_start,
+                    other.pos_end,
+                    "Element at this index could not be removed from array because index is out of bounds",
+                    self.context,
                 )
         else:
             return None, Value.illegal_operation(self, other)
@@ -526,9 +519,10 @@ class Array(Value):
                 return self.elements[other.value], None
             except:
                 return None, RTError(
-                    other.pos_start, other.pos_end,
-                    'Element at this index could not be retrieved from array because index is out of bounds',
-                    self.context
+                    other.pos_start,
+                    other.pos_end,
+                    "Element at this index could not be retrieved from array because index is out of bounds",
+                    self.context,
                 )
         else:
             return None, Value.illegal_operation(self, other)
@@ -540,7 +534,7 @@ class Array(Value):
             return Boolean(int(self.elements == other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
-    
+
     def get_comparison_ne(self, other):
         if isinstance(other, Array):
             return Boolean(int(self.elements != other.elements)).set_context(self.context), None
@@ -556,57 +550,60 @@ class Array(Value):
     def get_index(self, index_start, index_end=None, index_step=None):
         if not isinstance(index_start, Number):
             return None, self.illegal_operation(index_start)
-        
+
         if index_end != None and not isinstance(index_end, Number):
             return None, self.illegal_operation(index_end)
-        
+
         if index_step != None and not isinstance(index_step, Number):
             return None, self.illegal_operation(index_step)
 
         if (index_end != None) and (index_step != None):
             try:
                 # return String(self.value[index_start.value:index_end.value:index_step.value]), None
-                if isinstance(self.value[index_start.value:index_end.value:index_step.value], str):
-                    return String(self.value[index_start.value:index_end.value:index_step.value]), None
-                elif isinstance(self.value[index_start.value:index_end.value:index_step.value], int):
-                    return Number(self.value[index_start.value:index_end.value:index_step.value]), None
-                elif isinstance(self.value[index_start.value:index_end.value:index_step.value], float):
-                    return Number(self.value[index_start.value:index_end.value:index_step.value]), None
-                elif isinstance(self.value[index_start.value:index_end.value:index_step.value], bool):
-                    return Boolean(self.value[index_start.value:index_end.value:index_step.value]), None
-                elif isinstance(self.value[index_start.value:index_end.value:index_step.value], list):
-                    return Array(self.value[index_start.value:index_end.value:index_step.value]), None
+                if isinstance(self.value[index_start.value : index_end.value : index_step.value], str):
+                    return String(self.value[index_start.value : index_end.value : index_step.value]), None
+                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], int):
+                    return Number(self.value[index_start.value : index_end.value : index_step.value]), None
+                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], float):
+                    return Number(self.value[index_start.value : index_end.value : index_step.value]), None
+                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], bool):
+                    return Boolean(self.value[index_start.value : index_end.value : index_step.value]), None
+                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], list):
+                    return Array(self.value[index_start.value : index_end.value : index_step.value]), None
             except (IndexError, TypeError):
                 return None, RTError(
-                    index_start.pos_start, index_end.pos_end,
+                    index_start.pos_start,
+                    index_end.pos_end,
                     f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
-                    self.context
+                    self.context,
                 )
         elif index_end != None:
             try:
-                if isinstance(self.value[index_start.value:index_end.value], str):
-                    return String(self.value[index_start.value:index_end.value]), None
-                elif isinstance(self.value[index_start.value:index_end.value], Number):
-                    return Number(self.value[index_start.value:index_end.value]), None
-                elif isinstance(self.value[index_start.value:index_end.value], float):
-                    return Number(self.value[index_start.value:index_end.value]), None
-                elif isinstance(self.value[index_start.value:index_end.value], bool):
-                    return Boolean(self.value[index_start.value:index_end.value]), None
-                elif isinstance(self.value[index_start.value:index_end.value], list):
-                    return Array(self.value[index_start.value:index_end.value]), None
+                if isinstance(self.value[index_start.value : index_end.value], str):
+                    return String(self.value[index_start.value : index_end.value]), None
+                elif isinstance(self.value[index_start.value : index_end.value], Number):
+                    return Number(self.value[index_start.value : index_end.value]), None
+                elif isinstance(self.value[index_start.value : index_end.value], float):
+                    return Number(self.value[index_start.value : index_end.value]), None
+                elif isinstance(self.value[index_start.value : index_end.value], bool):
+                    return Boolean(self.value[index_start.value : index_end.value]), None
+                elif isinstance(self.value[index_start.value : index_end.value], list):
+                    return Array(self.value[index_start.value : index_end.value]), None
                 else:
                     return None, RTError(
-                        index_start.pos_start, index_end.pos_end,
+                        index_start.pos_start,
+                        index_end.pos_end,
                         f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
-                        self.context
+                        self.context,
                     )
             except (IndexError, TypeError):
                 return None, RTError(
-                    index_start.pos_start, index_end.pos_end,
+                    index_start.pos_start,
+                    index_end.pos_end,
                     f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
-                    self.context
+                    self.context,
                 )
-            
+
         try:
             # return String(self.value[index_start.value]), None
             if isinstance(self.value[index_start.value], str):
@@ -623,15 +620,17 @@ class Array(Value):
                 return String(self.value[index_start.value]), None
             else:
                 return None, RTError(
-                    index_start.pos_start, index_start.pos_end,
+                    index_start.pos_start,
+                    index_start.pos_end,
                     f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
-                    self.context
+                    self.context,
                 )
         except (TypeError, IndexError):
             return None, RTError(
-                index_start.pos_start, index_start.pos_end,
+                index_start.pos_start,
+                index_start.pos_end,
                 f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
-                self.context
+                self.context,
             )
 
     def set_index(self, index, value):
@@ -641,9 +640,10 @@ class Array(Value):
             self.elements[index.value] = value
         except IndexError:
             return None, RTError(
-                index.pos_start, index.pos_end,
+                index.pos_start,
+                index.pos_end,
                 f"Cannot set element {index} from list {self!r} to {value!r} because it is out of bounds.",
-                self.context
+                self.context,
             )
         return self, None
 
@@ -676,7 +676,7 @@ class HashMap(Value):
     def __init__(self, values):
         super().__init__()
         self.values = values
-        self.value = values # For matching with other conventions in the code base
+        self.value = values  # For matching with other conventions in the code base
 
     def added_to(self, other):
         if not isinstance(other, HashMap):
@@ -702,9 +702,7 @@ class HashMap(Value):
             return self.values[index.value], None
         except KeyError:
             return None, RTError(
-                self.pos_start, self.pos_end,
-                f"Could not find key {index!r} in dict {self!r}",
-                self.context
+                self.pos_start, self.pos_end, f"Could not find key {index!r} in dict {self!r}", self.context
             )
 
     def set_index(self, index, value):
@@ -720,7 +718,7 @@ class HashMap(Value):
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
-    
+
     def __str__(self):
         return ", ".join([str(x) for x in self.values])
 
@@ -731,45 +729,45 @@ class HashMap(Value):
 class Type(Value):
     def __init__(self, variable):
         super().__init__()
-        self.variable = variable or '<unknown>'
+        self.variable = variable or "<unknown>"
         self.get_type()
 
     def get_type(self):
         self.type = None
 
         if isinstance(self.variable, String):
-            self.type = 'String'
+            self.type = "String"
         elif isinstance(self.variable, Number):
             if isinstance(self.variable.value, int):
-                self.type = 'Number.Int'
+                self.type = "Number.Int"
             elif isinstance(self.variable.value, float):
-                self.type = 'Number.Float'
+                self.type = "Number.Float"
             else:
-                self.type = 'Number'
+                self.type = "Number"
         elif isinstance(self.variable, Boolean):
-            self.type = 'Boolean'
+            self.type = "Boolean"
         elif isinstance(self.variable, Array):
-            self.type = 'Array'
+            self.type = "Array"
         elif isinstance(self.variable, Function):
-            self.type = 'Function'
+            self.type = "Function"
         elif isinstance(self.variable, Class):
-            self.type = 'Class'
+            self.type = "Class"
         elif isinstance(self.variable, Instance):
-            self.type = 'Instance'
+            self.type = "Instance"
         elif isinstance(self.variable, HashMap):
-            self.type = 'HashMap'
+            self.type = "HashMap"
         elif isinstance(self.variable, PyAPI):
-            self.type = 'PyAPI'
+            self.type = "PyAPI"
         elif isinstance(self.variable, Type):
-            self.type = 'Type'
-        elif self.variable.__class__.__name__ == 'BuiltInFunction':
-            self.type = 'BuiltInFunction'
-        elif self.variable.__class__.__name__ == 'BuiltInClass':
-            self.type = 'BuiltInClass'
-        elif self.variable.__class__.__name__ == 'BuiltInInstance':
-            self.type = 'BuiltInInstance'
+            self.type = "Type"
+        elif self.variable.__class__.__name__ == "BuiltInFunction":
+            self.type = "BuiltInFunction"
+        elif self.variable.__class__.__name__ == "BuiltInClass":
+            self.type = "BuiltInClass"
+        elif self.variable.__class__.__name__ == "BuiltInInstance":
+            self.type = "BuiltInInstance"
         else:
-            self.type = 'unknown'
+            self.type = "unknown"
 
     def copy(self):
         copy = Type(self.variable)
@@ -778,10 +776,11 @@ class Type(Value):
         return copy
 
     def __str__(self):
-        return f'<class \'{self.type}\'>'
+        return f"<class '{self.type}'>"
 
     def __repr__(self):
-        return f'<class \'{self.type}\'>'
+        return f"<class '{self.type}'>"
+
 
 class PyAPI(Value):
     def __init__(self, code: str):
@@ -790,7 +789,7 @@ class PyAPI(Value):
         self.pyapi()
 
     def pyapi(self):
-        '''This will execute python code and return the result. Output will be store in a output variable. To access the output, use output variable in the Python string code.'''
+        """This will execute python code and return the result. Output will be store in a output variable. To access the output, use output variable in the Python string code."""
 
         # Empty dictionary to store the output
         locals_dict = {}
@@ -799,14 +798,14 @@ class PyAPI(Value):
             # Execute the code and store the output in locals_dict
             exec(self.code, {}, locals_dict)
 
-            if 'output' in locals_dict:
-                return str(locals_dict['output'])
+            if "output" in locals_dict:
+                return str(locals_dict["output"])
             else:
                 return "No output produced."
 
         except Exception as e:
             return f"Error: {str(e)}"
-            
+
     def copy(self):
         copy = PyAPI(self.code)
         copy.set_pos(self.pos_start, self.pos_end)
@@ -828,18 +827,24 @@ class BaseFunction(Value):
         res = RTResult()
 
         if len(args) > len(arg_names):
-            return res.failure(RTError(
-                self.pos_start, self.pos_end,
-                f"{len(args) - len(arg_names)} too many args passed into {self}",
-                self.context
-            ))
+            return res.failure(
+                RTError(
+                    self.pos_start,
+                    self.pos_end,
+                    f"{len(args) - len(arg_names)} too many args passed into {self}",
+                    self.context,
+                )
+            )
 
         if len(args) < len(arg_names) - len(list(filter(lambda default: default is not None, defaults))):
-            return res.failure(RTError(
-                self.pos_start, self.pos_end,
-                f"{(len(arg_names) - len(list(filter(lambda default: default is not None, defaults)))) - len(args)} too few args passed into {self}",
-                self.context
-            ))
+            return res.failure(
+                RTError(
+                    self.pos_start,
+                    self.pos_end,
+                    f"{(len(arg_names) - len(list(filter(lambda default: default is not None, defaults)))) - len(args)} too few args passed into {self}",
+                    self.context,
+                )
+            )
 
         return res.success(None)
 
@@ -858,15 +863,17 @@ class BaseFunction(Value):
         self.populate_args(arg_names, args, defaults, exec_ctx)
         return res.success(None)
 
+
 class BaseInstance(Value, ABC):
     def __init__(self, parent_class, symbol_table):
         super().__init__()
         self.parent_class = parent_class
         self.symbol_table = SymbolTable(symbol_table)
-        self.value = f'<type {self.__class__.__name__}>'
+        self.value = f"<type {self.__class__.__name__}>"
 
     @abstractmethod
-    def operator(self, operator, *args): ...
+    def operator(self, operator, *args):
+        ...
 
     def added_to(self, other):
         return self.operator("__add__", other)
@@ -909,11 +916,11 @@ class BaseInstance(Value, ABC):
 
     def notted(self, other):
         return self.operator("__not__", other)
-    
+
     def gen(self):
         # TODO: change this when we have generator functions
         return self.operator("__iter__", other).gen()
-    
+
     def get_index(self, index):
         return self.operator("__getitem__", other)
 
@@ -929,6 +936,7 @@ class BaseInstance(Value, ABC):
     def copy(self):
         return self
 
+
 class Instance(BaseInstance):
     def __init__(self, parent_class):
         super().__init__(parent_class, None)
@@ -938,11 +946,7 @@ class Instance(BaseInstance):
         method = self.symbol_table.symbols.get(operator, None)
 
         if method == None or not isinstance(method, Function):
-            return None, RTError(
-                self.pos_start, self.pos_end,
-                f"Function '{operator}' not defined",
-                self.context
-            )
+            return None, RTError(self.pos_start, self.pos_end, f"Function '{operator}' not defined", self.context)
 
         value = res.register(method.execute(list(args)))
         if res.should_return():
@@ -953,14 +957,16 @@ class Instance(BaseInstance):
         # TODO: make this overloadable as well
         return f"<instance of class {self.parent_class.name}>"
 
+
 class BaseClass(Value, ABC):
     def __init__(self, name):
         super().__init__()
         self.name = name
-        self.value = f'<type {self.__class__.__name__}>'
+        self.value = f"<type {self.__class__.__name__}>"
 
     @abstractmethod
-    def get(self, name): ...
+    def get(self, name):
+        ...
 
     def dived_by(self, other):
         if not isinstance(other, String):
@@ -968,31 +974,33 @@ class BaseClass(Value, ABC):
 
         value = self.get(other.value)
         if value == None:
-            return None, RTError(
-                self.pos_start, self.pos_end,
-                f"'{other.value}' is not defined",
-                self.context
-            )
+            return None, RTError(self.pos_start, self.pos_end, f"'{other.value}' is not defined", self.context)
 
         return value, None
 
     @abstractmethod
-    def create(self, args): ...
+    def create(self, args):
+        ...
 
     @abstractmethod
-    def init(self, inst, args): ...
+    def init(self, inst, args):
+        ...
 
     def execute(self, args):
         res = RTResult()
 
         inst = res.register(self.create(args))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
 
         res.register(self.init(inst, args))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
         return res.success(inst)
-    
-    def copy(self): return self
+
+    def copy(self):
+        return self
+
 
 class Class(BaseClass):
     def __init__(self, name, symbol_table):
@@ -1021,7 +1029,7 @@ class Class(BaseClass):
         for name in inst.symbol_table.symbols:
             inst.symbol_table.symbols[name].set_context(exec_ctx)
 
-        inst.symbol_table.set('this', inst)
+        inst.symbol_table.set("this", inst)
         return res.success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
 
     def init(self, inst, args):
@@ -1029,11 +1037,9 @@ class Class(BaseClass):
         method = inst.symbol_table.symbols.get("__constructor__", None)
 
         if method == None or not isinstance(method, Function):
-            return res.failure(RTError(
-                self.pos_start, self.pos_end,
-                f"Function '{self.name}' not defined",
-                self.context
-            ))
+            return res.failure(
+                RTError(self.pos_start, self.pos_end, f"Function '{self.name}' not defined", self.context)
+            )
 
         res.register(method.execute(args))
         if res.should_return():
@@ -1043,6 +1049,7 @@ class Class(BaseClass):
 
     def __repr__(self):
         return f"<class {self.name}>"
+
 
 class Function(BaseFunction):
     def __init__(self, name, body_node, arg_names, defaults, should_auto_return):
@@ -1059,8 +1066,7 @@ class Function(BaseFunction):
         interpreter = Interpreter()
         exec_ctx = self.generate_new_context()
 
-        res.register(self.check_and_populate_args(
-            self.arg_names, args, self.defaults, exec_ctx))
+        res.register(self.check_and_populate_args(self.arg_names, args, self.defaults, exec_ctx))
         if res.should_return():
             return res
 
@@ -1068,8 +1074,7 @@ class Function(BaseFunction):
         if res.should_return() and res.func_return_value == None:
             return res
 
-        ret_value = (
-            value if self.should_auto_return else None) or res.func_return_value or Number.null
+        ret_value = (value if self.should_auto_return else None) or res.func_return_value or Number.null
         return res.success(ret_value)
 
     def copy(self):

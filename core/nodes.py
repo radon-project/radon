@@ -1,4 +1,4 @@
-'''All Nodes'''
+"""All Nodes"""
 
 
 class NumberNode:
@@ -11,7 +11,7 @@ class NumberNode:
         self.child = None
 
     def __repr__(self):
-        return f'{self.tok}'
+        return f"{self.tok}"
 
 
 class StringNode:
@@ -24,7 +24,7 @@ class StringNode:
         self.child = None
 
     def __repr__(self):
-        return f'{self.tok}'
+        return f"{self.tok}"
 
 
 class ArrayNode:
@@ -55,8 +55,11 @@ class VarAssignNode:
         self.qualifier = qualifier
 
         self.pos_start = self.var_name_tok.pos_start
-        self.pos_end = self.extra_names[len(
-            self.extra_names)-1].pos_end if len(self.extra_names) > 0 else self.var_name_tok.pos_end
+        self.pos_end = (
+            self.extra_names[len(self.extra_names) - 1].pos_end
+            if len(self.extra_names) > 0
+            else self.var_name_tok.pos_end
+        )
 
         self.child = None
 
@@ -108,7 +111,7 @@ class BinOpNode:
         self.child = None
 
     def __repr__(self):
-        return f'({self.left_node}, {self.op_tok}, {self.right_node})'
+        return f"({self.left_node}, {self.op_tok}, {self.right_node})"
 
 
 class UnaryOpNode:
@@ -122,7 +125,7 @@ class UnaryOpNode:
         self.child = None
 
     def __repr__(self):
-        return f'({self.op_tok}, {self.node})'
+        return f"({self.op_tok}, {self.node})"
 
 
 class IfNode:
@@ -131,8 +134,7 @@ class IfNode:
         self.else_case = else_case
 
         self.pos_start = self.cases[0][0].pos_start
-        self.pos_end = (
-            self.else_case or self.cases[len(self.cases) - 1])[0].pos_end
+        self.pos_end = (self.else_case or self.cases[len(self.cases) - 1])[0].pos_end
 
         self.child = None
 
@@ -237,6 +239,7 @@ class TryNode:
 
         self.child = None
 
+
 class ForInNode:
     def __init__(self, var_name_tok, iterable_node, body_node, pos_start, pos_end, should_return_null):
         self.var_name_tok = var_name_tok
@@ -250,7 +253,7 @@ class ForInNode:
 
 
 class IndexGetNode:
-    def __init__(self, pos_start, pos_end, indexee, index_start, index_end = None, index_step = None):
+    def __init__(self, pos_start, pos_end, indexee, index_start, index_end=None, index_step=None):
         self.pos_start = pos_start
         self.pos_end = pos_end
         self.indexee = indexee

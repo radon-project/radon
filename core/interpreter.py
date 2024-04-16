@@ -9,7 +9,7 @@ import os
 
 class Interpreter:
     def visit(self, node, context):
-        method_name = f'visit_{type(node).__name__}'
+        method_name = f"visit_{type(node).__name__}"
         method = getattr(self, method_name, self.no_visit_method)
         return method(node, context)
 
@@ -19,21 +19,15 @@ class Interpreter:
         return self.visit(node, new_context)
 
     def no_visit_method(self, node, context):
-        raise Exception(f'No visit_{type(node).__name__} method defined')
+        raise Exception(f"No visit_{type(node).__name__} method defined")
 
     ###################################
 
     def visit_NumberNode(self, node, context):
-        return RTResult().success(
-            Number(node.tok.value).set_context(
-                context).set_pos(node.pos_start, node.pos_end)
-        )
+        return RTResult().success(Number(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end))
 
     def visit_StringNode(self, node, context):
-        return RTResult().success(
-            String(node.tok.value).set_context(
-                context).set_pos(node.pos_start, node.pos_end)
-        )
+        return RTResult().success(String(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end))
 
     def visit_ArrayNode(self, node, context):
         res = RTResult()
@@ -44,10 +38,7 @@ class Interpreter:
             if res.should_return():
                 return res
 
-        return res.success(
-            Array(elements).set_context(context).set_pos(
-                node.pos_start, node.pos_end)
-        )
+        return res.success(Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end))
 
     def visit_ObjectNode(self, node, context):
         res = RTResult()
@@ -58,10 +49,7 @@ class Interpreter:
             if res.should_return():
                 return res
 
-        return res.success(
-            HashMapNode(elements).set_context(context).set_pos(
-                node.pos_start, node.pos_end)
-        )
+        return res.success(HashMapNode(elements).set_context(context).set_pos(node.pos_start, node.pos_end))
 
     def visit_VarAccessNode(self, node, context):
         res = RTResult()
@@ -69,11 +57,7 @@ class Interpreter:
         value = context.symbol_table.get(var_name)
 
         if not value:
-            return res.failure(RTError(
-                node.pos_start, node.pos_end,
-                f"'{var_name}' is not defined",
-                context
-            ))
+            return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
 
         if node.child:
             if isinstance(value, BaseClass):
@@ -81,13 +65,15 @@ class Interpreter:
             elif isinstance(value, BaseInstance):
                 name = value.parent_class.name
             else:
-                return res.failure(RTError(
-                    node.pos_start, node.pos_end,
-                    f"Dotted attribute access may only be used on classes and instances for now",
-                    context
-                ))
-            new_context = Context(name,
-                                  context, node.pos_start)
+                return res.failure(
+                    RTError(
+                        node.pos_start,
+                        node.pos_end,
+                        f"Dotted attribute access may only be used on classes and instances for now",
+                        context,
+                    )
+                )
+            new_context = Context(name, context, node.pos_start)
             new_context.symbol_table = value.symbol_table
 
             child = res.register(self.visit(node.child, new_context))
@@ -112,38 +98,30 @@ class Interpreter:
             prev = None
 
             if not nd:
-                return res.failure(RTError(
-                    node.pos_start, node.pos_end,
-                    f"'{var_name}' not defined",
-                    context
-                ))
+                return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' not defined", context))
 
             for index, name_tok in enumerate(node.extra_names):
                 name = name_tok.value
 
                 if not isinstance(nd, Class) and not isinstance(nd, Instance):
-                    return res.failure(RTError(
-                        node.pos_start, node.pos_end,
-                        "Value must be instance of class or class",
-                        context
-                    ))
+                    return res.failure(
+                        RTError(node.pos_start, node.pos_end, "Value must be instance of class or class", context)
+                    )
 
                 prev = nd
                 nd = nd.symbol_table.symbols[name] if name in nd.symbol_table.symbols else None
 
-                if not nd and index != len(node.extra_names)-1:
-                    return res.failure(RTError(
-                        node.pos_start, node.pos_end,
-                        f"'{name}' not defined",
-                        context
-                    ))
+                if not nd and index != len(node.extra_names) - 1:
+                    return res.failure(RTError(node.pos_start, node.pos_end, f"'{name}' not defined", context))
 
             res.register(prev.symbol_table.set(name, value))
-            if res.should_return(): return res
+            if res.should_return():
+                return res
             return res.success(value)
 
         res.register(context.symbol_table.set(var_name, value, node.qualifier))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
         return res.success(value)
 
     def visit_VarManipulateNode(self, node, context):
@@ -152,22 +130,15 @@ class Interpreter:
         value = context.symbol_table.get(var_name)
 
         if not value:
-            return res.failure(RTError(
-                node.pos_start, node.pos_end,
-                f"'{var_name}' is not defined",
-                context
-            ))
+            return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
 
         if node.child:
             if not isinstance(value, Instance) and not isinstance(value, Class):
-                return res.failure(RTError(
-                    node.pos_start, node.pos_end,
-                    f"Value must be instance of class or class",
-                    context
-                ))
+                return res.failure(
+                    RTError(node.pos_start, node.pos_end, f"Value must be instance of class or class", context)
+                )
 
-            new_context = Context(value.parent_class.name,
-                                  context, node.pos_start)
+            new_context = Context(value.parent_class.name, context, node.pos_start)
             new_context.symbol_table = value.symbol_table
 
             child = res.register(self.visit(node.child, new_context))
@@ -187,13 +158,11 @@ class Interpreter:
 
         try:
             if module not in STDLIBS:
-                file_extension = module.split("/")[-1].split('.')[-1]
+                file_extension = module.split("/")[-1].split(".")[-1]
                 if file_extension != "rn":
-                    return res.failure(RTError(
-                        node.pos_start, node.pos_end,
-                        "A Radon script must have a .rn extension",
-                        exec_ctx
-                    ))
+                    return res.failure(
+                        RTError(node.pos_start, node.pos_end, "A Radon script must have a .rn extension", exec_ctx)
+                    )
                 module_file = module.split("/")[-1]
                 module_path = os.path.dirname(os.path.realpath(module))
                 print(module_file, module_path)
@@ -205,26 +174,26 @@ class Interpreter:
                 module = os.path.join(CURRENT_DIR, module_file)
             else:
                 # For STDLIB modules
-                module = os.path.join(BASE_DIR, 'stdlib', f'{module}.rn')
+                module = os.path.join(BASE_DIR, "stdlib", f"{module}.rn")
 
             with open(module, "r") as f:
                 script = f.read()
         except Exception as e:
-            return RTResult().failure(RTError(
-                node.pos_start, node.pos_end,
-                f"Failed to load script \"{module}\"\n" + str(e),
-                exec_ctx
-            ))
+            return RTResult().failure(
+                RTError(node.pos_start, node.pos_end, f'Failed to load script "{module}"\n' + str(e), exec_ctx)
+            )
 
         _, error, should_exit = run(module, script)
 
         if error:
-            return RTResult().failure(RTError(
-                node.pos_start, node.pos_end,
-                f"Failed to finish executing script \"{module}\"\n" +
-                error.as_string(),
-                exec_ctx
-            ))
+            return RTResult().failure(
+                RTError(
+                    node.pos_start,
+                    node.pos_end,
+                    f'Failed to finish executing script "{module}"\n' + error.as_string(),
+                    exec_ctx,
+                )
+            )
 
         if should_exit:
             return RTResult().success_exit(Number.null)
@@ -275,9 +244,9 @@ class Interpreter:
             result, error = left.mod_equals(right)
         elif node.op_tok.type == TT_POWE:
             result, error = left.power_equals(right)
-        elif node.op_tok.matches(TT_KEYWORD, 'and'):
+        elif node.op_tok.matches(TT_KEYWORD, "and"):
             result, error = left.anded_by(right)
-        elif node.op_tok.matches(TT_KEYWORD, 'or'):
+        elif node.op_tok.matches(TT_KEYWORD, "or"):
             result, error = left.ored_by(right)
 
         if error:
@@ -295,7 +264,7 @@ class Interpreter:
 
         if node.op_tok.type == TT_MINUS:
             number, error = number.multed_by(Number(-1))
-        elif node.op_tok.matches(TT_KEYWORD, 'not'):
+        elif node.op_tok.matches(TT_KEYWORD, "not"):
             number, error = number.notted()
 
         if error:
@@ -339,8 +308,7 @@ class Interpreter:
             return res
 
         if node.step_value_node:
-            step_value = res.register(
-                self.visit(node.step_value_node, context))
+            step_value = res.register(self.visit(node.step_value_node, context))
             if res.should_return():
                 return res
         else:
@@ -349,9 +317,13 @@ class Interpreter:
         i = start_value.value
 
         if step_value.value >= 0:
-            def condition(): return i < end_value.value
+
+            def condition():
+                return i < end_value.value
         else:
-            def condition(): return i > end_value.value
+
+            def condition():
+                return i > end_value.value
 
         while condition():
             context.symbol_table.set(node.var_name_tok.value, Number(i))
@@ -370,9 +342,9 @@ class Interpreter:
             elements.append(value)
 
         return res.success(
-            Number.null if node.should_return_null else
-            Array(elements).set_context(context).set_pos(
-                node.pos_start, node.pos_end)
+            Number.null
+            if node.should_return_null
+            else Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
 
     def visit_WhileNode(self, node, context):
@@ -400,9 +372,9 @@ class Interpreter:
             elements.append(value)
 
         return res.success(
-            Number.null if node.should_return_null else
-            Array(elements).set_context(context).set_pos(
-                node.pos_start, node.pos_end)
+            Number.null
+            if node.should_return_null
+            else Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
 
     def visit_FuncDefNode(self, node, context):
@@ -417,10 +389,15 @@ class Interpreter:
                 defaults.append(None)
                 continue
             default_value = res.register(self.visit(default, context))
-            if res.should_return(): return res
+            if res.should_return():
+                return res
             defaults.append(default_value)
 
-        func_value = Function(func_name, body_node, arg_names, defaults, node.should_auto_return).set_context(context).set_pos(node.pos_start, node.pos_end)
+        func_value = (
+            Function(func_name, body_node, arg_names, defaults, node.should_auto_return)
+            .set_context(context)
+            .set_pos(node.pos_start, node.pos_end)
+        )
 
         if node.var_name_tok:
             if node.static:
@@ -447,8 +424,7 @@ class Interpreter:
         return_value = res.register(value_to_call.execute(args))
         if res.should_return():
             return res
-        return_value = return_value.copy().set_pos(
-            node.pos_start, node.pos_end).set_context(context)
+        return_value = return_value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
         return res.success(return_value)
 
     def visit_ReturnNode(self, node, context):
@@ -473,7 +449,8 @@ class Interpreter:
         res = RTResult()
         res.register(self.visit(node.try_block, context))
         handled_error = res.error
-        if res.should_return() and res.error is None: return res
+        if res.should_return() and res.error is None:
+            return res
         elif handled_error is not None:
             var_name = node.exc_iden.value
             context.symbol_table.set(var_name, res.error)
@@ -481,9 +458,11 @@ class Interpreter:
 
             res.register(self.visit(node.catch_block, context))
             if res.error:
-                return res.failure(TryError(
-                    res.error.pos_start, res.error.pos_end, res.error.details, res.error.context, handled_error
-                ))
+                return res.failure(
+                    TryError(
+                        res.error.pos_start, res.error.pos_end, res.error.details, res.error.context, handled_error
+                    )
+                )
             return res.success(Number.null)
         else:
             return res.success(Number.null)
@@ -501,35 +480,42 @@ class Interpreter:
 
         for it_res in it:
             element = res.register(it_res)
-            if res.should_return(): return res
+            if res.should_return():
+                return res
 
             context.symbol_table.set(var_name, element)
 
             elements.append(res.register(self.visit(body, context)))
-            if res.should_return(): return res
+            if res.should_return():
+                return res
 
-        if should_return_null: return res.success(Number.null)
+        if should_return_null:
+            return res.success(Number.null)
         return res.success(elements)
 
     def visit_IndexGetNode(self, node, context):
         res = RTResult()
         indexee = res.register(self.visit(node.indexee, context))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
 
         if isinstance(indexee, HashMap):
             value = indexee.values.get(node.index_start.value)
             return res.success(value)
 
         index_start = res.register(self.visit(node.index_start, context))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
 
         if node.index_end != None:
             index_end = res.register(self.visit(node.index_end, context))
-            if res.should_return(): return res
+            if res.should_return():
+                return res
 
         if node.index_step != None:
             index_step = res.register(self.visit(node.index_step, context))
-            if res.should_return(): return res
+            if res.should_return():
+                return res
 
         if node.index_end != None and node.index_step != None:
             result, error = indexee.get_index(index_start, index_end, index_step)
@@ -538,13 +524,15 @@ class Interpreter:
         else:
             result, error = indexee.get_index(index_start)
 
-        if error: return res.failure(error)
+        if error:
+            return res.failure(error)
         return res.success(result)
 
     def visit_IndexSetNode(self, node, context):
         res = RTResult()
         indexee = res.register(self.visit(node.indexee, context))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
 
         # if isinstance(indexee, HashMap):
         #     # value = indexee.values.get(node.index_start.value)
@@ -554,13 +542,16 @@ class Interpreter:
         #     return res.success(node.indexee)
 
         index = res.register(self.visit(node.index, context))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
 
         value = res.register(self.visit(node.value, context))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
 
         result, error = indexee.set_index(index, value)
-        if error: return res.failure(error)
+        if error:
+            return res.failure(error)
 
         return res.success(result)
 
@@ -570,17 +561,17 @@ class Interpreter:
 
         for key_node, value_node in node.pairs:
             key = res.register(self.visit(key_node, context))
-            if res.should_return(): return res
+            if res.should_return():
+                return res
 
             if not isinstance(key, String):
-                return res.failure(RTError(
-                    key_node.pos_start, key_node.pos_end,
-                    f"Non-string key for hashmap: '{key!r}'",
-                    context
-                ))
+                return res.failure(
+                    RTError(key_node.pos_start, key_node.pos_end, f"Non-string key for hashmap: '{key!r}'", context)
+                )
 
             value = res.register(self.visit(value_node, context))
-            if res.should_return(): return res
+            if res.should_return():
+                return res
 
             values[key.value] = value
 
@@ -596,8 +587,10 @@ class Interpreter:
         if res.should_return():
             return res
 
-        cls_ = Class(node.class_name_tok.value, ctx.symbol_table).set_context(
-            context).set_pos(node.pos_start, node.pos_end)
+        cls_ = (
+            Class(node.class_name_tok.value, ctx.symbol_table)
+            .set_context(context)
+            .set_pos(node.pos_start, node.pos_end)
+        )
         context.symbol_table.set(node.class_name_tok.value, cls_)
         return res.success(cls_)
-

@@ -12,18 +12,17 @@ class Lexer:
 
     def advance(self):
         self.pos.advance(self.current_char)
-        self.current_char = self.text[self.pos.idx] if self.pos.idx < len(
-            self.text) else None
+        self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
 
     def make_tokens(self):
         tokens = []
 
         while self.current_char != None:
-            if self.current_char in ' \t':
+            if self.current_char in " \t":
                 self.advance()
-            elif self.current_char == '#':
+            elif self.current_char == "#":
                 self.skip_comment()
-            elif self.current_char in ';\n':
+            elif self.current_char in ";\n":
                 tokens.append(Token(TT_NEWLINE, pos_start=self.pos))
                 self.advance()
             elif self.current_char in DIGITS:
@@ -53,55 +52,55 @@ class Lexer:
             #     self.advance()
             # elif self.current_char == '%':
             #     tokens.append(Token(TT_MOD, pos_start=self.pos))
-            elif self.current_char == '+':
+            elif self.current_char == "+":
                 tokens.append(self.make_plus_equals())
-            elif self.current_char == '-':
+            elif self.current_char == "-":
                 tokens.append(self.make_minus_equals())
-            elif self.current_char == '*':
+            elif self.current_char == "*":
                 tokens.append(self.make_times_equals())
-            elif self.current_char == '/':
+            elif self.current_char == "/":
                 tokens.append(self.make_divide_equals())
-            elif self.current_char == '%':
+            elif self.current_char == "%":
                 tokens.append(self.make_mod_equals())
-            elif self.current_char == '^':
+            elif self.current_char == "^":
                 tokens.append(self.make_power_equals())
-            elif self.current_char == '(':
+            elif self.current_char == "(":
                 tokens.append(Token(TT_LPAREN, pos_start=self.pos))
                 self.advance()
-            elif self.current_char == ')':
+            elif self.current_char == ")":
                 tokens.append(Token(TT_RPAREN, pos_start=self.pos))
                 self.advance()
-            elif self.current_char == '{':
+            elif self.current_char == "{":
                 tokens.append(Token(TT_LBRACE, pos_start=self.pos))
                 self.advance()
-            elif self.current_char == '}':
+            elif self.current_char == "}":
                 tokens.append(Token(TT_RBRACE, pos_start=self.pos))
                 self.advance()
-            elif self.current_char == '[':
+            elif self.current_char == "[":
                 # tokens.append(self.make_slice())
                 tokens.append(Token(TT_LSQUARE, pos_start=self.pos))
                 self.advance()
-            elif self.current_char == ']':
+            elif self.current_char == "]":
                 tokens.append(Token(TT_RSQUARE, pos_start=self.pos))
                 self.advance()
-            elif self.current_char == ':':
+            elif self.current_char == ":":
                 tokens.append(Token(TT_COLON, pos_start=self.pos))
                 self.advance()
-            elif self.current_char == '.':
+            elif self.current_char == ".":
                 tokens.append(Token(TT_DOT, pos_start=self.pos))
                 self.advance()
-            elif self.current_char == '!':
+            elif self.current_char == "!":
                 token, error = self.make_not_equals()
                 if error:
                     return [], error
                 tokens.append(token)
-            elif self.current_char == '=':
+            elif self.current_char == "=":
                 tokens.append(self.make_equals())
-            elif self.current_char == '<':
+            elif self.current_char == "<":
                 tokens.append(self.make_less_than())
-            elif self.current_char == '>':
+            elif self.current_char == ">":
                 tokens.append(self.make_greater_than())
-            elif self.current_char == ',':
+            elif self.current_char == ",":
                 tokens.append(Token(TT_COMMA, pos_start=self.pos))
                 self.advance()
             else:
@@ -114,12 +113,12 @@ class Lexer:
         return tokens, None
 
     def make_number(self):
-        num_str = ''
+        num_str = ""
         dot_count = 0
         pos_start = self.pos.copy()
 
-        while self.current_char != None and self.current_char in DIGITS + '.':
-            if self.current_char == '.':
+        while self.current_char != None and self.current_char in DIGITS + ".":
+            if self.current_char == ".":
                 if dot_count == 1:
                     break
                 dot_count += 1
@@ -132,13 +131,13 @@ class Lexer:
             return Token(TT_FLOAT, float(num_str), pos_start, self.pos)
 
     def make_string(self):
-        string = ''
+        string = ""
         pos_start = self.pos.copy()
         escape_character = False
         self.advance()
 
         while self.current_char is not None and (self.current_char != '"' or escape_character):
-            if self.current_char == '\\':
+            if self.current_char == "\\":
                 escape_character = True
             else:
                 escape_character = False
@@ -149,7 +148,7 @@ class Lexer:
         return Token(TT_STRING, string.encode("utf-8").decode("unicode-escape"), pos_start, self.pos)
 
     def make_identifier(self):
-        id_str = ''
+        id_str = ""
         pos_start = self.pos.copy()
 
         while self.current_char != None and self.current_char in VALID_IDENTIFIERS:
@@ -165,18 +164,24 @@ class Lexer:
 
         if self.current_char in DIGITS:
             start = self.make_number()
-            if self.current_char == ':':
+            if self.current_char == ":":
                 self.advance()
                 end = self.make_number()
-                if self.current_char == ':':
+                if self.current_char == ":":
                     self.advance()
                     step = self.make_number()
-                    if self.current_char == ']':
+                    if self.current_char == "]":
                         self.advance()
                         return Token(TT_SLICE, (start, end, step), pos_start, self.pos)
-                    return Token(TT_SLICE, (start, end, step), pos_start, self.pos), ExpectedCharError(pos_start, self.pos, "']'")
-                return Token(TT_SLICE, (start, end, None), pos_start, self.pos), ExpectedCharError(pos_start, self.pos, "']'")
-            return Token(TT_SLICE, (start, None, None), pos_start, self.pos), ExpectedCharError(pos_start, self.pos, "']'")
+                    return Token(TT_SLICE, (start, end, step), pos_start, self.pos), ExpectedCharError(
+                        pos_start, self.pos, "']'"
+                    )
+                return Token(TT_SLICE, (start, end, None), pos_start, self.pos), ExpectedCharError(
+                    pos_start, self.pos, "']'"
+                )
+            return Token(TT_SLICE, (start, None, None), pos_start, self.pos), ExpectedCharError(
+                pos_start, self.pos, "']'"
+            )
         return Token(TT_SLICE, (None, None, None), pos_start, self.pos), ExpectedCharError(pos_start, self.pos, "']'")
 
     # def make_minus_or_arrow(self):
@@ -194,7 +199,7 @@ class Lexer:
         pos_start = self.pos.copy()
         self.advance()
 
-        if self.current_char == '=':
+        if self.current_char == "=":
             self.advance()
             return Token(TT_NE, pos_start=pos_start, pos_end=self.pos), None
 
@@ -206,7 +211,7 @@ class Lexer:
         pos_start = self.pos.copy()
         self.advance()
 
-        if self.current_char == '=':
+        if self.current_char == "=":
             self.advance()
             tok_type = TT_EE
 
@@ -217,7 +222,7 @@ class Lexer:
         pos_start = self.pos.copy()
         self.advance()
 
-        if self.current_char == '=':
+        if self.current_char == "=":
             self.advance()
             tok_type = TT_LTE
 
@@ -228,7 +233,7 @@ class Lexer:
         pos_start = self.pos.copy()
         self.advance()
 
-        if self.current_char == '=':
+        if self.current_char == "=":
             self.advance()
             tok_type = TT_GTE
 
@@ -239,7 +244,7 @@ class Lexer:
         pos_start = self.pos.copy()
         self.advance()
 
-        if self.current_char == '=':
+        if self.current_char == "=":
             tok_type = TT_PE
             self.advance()
 
@@ -250,11 +255,11 @@ class Lexer:
         pos_start = self.pos.copy()
         self.advance()
 
-        if self.current_char == '=':
+        if self.current_char == "=":
             tok_type = TT_ME
             self.advance()
 
-        elif self.current_char == '>':
+        elif self.current_char == ">":
             tok_type = TT_ARROW
             self.advance()
 
@@ -265,7 +270,7 @@ class Lexer:
         pos_start = self.pos.copy()
         self.advance()
 
-        if self.current_char == '=':
+        if self.current_char == "=":
             tok_type = TT_TE
             self.advance()
         return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
@@ -275,11 +280,11 @@ class Lexer:
         pos_start = self.pos.copy()
         self.advance()
 
-        if self.current_char == '=':
+        if self.current_char == "=":
             tok_type = TT_DE
             self.advance()
 
-        if self.current_char == '/':
+        if self.current_char == "/":
             tok_type = TT_IDIV
             self.advance()
 
@@ -289,7 +294,7 @@ class Lexer:
         pos_start = self.pos.copy()
         self.advance()
 
-        if self.current_char == '=':
+        if self.current_char == "=":
             self.advance()
             return Token(TT_MDE, pos_start=pos_start, pos_end=self.pos)
         return Token(TT_MOD, pos_start=pos_start, pos_end=self.pos)
@@ -299,7 +304,7 @@ class Lexer:
         pos_start = self.pos.copy()
         self.advance()
 
-        if self.current_char == '=':
+        if self.current_char == "=":
             tok_type = TT_POWE
             self.advance()
 
@@ -309,7 +314,7 @@ class Lexer:
         multi_line = False
         self.advance()
 
-        if self.current_char == '!':
+        if self.current_char == "!":
             multi_line = True
             self.advance()
 
@@ -317,14 +322,12 @@ class Lexer:
             if self.current_char == None:
                 return
             if multi_line:
-                if self.current_char == '!':
+                if self.current_char == "!":
                     self.advance()
-                    if self.current_char == '#':
+                    if self.current_char == "#":
                         self.advance()
                         return
             else:
-                if self.current_char == '\n':
+                if self.current_char == "\n":
                     return
             self.advance()
-
-        
