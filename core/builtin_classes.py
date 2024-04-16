@@ -86,6 +86,8 @@ def method(f):
 
 # Decorator to check argument types
 def check(types, defaults=None):
+    if defaults is None:
+        defaults = [None] * len(types)
     def _deco(f):
         def wrapper(self, args):
             res = RTResult()
