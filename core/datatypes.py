@@ -764,6 +764,10 @@ class Type(Value):
             self.type = 'Type'
         elif self.variable.__class__.__name__ == 'BuiltInFunction':
             self.type = 'BuiltInFunction'
+        elif self.variable.__class__.__name__ == 'BuiltInClass':
+            self.type = 'BuiltInClass'
+        elif self.variable.__class__.__name__ == 'BuiltInInstance':
+            self.type = 'BuiltInInstance'
         else:
             self.type = 'unknown'
 
@@ -859,6 +863,7 @@ class BaseInstance(Value, ABC):
         super().__init__()
         self.parent_class = parent_class
         self.symbol_table = SymbolTable(symbol_table)
+        self.value = f'<type {self.__class__.__name__}>'
 
     @abstractmethod
     def operator(self, operator, *args): ...
@@ -952,6 +957,7 @@ class BaseClass(Value, ABC):
     def __init__(self, name):
         super().__init__()
         self.name = name
+        self.value = f'<type {self.__class__.__name__}>'
 
     @abstractmethod
     def get(self, name): ...
