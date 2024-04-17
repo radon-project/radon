@@ -594,3 +594,25 @@ class Interpreter:
         )
         context.symbol_table.set(node.class_name_tok.value, cls_)
         return res.success(cls_)
+
+    def visit_AssertNode(self, node, context):
+        res = RTResult()
+        condition = res.register(self.visit(node.condition, context))
+        if res.should_return():
+            return res
+        if not condition.is_true():
+            message = "Assertion failed"
+            if node.message != None:
+                message = res.register(self.visit(node.message, context))
+                if res.should_return():
+                    return res
+                if not isinstance(message, String):
+                    return res.failure(
+                        RTError(node.message.pos_start, node.message.pos_end, f"Assertion message must be a string", context)
+                    )
+                message = f"Assertion failed: {message.value}"
+
+            return res.failure(
+                RTError(node.condition.pos_start, node.condition.pos_end, message, context)
+            )
+        return res.success(condition)

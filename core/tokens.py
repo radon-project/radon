@@ -113,6 +113,7 @@ KEYWORDS = [
     "global",
     "const",
     "static",
+    "assert",
 ]
 
 
