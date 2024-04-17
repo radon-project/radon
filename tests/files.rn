@@ -1,15 +1,15 @@
 
-f = File("hello.txt", "w")
-f.write("Hello, World!")
+f = File("tests/hello.txt", "w")
+f.write("Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
 f.close()
 
-f = File("hello.txt", "r")
+f = File("tests/hello.txt", "r")
 print("------------")
 print(f.read())
 print("------------")
 f.close()
 
-f = File("hello.txt") # No mode == "r"
+f = File("tests/hello.txt") # No mode == "r"
 print("|> " + f.read(4) + " <|")
 print("|> " + f.read(4) + " <|")
 f.close()
@@ -30,3 +30,14 @@ try {
     print(e)
 }
 
+try {
+    File("hello", "unknown_mode")
+} catch as e {
+    print(e)
+}
+
+try {
+    File("hello", "r", 69)
+} catch as e {
+    print(e)
+}
