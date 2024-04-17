@@ -131,10 +131,22 @@ def check(types, defaults=None):
     return _deco
 
 class FileObject(BuiltInObject):
+
     @operator("__constructor__")
     @check([String, String], [None, String("r")])
     def constructor(self, path, mode):
+        allowed_modes = ["r", "w", "a", "r+", "w+", "a+"] # Allowed modes for opening files
         res = RTResult()
+        if mode.value not in allowed_modes:
+            # Not throwing errors here, passing silently.
+            return res.failure(
+                RTError(
+                    mode.pos_start,
+                    mode.pos_end,
+                    f"Invalid mode '{mode.value}'",
+                    mode.context
+                )
+            )
         self.file = open(path.value, mode.value)
         return res.success(None)
 
