@@ -2,7 +2,7 @@
 
 class Math {
     fun __constructor__() {
-        1 / (0 and "Cannot instantiate `Math` class")
+        assert false, "Cannot instantiate `Math` class"
     }
     static const PI = 3.14159265358979323846
 
