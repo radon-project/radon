@@ -71,6 +71,9 @@ def record_tests(directory="tests") -> int:
             continue
         print(f"Recording {test!r}...", end="", flush=True)
         output = run_test(f"{directory}/{test}")
+        if os.getcwd() in (output.stdout + output.stderr):
+            print(f"\nERROR: test {test!r} accidentally depends on current directory")
+            return 1
         json_file = f"{directory}/{test}.json"
         output.dump(json_file)
         print(f"\rRecorded {test!r}" + " " * 20)
