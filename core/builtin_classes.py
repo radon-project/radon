@@ -135,7 +135,7 @@ class FileObject(BuiltInObject):
     @operator("__constructor__")
     @check([String, String], [None, String("r")])
     def constructor(self, path, mode):
-        allowed_modes = ["r", "w", "a", "r+", "w+", "a+"] # Allowed modes for opening files
+        allowed_modes = [None, "r", "w", "a", "r+", "w+", "a+"] # Allowed modes for opening files
         res = RTResult()
         if mode.value not in allowed_modes:
             # Not throwing errors here, passing silently.
@@ -170,6 +170,32 @@ class FileObject(BuiltInObject):
                 RTError(count.pos_start, count.pos_end, f"Could not read from file: {e.strerror}", count.context)
             )
 
+    @args([])
+    @method
+    def readline(ctx):
+        res = RTResult()
+        self = ctx.symbol_table.get("this")
+        try:
+            value = self.file.readline()
+            return res.success(String(value))
+        except OSError as e:
+            return res.failure(
+                RTError(None, None, f"Could not read from file: {e.strerror}", None)
+            )
+
+    @args([])
+    @method
+    def readlines(ctx):
+        res = RTResult()
+        self = ctx.symbol_table.get("this")
+        try:
+            value = self.file.readlines()
+            return res.success(Array([String(line) for line in value]))
+        except OSError as e:
+            return res.failure(
+                RTError(None, None, f"Could not read from file: {e.strerror}", None)
+            )
+
     @args(["data"])
     @method
     def write(ctx):
@@ -195,4 +221,40 @@ class FileObject(BuiltInObject):
         self.file.close()
         return res.success(Number.null)
 
+    @args([])
+    @method
+    def is_closed(ctx):
+        res = RTResult()
+        self = ctx.symbol_table.get("this")
+        return res.success(Boolean(self.file.closed))
+
+
+class StringObject(BuiltInObject):
+    @operator("__constructor__")
+    @check([String])
+    def constructor(self, string: String):
+        self.value = string.value
+        return None
+
+    @operator("__len__")
+    def len(self):
+        # return Number(len(self.value))
+        res = RTResult()
+        return res.success(Number(len(self.value)))
+    
+    @operator("__add__")
+    @check([String])
+    def add(self, other):
+        res = RTResult()
+        # return String(self.value + other.value)
+        return res.success(String(self.value + other.value))
+
+    @args([])
+    @method
+    def upper(ctx):
+        res = RTResult()
+        self = ctx.symbol_table.get("this")
+        return res.success(String(self.value.upper()))
+
 global_symbol_table.set("File", BuiltInClass("File", FileObject))
+global_symbol_table.set("String", BuiltInClass("String", StringObject))
