@@ -281,55 +281,56 @@ class Number(Value):
 class Boolean(Value):
     def __init__(self, value):
         super().__init__()
-        self.value = value
+        self.__value = value
+        self.value = self.__str__()
 
     def anded_by(self, other):
-        return Boolean(self.value and other.value).set_context(self.context), None
+        return Boolean(self.__value and other.__value).set_context(self.context), None
 
     def ored_by(self, other):
-        return Boolean(self.value or other.value).set_context(self.context), None
+        return Boolean(self.__value or other.__value).set_context(self.context), None
 
     def notted(self):
-        return Boolean(not self.value).set_context(self.context), None
+        return Boolean(not self.__value).set_context(self.context), None
 
     def get_comparison_eq(self, other):
         if isinstance(other, Boolean):
-            return Boolean(int(self.value == other.value)).set_context(self.context), None
+            return Boolean(int(self.__value == other.__value)).set_context(self.context), None
         elif isinstance(other, Number):
-            return Boolean(int(self.value == other.value)).set_context(self.context), None
+            return Boolean(int(self.__value == other.value)).set_context(self.context), None
         elif isinstance(other, String):
-            return Boolean(int(self.value == other.value)).set_context(self.context), None
+            return Boolean(int(self.__value == other.value)).set_context(self.context), None
         elif isinstance(other, Array):
-            return Boolean(int(self.value == other.elements)).set_context(self.context), None
+            return Boolean(int(self.__value == other.elements)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
     def get_comparison_ne(self, other):
         if isinstance(other, Boolean):
-            return Boolean(int(self.value != other.value)).set_context(self.context), None
+            return Boolean(int(self.__value != other.__value)).set_context(self.context), None
         elif isinstance(other, Number):
-            return Boolean(int(self.value != other.value)).set_context(self.context), None
+            return Boolean(int(self.__value != other.value)).set_context(self.context), None
         elif isinstance(other, String):
-            return Boolean(int(self.value != other.value)).set_context(self.context), None
+            return Boolean(int(self.__value != other.value)).set_context(self.context), None
         elif isinstance(other, Array):
-            return Boolean(int(self.value != other.elements)).set_context(self.context), None
+            return Boolean(int(self.__value != other.elements)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
     def copy(self):
-        copy = Boolean(self.value)
+        copy = Boolean(self.__value)
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
 
     def is_true(self):
-        return self.value
+        return self.__value
 
     def __str__(self):
-        return "true" if self.value else "false"
+        return "true" if self.__value else "false"
 
     def __repr__(self):
-        return "true" if self.value else "false"
+        return "true" if self.__value else "false"
 
 
 Number.null = Number(0)
