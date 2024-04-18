@@ -463,7 +463,7 @@ class BuiltInFunction(BaseFunction):
                 script = f.read()
         except Exception as e:
             if run.hide_paths:
-                module = "[REDACTED]"
+                module = "<stdin>"
             return RTResult().failure(
                 RTError(self.pos_start, self.pos_end, f'Failed to load script "{module}"\n' + str(e), exec_ctx)
             )
@@ -472,7 +472,7 @@ class BuiltInFunction(BaseFunction):
 
         if error:
             if run.hide_paths:
-                module = "[REDACTED]"
+                module = "<stdin>"
             return RTResult().failure(
                 RTError(
                     self.pos_start,
@@ -498,7 +498,7 @@ def run(fn, text, context=None, entry_pos=None, return_result=False, hide_paths=
         hide_paths = run.hide_paths = True  # Once hidden, forever hidden
 
     # Generate tokens
-    fn = "[REDACTED]" if not hide_paths else fn
+    fn = "<stdin>" if not hide_paths else fn
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
     if error:

@@ -608,11 +608,11 @@ class Interpreter:
                     return res
                 if not isinstance(message, String):
                     return res.failure(
-                        RTError(node.message.pos_start, node.message.pos_end, f"Assertion message must be a string", context)
+                        RTError(
+                            node.message.pos_start, node.message.pos_end, f"Assertion message must be a string", context
+                        )
                     )
                 message = f"Assertion failed: {message.value}"
 
-            return res.failure(
-                RTError(node.condition.pos_start, node.condition.pos_end, message, context)
-            )
+            return res.failure(RTError(node.condition.pos_start, node.condition.pos_end, message, context))
         return res.success(condition)
