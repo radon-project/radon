@@ -459,6 +459,12 @@ class Parser:
                 return res
             node = class_node
 
+        elif tok.matches(TT_KEYWORD, "assert"):
+            assert_expr = res.register(self.assert_expr())
+            if res.error:
+                return res
+            node = assert_expr
+
         elif tok.type == TT_LBRACE:
             hashmap_expr = res.register(self.hashmap_expr())
             if res.error:
@@ -549,6 +555,24 @@ class Parser:
             return res.success(IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, *index))
 
         return res.success(node)
+
+    def assert_expr(self):
+        res = ParseResult()
+        assert self.current_tok.matches(TT_KEYWORD, "assert"), "`assert`-ception :D"
+        self.advance(res)
+
+        condition = res.register(self.expr())
+        if res.error:
+            return res
+
+        message = None
+        if self.current_tok.type == TT_COMMA:
+            self.advance(res)
+            message = res.register(self.expr())
+            if res.error:
+                return res
+
+        return res.success(AssertNode(condition, message, self.current_tok.pos_start, self.current_tok.pos_end))
 
     def array_expr(self):
         res = ParseResult()
