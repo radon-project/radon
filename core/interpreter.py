@@ -499,10 +499,6 @@ class Interpreter:
         if res.should_return():
             return res
 
-        if isinstance(indexee, HashMap):
-            value = indexee.values.get(node.index_start.value)
-            return res.success(value)
-
         index_start = res.register(self.visit(node.index_start, context))
         if res.should_return():
             return res
