@@ -1,7 +1,14 @@
 
-const x = 69
+try {
+    const x = 69
 
-print(x)
-x = 10
-print(x)
+    print(x)
+    x = 10
+    print(x)
+} catch as _ {
+    class Foo {
+        static const x = 42
+        x = 45
+    }
+}
 

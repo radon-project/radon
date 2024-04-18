@@ -580,7 +580,7 @@ class Interpreter:
     def visit_ClassNode(self, node, context):
         res = RTResult()
 
-        ctx = Context(node.class_name_tok.value, node.pos_start)
+        ctx = Context(node.class_name_tok.value, context, node.pos_start)
         ctx.symbol_table = SymbolTable(context.symbol_table)
 
         res.register(self.visit(node.body_nodes, ctx))
