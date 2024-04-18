@@ -2,3 +2,5 @@ __pycache__
 .venv
 .vscode
 hello.txt # Used by a test
+.ruff_cache
+.mypy_cache
