@@ -5,10 +5,16 @@ try {
     print(x)
     x = 10
     print(x)
-} catch as _ {
+} catch as e {
+    print(e)
+}
+
+try {
     class Foo {
         static const x = 42
         x = 45
     }
+} catch as e {
+    print(e)
 }
 
