@@ -1,0 +1,35 @@
+# HashMap data type in Radon
+
+hashmap = {
+    "name": "John",
+    "age": 23,
+    "address": "123 Main St"
+}
+print(hashmap)
+
+value = hashmap["name"]
+print(value)
+
+hashmap["bcd"] = 234
+hashmap["abc"] = 456
+
+print(hashmap)
+adrs = "address"
+print(hashmap[adrs])
+
+for key in hashmap {
+    print(key)
+    print(type(key))
+    print(hashmap[key])
+}
+
+keys = ["name", "age", "address", "noexist"]
+
+try {
+    for key in keys {
+        print(hashmap[key])
+    }
+} catch as e {
+    print(e)
+}
+

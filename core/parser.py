@@ -495,37 +495,32 @@ class Parser:
             # [index_start:index_end:index_step] or [index_start:index_end] or [index_start]
 
             # if it's a HashMap it will be key as string get and set
-            if self.current_tok.type == TT_STRING or self.current_tok.type == TT_IDENTIFIER:
-                if self.current_tok.type == TT_IDENTIFIER:
-                    # get the value from identifier token type
-                    key = res.register(self.expr())
-                    if res.error:
-                        return res
-
-                elif self.current_tok.type == TT_STRING:
-                    key = self.current_tok
-
-                self.advance(res)
-
-                if self.current_tok.type != TT_RSQUARE:
-                    return res.failure(InvalidSyntaxError(tok.pos_start, self.current_tok.pos_end, "Expected ']'"))
-                self.advance(res)
-
-                if self.current_tok.type == TT_EQ:
-                    self.advance(res)
-
-                    value = res.register(self.expr())
-                    if res.error:
-                        return res
-
-                    return res.success(IndexSetNode(node, key, value, tok.pos_start, self.current_tok.pos_end))
-
-                return res.success(IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, key))
-
-            if self.current_tok.type != TT_INT:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected int")
-                )
+#            if self.current_tok.type == TT_STRING or self.current_tok.type == TT_IDENTIFIER:
+#                if self.current_tok.type == TT_IDENTIFIER:
+#                    # get the value from identifier token type
+#                    key = res.register(self.expr())
+#                    if res.error:
+#                        return res
+#
+#                elif self.current_tok.type == TT_STRING:
+#                    key = self.current_tok
+#
+#                self.advance(res)
+#
+#                if self.current_tok.type != TT_RSQUARE:
+#                    return res.failure(InvalidSyntaxError(tok.pos_start, self.current_tok.pos_end, "Expected ']'"))
+#                self.advance(res)
+#
+#                if self.current_tok.type == TT_EQ:
+#                    self.advance(res)
+#
+#                    value = res.register(self.expr())
+#                    if res.error:
+#                        return res
+#
+#                    return res.success(IndexSetNode(node, key, value, tok.pos_start, self.current_tok.pos_end))
+#
+#                return res.success(IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, key))
 
             index = []
             while self.current_tok.type != TT_RSQUARE:
