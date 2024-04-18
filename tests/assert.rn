@@ -4,4 +4,9 @@ assert true, "no error message because condition was true"
 const x = assert 42, "assert can also be an expression"
 print(x)
 
-assert false, "error message because condition was false"
+
+try {
+    assert false, "error message because condition was false"
+} catch as e {
+    print(e)
+}

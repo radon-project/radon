@@ -125,7 +125,7 @@ def check(types, defaults=None):
                             f"Expected {typ.__name__} for argument {i} (0-based) of {full_func_name}, got {arg.__class__.__name__} instead",
                             self.context))
                 real_args.append(arg)
-            return res.success(f(self, *real_args))
+            return f(self, *real_args)
         wrapper.__name__ = f.__name__
         return wrapper
     return _deco
