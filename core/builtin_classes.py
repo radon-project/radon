@@ -238,7 +238,6 @@ class StringObject(BuiltInObject):
 
     @operator("__len__")
     def len(self):
-        # return Number(len(self.value))
         res = RTResult()
         return res.success(Number(len(self.value)))
     
@@ -246,7 +245,6 @@ class StringObject(BuiltInObject):
     @check([String])
     def add(self, other):
         res = RTResult()
-        # return String(self.value + other.value)
         return res.success(String(self.value + other.value))
 
     @args([])
