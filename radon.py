@@ -51,7 +51,12 @@ def shell():
 
 
 parser = argparse.ArgumentParser(description="Radon programming language")
-parser.add_argument("-p", "--hide-file-paths", help="Don't show file paths in error messages [NOT CURRENTLY WORKING]", action="store_true")
+parser.add_argument(
+    "-p",
+    "--hide-file-paths",
+    help="Don't show file paths in error messages [NOT CURRENTLY WORKING]",
+    action="store_true",
+)
 parser.add_argument("-s", "--source", type=str, help="Radon source file", nargs="*")
 parser.add_argument("-c", "--command", type=str, help="Command to execute as string")
 parser.add_argument("-v", "--version", help="Version info", action="store_true")

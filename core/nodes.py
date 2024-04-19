@@ -294,6 +294,7 @@ class ClassNode:
 
         self.child = None
 
+
 class AssertNode:
     def __init__(self, condition_node, message_node, pos_start, pos_end):
         self.condition = condition_node
@@ -302,4 +303,3 @@ class AssertNode:
         self.pos_end = pos_end
 
         self.child = None
-
