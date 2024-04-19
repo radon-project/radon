@@ -507,7 +507,7 @@ def run(fn, text, context=None, entry_pos=None, return_result=False, hide_paths=
         hide_paths = run.hide_paths = True  # Once hidden, forever hidden
 
     # Generate tokens
-    fn = "[REDACTED]" if not hide_paths else fn
+    fn = "[REDACTED]" if hide_paths else fn
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
     if error:
