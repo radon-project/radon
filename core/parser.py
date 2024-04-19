@@ -355,11 +355,18 @@ class Parser:
         if self.current_tok.type == TT_LPAREN:
             self.advance(res)
             arg_nodes = []
+            kwarg_nodes = {}
 
             if self.current_tok.type == TT_RPAREN:
                 self.advance(res)
             else:
-                arg_nodes.append(res.register(self.expr()))
+                kw, val = res.register(self.func_arg())
+                if res.error:
+                    return res
+                if kw is None:
+                    arg_nodes.append(val)
+                else:
+                    kwarg_nodes[kw] = val
                 if res.error:
                     return res.failure(
                         InvalidSyntaxError(
@@ -372,9 +379,13 @@ class Parser:
                 while self.current_tok.type == TT_COMMA:
                     self.advance(res)
 
-                    arg_nodes.append(res.register(self.expr()))
+                    kw, val = res.register(self.func_arg())
                     if res.error:
                         return res
+                    if kw is None:
+                        arg_nodes.append(val)
+                    else:
+                        kwarg_nodes[kw] = val
 
                 if self.current_tok.type != TT_RPAREN:
                     return res.failure(
@@ -382,8 +393,24 @@ class Parser:
                     )
 
                 self.advance(res)
-            return res.success(CallNode(index, arg_nodes))
+            return res.success(CallNode(index, arg_nodes, kwarg_nodes))
         return res.success(index)
+
+    def func_arg(self):
+        res = ParseResult()
+
+        kw = None
+        if (len(self.tokens[self.tok_idx:]) >= 2
+            and self.tokens[self.tok_idx+0].type == TT_IDENTIFIER
+            and self.tokens[self.tok_idx+1].type == TT_EQ):
+
+            kw = self.tokens[self.tok_idx].value
+            self.advance(res)
+            self.advance(res)
+        val = res.register(self.expr())
+        if res.error:
+            return res
+        return res.success((kw, val))
 
     def atom(self):
         res = ParseResult()
