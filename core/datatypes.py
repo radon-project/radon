@@ -865,7 +865,8 @@ class BaseFunction(Value):
     def populate_args(self, arg_names, args, kwargs, defaults, exec_ctx):
         for i in range(len(arg_names)):
             arg_name = arg_names[i]
-            if arg_name in kwargs: continue
+            if arg_name in kwargs:
+                continue
             arg_value = defaults[i] if i >= len(args) else args[i]
             arg_value.set_context(exec_ctx)
             exec_ctx.symbol_table.set(arg_name, arg_value)
@@ -891,8 +892,7 @@ class BaseInstance(Value, ABC):
         self.value = f"<type {self.__class__.__name__}>"
 
     @abstractmethod
-    def operator(self, operator, *args):
-        ...
+    def operator(self, operator, *args): ...
 
     def added_to(self, other):
         return self.operator("__add__", other)
@@ -984,8 +984,7 @@ class BaseClass(Value, ABC):
         self.value = f"<type {self.__class__.__name__}>"
 
     @abstractmethod
-    def get(self, name):
-        ...
+    def get(self, name): ...
 
     def dived_by(self, other):
         if not isinstance(other, String):
@@ -998,12 +997,10 @@ class BaseClass(Value, ABC):
         return value, None
 
     @abstractmethod
-    def create(self, args):
-        ...
+    def create(self, args): ...
 
     @abstractmethod
-    def init(self, inst, args, kwargs):
-        ...
+    def init(self, inst, args, kwargs): ...
 
     def execute(self, args, kwargs):
         res = RTResult()
