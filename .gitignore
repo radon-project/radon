@@ -4,3 +4,6 @@ __pycache__
 hello.txt # Used by a test
 .ruff_cache
 .mypy_cache
+radon.html
+radon.spec
+
