@@ -409,19 +409,25 @@ class Interpreter:
 
     def visit_CallNode(self, node, context):
         res = RTResult()
-        args = []
 
         value_to_call = res.register(self.visit(node.node_to_call, context))
         if res.should_return():
             return res
         value_to_call = value_to_call.copy().set_pos(node.pos_start, node.pos_end)
 
+        args = []
         for arg_node in node.arg_nodes:
             args.append(res.register(self.visit(arg_node, context)))
             if res.should_return():
                 return res
 
-        return_value = res.register(value_to_call.execute(args))
+        kwargs = {}
+        for kw, kwarg_node in node.kwarg_nodes.items():
+            kwargs[kw] = res.register(self.visit(kwarg_node, context))
+            if res.should_return():
+                return res
+
+        return_value = res.register(value_to_call.execute(args, kwargs))
         if res.should_return():
             return res
         return_value = return_value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)

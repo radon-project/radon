@@ -73,7 +73,7 @@ class Value:
     def set_index(self, index, value):
         return None, self.illegal_operation(index, value)
 
-    def execute(self, args):
+    def execute(self, args, kwargs):
         return RTResult().failure(self.illegal_operation())
 
     def copy(self):
@@ -824,10 +824,11 @@ class BaseFunction(Value):
         new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
         return new_context
 
-    def check_args(self, arg_names, args, defaults):
+    def check_args(self, arg_names, args, kwargs, defaults):
         res = RTResult()
 
-        if len(args) > len(arg_names):
+        args_count = len(args) + len(kwargs)
+        if args_count > len(arg_names):
             return res.failure(
                 RTError(
                     self.pos_start,
@@ -837,31 +838,49 @@ class BaseFunction(Value):
                 )
             )
 
-        if len(args) < len(arg_names) - len(list(filter(lambda default: default is not None, defaults))):
+        defaults_count = sum(1 for default in defaults if default is not None)
+        if args_count < len(arg_names) - defaults_count:
             return res.failure(
                 RTError(
                     self.pos_start,
                     self.pos_end,
-                    f"{(len(arg_names) - len(list(filter(lambda default: default is not None, defaults)))) - len(args)} too few args passed into {self}",
+                    f"{args_count - defaults_count} too few args passed into {self}",
                     self.context,
                 )
             )
 
+        for kw in kwargs.keys():
+            if kw not in arg_names:
+                return res.failure(
+                    RTError(
+                        self.pos_start,
+                        self.pos_end,
+                        f"{kw} is not a valid keyword arg passed into {self}",
+                        self.context,
+                    )
+                )
+
         return res.success(None)
 
-    def populate_args(self, arg_names, args, defaults, exec_ctx):
+    def populate_args(self, arg_names, args, kwargs, defaults, exec_ctx):
         for i in range(len(arg_names)):
             arg_name = arg_names[i]
+            if arg_name in kwargs:
+                continue
             arg_value = defaults[i] if i >= len(args) else args[i]
             arg_value.set_context(exec_ctx)
             exec_ctx.symbol_table.set(arg_name, arg_value)
 
-    def check_and_populate_args(self, arg_names, args, defaults, exec_ctx):
+        for kw, kwarg in kwargs.items():
+            kwarg.set_context(exec_ctx)
+            exec_ctx.symbol_table.set(kw, kwarg)
+
+    def check_and_populate_args(self, arg_names, args, kwargs, defaults, exec_ctx):
         res = RTResult()
-        res.register(self.check_args(arg_names, args, defaults))
+        res.register(self.check_args(arg_names, args, kwargs, defaults))
         if res.should_return():
             return res
-        self.populate_args(arg_names, args, defaults, exec_ctx)
+        self.populate_args(arg_names, args, kwargs, defaults, exec_ctx)
         return res.success(None)
 
 
@@ -873,8 +892,7 @@ class BaseInstance(Value, ABC):
         self.value = f"<type {self.__class__.__name__}>"
 
     @abstractmethod
-    def operator(self, operator, *args):
-        ...
+    def operator(self, operator, *args): ...
 
     def added_to(self, other):
         return self.operator("__add__", other)
@@ -923,16 +941,16 @@ class BaseInstance(Value, ABC):
         return self.operator("__iter__", other).gen()
 
     def get_index(self, index):
-        return self.operator("__getitem__", other)
+        return self.operator("__getitem__", index)
 
     def set_index(self, index, value):
-        return self.operator("__setitem__", other)
+        return self.operator("__setitem__", index, value)
 
-    def execute(self, args):
-        return self.operator("__call__", other)
+    def execute(self, args, kwargs):
+        return self.operator("__call__", *args, **kwargs)
 
     def is_true(self):
-        return self.operator("__truthy__", other)
+        return self.operator("__truthy__")
 
     def copy(self):
         return self
@@ -949,7 +967,7 @@ class Instance(BaseInstance):
         if method == None or not isinstance(method, Function):
             return None, RTError(self.pos_start, self.pos_end, f"Function '{operator}' not defined", self.context)
 
-        value = res.register(method.execute(list(args)))
+        value = res.register(method.execute(list(args), {}))
         if res.should_return():
             return None, res.error
         return value, None
@@ -966,8 +984,7 @@ class BaseClass(Value, ABC):
         self.value = f"<type {self.__class__.__name__}>"
 
     @abstractmethod
-    def get(self, name):
-        ...
+    def get(self, name): ...
 
     def dived_by(self, other):
         if not isinstance(other, String):
@@ -980,21 +997,19 @@ class BaseClass(Value, ABC):
         return value, None
 
     @abstractmethod
-    def create(self, args):
-        ...
+    def create(self, args): ...
 
     @abstractmethod
-    def init(self, inst, args):
-        ...
+    def init(self, inst, args, kwargs): ...
 
-    def execute(self, args):
+    def execute(self, args, kwargs):
         res = RTResult()
 
         inst = res.register(self.create(args))
         if res.should_return():
             return res
 
-        res.register(self.init(inst, args))
+        res.register(self.init(inst, args, kwargs))
         if res.should_return():
             return res
         return res.success(inst)
@@ -1033,7 +1048,7 @@ class Class(BaseClass):
         inst.symbol_table.set("this", inst)
         return res.success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
 
-    def init(self, inst, args):
+    def init(self, inst, args, kwargs):
         res = RTResult()
         method = inst.symbol_table.symbols.get("__constructor__", None)
 
@@ -1042,7 +1057,7 @@ class Class(BaseClass):
                 RTError(self.pos_start, self.pos_end, f"Function '{self.name}' not defined", self.context)
             )
 
-        res.register(method.execute(args))
+        res.register(method.execute(args, kwargs))
         if res.should_return():
             return res
 
@@ -1060,14 +1075,14 @@ class Function(BaseFunction):
         self.defaults = defaults
         self.should_auto_return = should_auto_return
 
-    def execute(self, args):
+    def execute(self, args, kwargs):
         from core.interpreter import Interpreter  # Lazy import
 
         res = RTResult()
         interpreter = Interpreter()
         exec_ctx = self.generate_new_context()
 
-        res.register(self.check_and_populate_args(self.arg_names, args, self.defaults, exec_ctx))
+        res.register(self.check_and_populate_args(self.arg_names, args, kwargs, self.defaults, exec_ctx))
         if res.should_return():
             return res
 

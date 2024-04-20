@@ -13,8 +13,17 @@ class BuiltInClass(BaseClass):
         inst = BuiltInInstance(self)
         return RTResult().success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
 
-    def init(self, inst, args):
+    def init(self, inst, args, kwargs):
         res = RTResult()
+        if len(kwargs) > 0:
+            return res.failure(
+                RTError(
+                    list(kwargs.values())[0].pos_start,
+                    list(kwargs.values())[-1].pos_end,
+                    "Keyword arguments are not yet supported for built-in functions.",
+                    list(kwargs.values())[0].context,
+                )
+            )
         _, error = inst.operator("__constructor__", args)
         if error:
             return res.failure(error)

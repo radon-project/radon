@@ -188,9 +188,10 @@ class FuncDefNode:
 
 
 class CallNode:
-    def __init__(self, node_to_call, arg_nodes):
+    def __init__(self, node_to_call, arg_nodes, kwarg_nodes):
         self.node_to_call = node_to_call
         self.arg_nodes = arg_nodes
+        self.kwarg_nodes = kwarg_nodes
 
         self.pos_start = self.node_to_call.pos_start
 

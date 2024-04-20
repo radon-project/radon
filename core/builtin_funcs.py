@@ -25,8 +25,17 @@ class BuiltInFunction(BaseFunction):
         super().__init__(name)
         self.func = func
 
-    def execute(self, args):
+    def execute(self, args, kwargs):
         res = RTResult()
+        if len(kwargs) > 0:
+            return res.failure(
+                RTError(
+                    list(kwargs.values())[0].pos_start,
+                    list(kwargs.values())[-1].pos_end,
+                    "Keyword arguments are not yet supported for built-in functions.",
+                    list(kwargs.values())[0].context,
+                )
+            )
         exec_ctx = self.generate_new_context()
 
         if self.func is None:
@@ -35,7 +44,7 @@ class BuiltInFunction(BaseFunction):
         else:
             method = self.func
 
-        res.register(self.check_and_populate_args(method.arg_names, args, method.defaults, exec_ctx))
+        res.register(self.check_and_populate_args(method.arg_names, args, kwargs, method.defaults, exec_ctx))
         if res.should_return():
             return res
 
@@ -498,7 +507,8 @@ def run(fn, text, context=None, entry_pos=None, return_result=False, hide_paths=
         hide_paths = run.hide_paths = True  # Once hidden, forever hidden
 
     # Generate tokens
-    fn = "<stdin>" if not hide_paths else fn
+    fn = "[REDACTED]" if hide_paths else fn
+
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
     if error:
