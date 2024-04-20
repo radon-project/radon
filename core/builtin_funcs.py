@@ -237,27 +237,6 @@ class BuiltInFunction(BaseFunction):
         except:
             return RTResult().failure(IndexError(self.pos_start, self.pos_end, "Could't find that index", exec_ctx))
 
-    @args(["array", "start", "end"])
-    def execute_arr_slice(self, exec_ctx):
-        array = exec_ctx.symbol_table.get("array")
-        start = exec_ctx.symbol_table.get("start")
-        end = exec_ctx.symbol_table.get("end")
-
-        if not isinstance(array, Array):
-            return RTResult().failure(RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx))
-
-        if not isinstance(start, Number):
-            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Second argument must be number", exec_ctx))
-
-        if not isinstance(end, Number):
-            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Third argument must be number", exec_ctx))
-
-        try:
-            _list = Array(array.elements[start.value : end.value])
-        except:
-            return RTResult().failure(IndexError(self.pos_start, self.pos_end, "Could't find that index", exec_ctx))
-        return RTResult().success(_list)
-
     @args(["array", "value"])
     def execute_arr_chunk(self, exec_ctx):
         array = exec_ctx.symbol_table.get("array")
@@ -312,27 +291,6 @@ class BuiltInFunction(BaseFunction):
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "Argument must be string", exec_ctx))
 
         return RTResult().success(Number(len(string.value)))
-
-    @args(["string", "start", "end"])
-    def execute_str_slice(self, exec_ctx):
-        string = exec_ctx.symbol_table.get("string")
-        start = exec_ctx.symbol_table.get("start")
-        end = exec_ctx.symbol_table.get("end")
-
-        if not isinstance(string, String):
-            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Argument must be string", exec_ctx))
-
-        if not isinstance(string, Number):
-            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Argument must be number", exec_ctx))
-
-        if not isinstance(string, Number):
-            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Argument must be number", exec_ctx))
-
-        try:
-            return RTResult().success(String(string.value[start:end]))
-
-        except Exception as e:
-            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could't able to slice", exec_ctx))
 
     @args(["string", "value"])
     def execute_str_find(self, exec_ctx):
@@ -558,13 +516,11 @@ BuiltInFunction.arr_append = BuiltInFunction("arr_append")
 BuiltInFunction.arr_pop = BuiltInFunction("arr_pop")
 BuiltInFunction.arr_extend = BuiltInFunction("arr_extend")
 BuiltInFunction.arr_find = BuiltInFunction("arr_find")
-BuiltInFunction.arr_slice = BuiltInFunction("arr_slice")
 BuiltInFunction.arr_len = BuiltInFunction("arr_len")
 BuiltInFunction.arr_chunk = BuiltInFunction("arr_chunk")
 BuiltInFunction.arr_get = BuiltInFunction("arr_get")
 # String methods
 BuiltInFunction.str_len = BuiltInFunction("str_len")
-BuiltInFunction.str_slice = BuiltInFunction("str_slice")
 BuiltInFunction.str_find = BuiltInFunction("str_find")
 BuiltInFunction.str_get = BuiltInFunction("str_get")
 # Typecase methods
@@ -608,13 +564,11 @@ global_symbol_table.set("arr_append", BuiltInFunction.arr_append)
 global_symbol_table.set("arr_pop", BuiltInFunction.arr_pop)
 global_symbol_table.set("arr_extend", BuiltInFunction.arr_extend)
 global_symbol_table.set("arr_find", BuiltInFunction.arr_find)
-global_symbol_table.set("arr_slice", BuiltInFunction.arr_slice)
 global_symbol_table.set("arr_len", BuiltInFunction.arr_len)
 global_symbol_table.set("arr_chunk", BuiltInFunction.arr_chunk)
 global_symbol_table.set("arr_get", BuiltInFunction.arr_get)
 # String methods
 global_symbol_table.set("str_len", BuiltInFunction.str_len)
-global_symbol_table.set("str_slice", BuiltInFunction.str_slice)
 global_symbol_table.set("str_find", BuiltInFunction.str_find)
 global_symbol_table.set("str_get", BuiltInFunction.str_get)
 # Typecase methods
