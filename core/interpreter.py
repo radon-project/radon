@@ -421,19 +421,25 @@ class Interpreter:
 
     def visit_CallNode(self, node, context):
         res = RTResult()
-        args = []
 
         value_to_call = res.register(self.visit(node.node_to_call, context))
         if res.should_return():
             return res
         value_to_call = value_to_call.copy().set_pos(node.pos_start, node.pos_end)
 
+        args = []
         for arg_node in node.arg_nodes:
             args.append(res.register(self.visit(arg_node, context)))
             if res.should_return():
                 return res
 
-        return_value = res.register(value_to_call.execute(args))
+        kwargs = {}
+        for kw, kwarg_node in node.kwarg_nodes.items():
+            kwargs[kw] = res.register(self.visit(kwarg_node, context))
+            if res.should_return():
+                return res
+
+        return_value = res.register(value_to_call.execute(args, kwargs))
         if res.should_return():
             return res
         return_value = return_value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
@@ -510,10 +516,6 @@ class Interpreter:
         indexee = res.register(self.visit(node.indexee, context))
         if res.should_return():
             return res
-
-        if isinstance(indexee, HashMap):
-            value = indexee.values.get(node.index_start.value)
-            return res.success(value)
 
         index_start = res.register(self.visit(node.index_start, context))
         if res.should_return():
@@ -620,13 +622,13 @@ class Interpreter:
                     return res
                 if not isinstance(message, String):
                     return res.failure(
-                        RTError(node.message.pos_start, node.message.pos_end, f"Assertion message must be a string", context)
+                        RTError(
+                            node.message.pos_start, node.message.pos_end, f"Assertion message must be a string", context
+                        )
                     )
                 message = f"Assertion failed: {message.value}"
 
-            return res.failure(
-                RTError(node.condition.pos_start, node.condition.pos_end, message, context)
-            )
+            return res.failure(RTError(node.condition.pos_start, node.condition.pos_end, message, context))
         return res.success(condition)
 
     def visit_IncNode(self, node, context):

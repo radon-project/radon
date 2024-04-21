@@ -13,8 +13,17 @@ class BuiltInClass(BaseClass):
         inst = BuiltInInstance(self)
         return RTResult().success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
 
-    def init(self, inst, args):
+    def init(self, inst, args, kwargs):
         res = RTResult()
+        if len(kwargs) > 0:
+            return res.failure(
+                RTError(
+                    list(kwargs.values())[0].pos_start,
+                    list(kwargs.values())[-1].pos_end,
+                    "Keyword arguments are not yet supported for built-in functions.",
+                    list(kwargs.values())[0].context,
+                )
+            )
         _, error = inst.operator("__constructor__", args)
         if error:
             return res.failure(error)
@@ -84,17 +93,19 @@ def method(f):
     f.__is_method__ = True
     return f
 
+
 # Decorator to check argument types
 def check(types, defaults=None):
     if defaults is None:
         defaults = [None] * len(types)
+
     def _deco(f):
         def wrapper(self, args):
             res = RTResult()
             func_name = f.__name__
             class_name = self.parent_class.name
             full_func_name = f"{class_name}.{func_name}()"
-    
+
             # Check arg count
             if len(args) > len(types):
                 return res.failure(
@@ -102,16 +113,20 @@ def check(types, defaults=None):
                         self.pos_start,
                         self.pos_end,
                         f"{len(args) - len(types)} too many args passed into {full_func_name}",
-                        self.context))
-    
+                        self.context,
+                    )
+                )
+
             if len(args) < len(types) - len(list(filter(lambda default: default is not None, defaults))):
                 return res.failure(
                     RTError(
                         self.pos_start,
                         self.pos_end,
                         f"{(len(types) - len(list(filter(lambda default: default is not None, defaults)))) - len(args)} too few args passed into {full_func_name}",
-                        self.context))
-    
+                        self.context,
+                    )
+                )
+
             # Populate defaults
             real_args = []
             for i, typ in enumerate(types):
@@ -123,30 +138,27 @@ def check(types, defaults=None):
                             self.pos_start,
                             self.pos_end,
                             f"Expected {typ.__name__} for argument {i} (0-based) of {full_func_name}, got {arg.__class__.__name__} instead",
-                            self.context))
+                            self.context,
+                        )
+                    )
                 real_args.append(arg)
             return f(self, *real_args)
+
         wrapper.__name__ = f.__name__
         return wrapper
+
     return _deco
 
-class FileObject(BuiltInObject):
 
+class FileObject(BuiltInObject):
     @operator("__constructor__")
     @check([String, String], [None, String("r")])
     def constructor(self, path, mode):
-        allowed_modes = ["r", "w", "a", "r+", "w+", "a+"] # Allowed modes for opening files
+        allowed_modes = [None, "r", "w", "a", "r+", "w+", "a+"]  # Allowed modes for opening files
         res = RTResult()
         if mode.value not in allowed_modes:
             # Not throwing errors here, passing silently.
-            return res.failure(
-                RTError(
-                    mode.pos_start,
-                    mode.pos_end,
-                    f"Invalid mode '{mode.value}'",
-                    mode.context
-                )
-            )
+            return res.failure(RTError(mode.pos_start, mode.pos_end, f"Invalid mode '{mode.value}'", mode.context))
         self.file = open(path.value, mode.value)
         return res.success(None)
 
@@ -169,6 +181,28 @@ class FileObject(BuiltInObject):
             return res.failure(
                 RTError(count.pos_start, count.pos_end, f"Could not read from file: {e.strerror}", count.context)
             )
+
+    @args([])
+    @method
+    def readline(ctx):
+        res = RTResult()
+        self = ctx.symbol_table.get("this")
+        try:
+            value = self.file.readline()
+            return res.success(String(value))
+        except OSError as e:
+            return res.failure(RTError(None, None, f"Could not read from file: {e.strerror}", None))
+
+    @args([])
+    @method
+    def readlines(ctx):
+        res = RTResult()
+        self = ctx.symbol_table.get("this")
+        try:
+            value = self.file.readlines()
+            return res.success(Array([String(line) for line in value]))
+        except OSError as e:
+            return res.failure(RTError(None, None, f"Could not read from file: {e.strerror}", None))
 
     @args(["data"])
     @method
@@ -195,4 +229,39 @@ class FileObject(BuiltInObject):
         self.file.close()
         return res.success(Number.null)
 
+    @args([])
+    @method
+    def is_closed(ctx):
+        res = RTResult()
+        self = ctx.symbol_table.get("this")
+        return res.success(Boolean(self.file.closed))
+
+
+class StringObject(BuiltInObject):
+    @operator("__constructor__")
+    @check([String])
+    def constructor(self, string: String):
+        self.value = string.value
+        return None
+
+    @operator("__len__")
+    def len(self):
+        res = RTResult()
+        return res.success(Number(len(self.value)))
+
+    @operator("__add__")
+    @check([String])
+    def add(self, other):
+        res = RTResult()
+        return res.success(String(self.value + other.value))
+
+    @args([])
+    @method
+    def upper(ctx):
+        res = RTResult()
+        self = ctx.symbol_table.get("this")
+        return res.success(String(self.value.upper()))
+
+
 global_symbol_table.set("File", BuiltInClass("File", FileObject))
+global_symbol_table.set("String", BuiltInClass("String", StringObject))

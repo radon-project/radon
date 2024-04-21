@@ -1,0 +1,10 @@
+
+fun f(a, b) {
+    print(str(a) + " " + str(b))
+}
+
+f(1, 2)
+f(3, b=4)
+f(a=5, b=6)
+f(b=8, a=7)
+
