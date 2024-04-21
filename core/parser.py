@@ -259,23 +259,47 @@ class Parser:
             self.advance(res)
         #####
 
-        tok = self.current_tok
-        if tok.type not in (TT_EQ, TT_PLUS_PLUS, TT_MINUS_MINUS):
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '=', '++' or '--'"))
+        op_tok = self.current_tok
+        if op_tok.type not in (TT_EQ, TT_PLUS_PLUS, TT_MINUS_MINUS, TT_PE, TT_ME, TT_TE, TT_DE, TT_MDE, TT_POWE):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator")
+            )
 
-        if tok.type == TT_PLUS_PLUS:
+        if op_tok.type == TT_PLUS_PLUS:
             self.advance(res)
-            return res.success(IncNode(var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=tok.pos_end.copy()))
+            return res.success(
+                IncNode(
+                    var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
+                )
+            )
 
-        if tok.type == TT_MINUS_MINUS:
+        if op_tok.type == TT_MINUS_MINUS:
             self.advance(res)
-            return res.success(DecNode(var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=tok.pos_end.copy()))
+            return res.success(
+                DecNode(
+                    var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
+                )
+            )
 
         self.advance(res)
         assign_expr = res.register(self.expr())
         if res.error:
             return res
 
+        ASSIGN_TO_OPERATORS = {
+            TT_PE: TT_PLUS,
+            TT_ME: TT_MINUS,
+            TT_TE: TT_MUL,
+            TT_DE: TT_DIV,
+            TT_MDE: TT_MOD,
+            TT_POWE: TT_POW,
+        }
+        if op_tok.type != TT_EQ:
+            assign_expr = BinOpNode(
+                VarAccessNode.with_extra_names(var_name_tok, extra_names),
+                Token(ASSIGN_TO_OPERATORS[op_tok.type], pos_start=op_tok.pos_start, pos_end=op_tok.pos_end),
+                assign_expr,
+            )
         return res.success(VarAssignNode(var_name_tok, assign_expr, extra_names, qualifier))
 
     def comp_expr(self):

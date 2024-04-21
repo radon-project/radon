@@ -46,6 +46,14 @@ class VarAccessNode:
 
         self.child = None
 
+    @classmethod
+    def with_extra_names(cls, var_name_tok, extra_names):
+        ret = cls(var_name_tok)
+        if len(extra_names) == 0:
+            return ret
+        ret.child = cls.with_extra_names(extra_names[0], extra_names[1:])
+        return ret
+
 
 class VarAssignNode:
     def __init__(self, var_name_tok, value_node, extra_names=[], qualifier=None):
