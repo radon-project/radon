@@ -224,6 +224,11 @@ class Parser:
             qualifier = self.current_tok
             self.advance(res)
 
+        pre_tok = None
+        if self.current_tok.type in (TT_PLUS_PLUS, TT_MINUS_MINUS):
+            pre_tok = self.current_tok
+            self.advance(res)
+
         if self.current_tok.type != TT_IDENTIFIER:
             return res.failure(
                 InvalidSyntaxError(
@@ -258,6 +263,23 @@ class Parser:
             extra_names.append(self.current_tok)
             self.advance(res)
         #####
+
+        if pre_tok is not None:
+            if pre_tok.type == TT_PLUS_PLUS:
+                self.advance(res)
+                return res.success(
+                    IncNode(
+                        var_name_tok, extra_names, qualifier, pre=True, pos_start=pos_start, pos_end=pre_tok.pos_end.copy()
+                    )
+                )
+
+            if pre_tok.type == TT_MINUS_MINUS:
+                self.advance(res)
+                return res.success(
+                    DecNode(
+                        var_name_tok, extra_names, qualifier, pre=True, pos_start=pos_start, pos_end=pre_tok.pos_end.copy()
+                    )
+                )
 
         op_tok = self.current_tok
         if op_tok.type not in (TT_EQ, TT_PLUS_PLUS, TT_MINUS_MINUS, TT_PE, TT_ME, TT_TE, TT_DE, TT_MDE, TT_POWE, TT_IDE):
