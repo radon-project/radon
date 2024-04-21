@@ -80,6 +80,7 @@ TT_DE = "DE"  # Divide Equal
 TT_IDIV = "IDIV"  # Int Divide
 TT_MDE = "MDE"  # Modulo Divide Equal
 TT_POWE = "POWE"  # Power Equal
+TT_IDE = "IDE"  # Int Divide Equal
 TT_COMMA = "COMMA"  # ,
 TT_COLON = "COLON"  # :
 TT_ARROW = "ARROW"  # ->

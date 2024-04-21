@@ -41,6 +41,9 @@ print(x)
 x ^= y
 print(x)
 
+x //= y
+print(x)
+
 x %= y
 print(x)
 

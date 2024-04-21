@@ -260,7 +260,7 @@ class Parser:
         #####
 
         op_tok = self.current_tok
-        if op_tok.type not in (TT_EQ, TT_PLUS_PLUS, TT_MINUS_MINUS, TT_PE, TT_ME, TT_TE, TT_DE, TT_MDE, TT_POWE):
+        if op_tok.type not in (TT_EQ, TT_PLUS_PLUS, TT_MINUS_MINUS, TT_PE, TT_ME, TT_TE, TT_DE, TT_MDE, TT_POWE, TT_IDE):
             return res.failure(
                 InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator")
             )
@@ -293,6 +293,7 @@ class Parser:
             TT_DE: TT_DIV,
             TT_MDE: TT_MOD,
             TT_POWE: TT_POW,
+            TT_IDE: TT_IDIV,
         }
         if op_tok.type != TT_EQ:
             assign_expr = BinOpNode(

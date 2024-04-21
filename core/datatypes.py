@@ -31,6 +31,9 @@ class Value:
     def dived_by(self, other):
         return None, self.illegal_operation(other)
 
+    def idived_by(self, other):
+        return None, self.illegal_operation(other)
+
     def powed_by(self, other):
         return None, self.illegal_operation(other)
 
@@ -147,6 +150,15 @@ class Number(Value):
                 return None, RTError(other.pos_start, other.pos_end, "Division by zero", self.context)
 
             return Number(self.value / other.value).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
+
+    def idived_by(self, other):
+        if isinstance(other, Number):
+            if other.value == 0:
+                return None, RTError(other.pos_start, other.pos_end, "Division by zero", self.context)
+
+            return Number(self.value // other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 

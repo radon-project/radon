@@ -260,6 +260,10 @@ class Interpreter:
             result, error = left.anded_by(right)
         elif node.op_tok.matches(TT_KEYWORD, "or"):
             result, error = left.ored_by(right)
+        elif node.op_tok.type == TT_IDIV:
+            result, error = left.idived_by(right)
+        else:
+            assert False, f"invalid binary operation: {node.op_tok}"
 
         if error:
             return res.failure(error)

@@ -289,10 +289,12 @@ class Lexer:
         if self.current_char == "=":
             tok_type = TT_DE
             self.advance()
-
-        if self.current_char == "/":
+        elif self.current_char == "/":
             tok_type = TT_IDIV
             self.advance()
+            if self.current_char == "=":
+                tok_type = TT_IDE
+                self.advance()
 
         return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
 
