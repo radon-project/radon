@@ -214,6 +214,8 @@ class Parser:
     def assign_expr(self):
         res = ParseResult()
 
+        pos_start = self.current_tok.pos_start.copy()
+
         if self.current_tok.matches(TT_KEYWORD, "static"):
             self.advance(res)
 
@@ -257,8 +259,17 @@ class Parser:
             self.advance(res)
         #####
 
-        if self.current_tok.type != TT_EQ:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '='"))
+        tok = self.current_tok
+        if tok.type not in (TT_EQ, TT_PLUS_PLUS, TT_MINUS_MINUS):
+            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '=', '++' or '--'"))
+
+        if tok.type == TT_PLUS_PLUS:
+            self.advance(res)
+            return res.success(IncNode(var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=tok.pos_end.copy()))
+
+        if tok.type == TT_MINUS_MINUS:
+            self.advance(res)
+            return res.success(DecNode(var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=tok.pos_end.copy()))
 
         self.advance(res)
         assign_expr = res.register(self.expr())

@@ -302,3 +302,27 @@ class AssertNode:
 
         self.child = None
 
+class IncNode:
+    def __init__(self, var_name_tok, extra_names, qualifier, pre, pos_start, pos_end):
+        self.var_name_tok = var_name_tok
+        self.extra_names = extra_names
+        self.qualifier = qualifier
+        self.is_pre = pre
+
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+        self.child = None
+
+class DecNode:
+    def __init__(self, var_name_tok, extra_names, qualifier, pre, pos_start, pos_end):
+        self.var_name_tok = var_name_tok
+        self.extra_names = extra_names
+        self.qualifier = qualifier
+        self.is_pre = pre
+
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+        self.child = None
+
