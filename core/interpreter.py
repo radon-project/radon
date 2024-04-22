@@ -23,9 +23,7 @@ class Interpreter:
                 name = name_tok.value
 
                 if not isinstance(nd, Class) and not isinstance(nd, Instance):
-                    return res.failure(
-                        RTError(pos_start, pos_end, "Value must be instance of class or class", context)
-                    )
+                    return res.failure(RTError(pos_start, pos_end, "Value must be instance of class or class", context))
 
                 prev = nd
                 nd = nd.symbol_table.symbols[name] if name in nd.symbol_table.symbols else None
@@ -42,7 +40,6 @@ class Interpreter:
         if res.should_return():
             return res
         return res.success(value)
-
 
     def visit(self, node, context):
         method_name = f"visit_{type(node).__name__}"
@@ -128,13 +125,15 @@ class Interpreter:
         if res.should_return():
             return res
 
-        return self.assign(var_name=var_name,
-                           value=value,
-                           context=context,
-                           extra_names=node.extra_names,
-                           qualifier=node.qualifier,
-                           pos_start=node.pos_start,
-                           pos_end=node.pos_end)
+        return self.assign(
+            var_name=var_name,
+            value=value,
+            context=context,
+            extra_names=node.extra_names,
+            qualifier=node.qualifier,
+            pos_start=node.pos_start,
+            pos_end=node.pos_end,
+        )
 
     def visit_VarManipulateNode(self, node, context):
         res = RTResult()
@@ -648,14 +647,19 @@ class Interpreter:
 
         new_value, error = old_value.added_to(Number.one)
 
-        res.register(self.assign(var_name=var_name,
-                           value=new_value,
-                           context=context,
-                           extra_names=node.extra_names,
-                           qualifier=node.qualifier,
-                           pos_start=node.pos_start,
-                           pos_end=node.pos_end))
-        if res.should_return(): return res
+        res.register(
+            self.assign(
+                var_name=var_name,
+                value=new_value,
+                context=context,
+                extra_names=node.extra_names,
+                qualifier=node.qualifier,
+                pos_start=node.pos_start,
+                pos_end=node.pos_end,
+            )
+        )
+        if res.should_return():
+            return res
 
         return res.success(new_value if pre else old_value)
 
@@ -672,34 +676,43 @@ class Interpreter:
 
         new_value, error = old_value.subbed_by(Number.one)
 
-        res.register(self.assign(var_name=var_name,
-                           value=new_value,
-                           context=context,
-                           extra_names=node.extra_names,
-                           qualifier=node.qualifier,
-                           pos_start=node.pos_start,
-                           pos_end=node.pos_end))
-        if res.should_return(): return res
+        res.register(
+            self.assign(
+                var_name=var_name,
+                value=new_value,
+                context=context,
+                extra_names=node.extra_names,
+                qualifier=node.qualifier,
+                pos_start=node.pos_start,
+                pos_end=node.pos_end,
+            )
+        )
+        if res.should_return():
+            return res
 
         return res.success(new_value if pre else old_value)
 
     def visit_SwitchNode(self, node, context):
         res = RTResult()
         subject = res.register(self.visit(node.subject_node, context))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
 
         should_continue = False
         for expr, body in node.cases:
             if not should_continue:
                 value = res.register(self.visit(expr, context))
-                if res.should_return(): return res
+                if res.should_return():
+                    return res
                 bool_, error = subject.get_comparison_eq(value)
-                if error: return res.failure(error)
+                if error:
+                    return res.failure(error)
                 should_continue = bool(bool_.is_true())
 
             if should_continue:
                 res.register(self.visit(body, context))
-                if res.should_return(): return res
+                if res.should_return():
+                    return res
 
                 if res.should_fallthrough:
                     should_continue = True
@@ -709,10 +722,10 @@ class Interpreter:
 
         if node.default != None:
             res.register(self.visit(node.default, context))
-            if res.should_return(): return res
+            if res.should_return():
+                return res
             return res.success(Number.null)
         return res.failure(RTError(node.pos_start, node.subject_node.pos_end, "No cases matched", context))
 
     def visit_FallthroughNode(self, node, context):
         return RTResult().success(Number.null).fallthrough()
-

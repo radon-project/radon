@@ -163,7 +163,9 @@ class Parser:
             if not self.in_case:
                 return res.failure(
                     InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, "Fallthrough statement must be inside a switch-case statement"
+                        self.current_tok.pos_start,
+                        self.current_tok.pos_end,
+                        "Fallthrough statement must be inside a switch-case statement",
                     )
                 )
             self.advance(res)
@@ -285,7 +287,12 @@ class Parser:
                 self.advance(res)
                 return res.success(
                     IncNode(
-                        var_name_tok, extra_names, qualifier, pre=True, pos_start=pos_start, pos_end=pre_tok.pos_end.copy()
+                        var_name_tok,
+                        extra_names,
+                        qualifier,
+                        pre=True,
+                        pos_start=pos_start,
+                        pos_end=pre_tok.pos_end.copy(),
                     )
                 )
 
@@ -293,12 +300,28 @@ class Parser:
                 self.advance(res)
                 return res.success(
                     DecNode(
-                        var_name_tok, extra_names, qualifier, pre=True, pos_start=pos_start, pos_end=pre_tok.pos_end.copy()
+                        var_name_tok,
+                        extra_names,
+                        qualifier,
+                        pre=True,
+                        pos_start=pos_start,
+                        pos_end=pre_tok.pos_end.copy(),
                     )
                 )
 
         op_tok = self.current_tok
-        if op_tok.type not in (TT_EQ, TT_PLUS_PLUS, TT_MINUS_MINUS, TT_PE, TT_ME, TT_TE, TT_DE, TT_MDE, TT_POWE, TT_IDE):
+        if op_tok.type not in (
+            TT_EQ,
+            TT_PLUS_PLUS,
+            TT_MINUS_MINUS,
+            TT_PE,
+            TT_ME,
+            TT_TE,
+            TT_DE,
+            TT_MDE,
+            TT_POWE,
+            TT_IDE,
+        ):
             return res.failure(
                 InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator")
             )
@@ -1187,7 +1210,8 @@ class Parser:
         pos_start = self.current_tok.pos_start.copy()
 
         subject = res.register(self.expr())
-        if res.error: return res
+        if res.error:
+            return res
 
         if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
@@ -1199,11 +1223,14 @@ class Parser:
         while self.current_tok.matches(TT_KEYWORD, "case"):
             self.advance(res)
             expr = res.register(self.expr())
-            if res.error: return res
+            if res.error:
+                return res
 
             # TODO: support single-statement cases
             if self.current_tok.type != TT_LBRACE:
-                return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'")
+                )
             self.advance(res)
             self.skip_newlines()
 
@@ -1211,8 +1238,10 @@ class Parser:
             body = res.register(self.statements())
             self.in_case -= 1
             if self.current_tok.type != TT_RBRACE:
-                return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
-            
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
+                )
+
             cases.append((expr, body))
 
             self.advance(res)
@@ -1222,24 +1251,29 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, "default"):
             self.advance(res)
             if self.current_tok.type != TT_LBRACE:
-                return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'")
+                )
             self.advance(res)
             self.skip_newlines()
 
             default = res.register(self.statements())
             if self.current_tok.type != TT_RBRACE:
-                return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
+                )
             self.advance(res)
             self.skip_newlines()
-        
+
         self.skip_newlines()
 
         if self.current_tok.type != TT_RBRACE:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}' or 'case'"))
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}' or 'case'")
+            )
         self.advance(res)
 
         return res.success(SwitchNode(subject, cases, default, pos_start=pos_start, pos_end=self.current_tok.pos_end))
-
 
     def try_statement(self):
         res = ParseResult()
@@ -1349,7 +1383,7 @@ class RTResult:
         return res.value
 
     def success(self, value):
-        should_fallthrough = self.should_fallthrough # Save `should_fallthrough` because we don't want to lose it
+        should_fallthrough = self.should_fallthrough  # Save `should_fallthrough` because we don't want to lose it
         self.reset()
         self.should_fallthrough = should_fallthrough
         self.value = value
