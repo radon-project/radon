@@ -237,6 +237,14 @@ class BreakNode:
         self.child = None
 
 
+class FallthroughNode:
+    def __init__(self, pos_start, pos_end):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+        self.child = None
+
+
 class TryNode:
     def __init__(self, try_block, exc_iden, catch_block, pos_start, pos_end):
         self.try_block = try_block
@@ -312,6 +320,7 @@ class AssertNode:
 
         self.child = None
 
+
 class IncNode:
     def __init__(self, var_name_tok, extra_names, qualifier, pre, pos_start, pos_end):
         self.var_name_tok = var_name_tok
@@ -323,6 +332,7 @@ class IncNode:
         self.pos_end = pos_end
 
         self.child = None
+
 
 class DecNode:
     def __init__(self, var_name_tok, extra_names, qualifier, pre, pos_start, pos_end):
@@ -337,3 +347,12 @@ class DecNode:
         self.child = None
 
 
+class SwitchNode:
+    def __init__(self, subject_node, cases, default, pos_start, pos_end):
+        self.subject_node = subject_node
+        self.cases = cases
+        self.default = default
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+        self.child = None

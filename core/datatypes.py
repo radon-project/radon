@@ -348,7 +348,7 @@ class Boolean(Value):
 Number.null = Number(0)
 Number.false = Number(0)
 Number.true = Number(1)
-Number.one = Number(1) # used in increment and decrement ops
+Number.one = Number(1)  # used in increment and decrement ops
 
 Boolean.null = Boolean(False)
 Boolean.false = Boolean(False)

@@ -88,8 +88,8 @@ TT_NEWLINE = "NEWLINE"  # \n
 TT_DOT = "DOT"  # .
 TT_EOF = "EOF"  # End Of File
 TT_SLICE = "SLICE"  # x[1:2:3]
-TT_PLUS_PLUS = "PLUS_PLUS" # ++
-TT_MINUS_MINUS = "MINUS_MINUS" # --
+TT_PLUS_PLUS = "PLUS_PLUS"  # ++
+TT_MINUS_MINUS = "MINUS_MINUS"  # --
 
 KEYWORDS = [
     "and",
@@ -117,6 +117,10 @@ KEYWORDS = [
     "const",
     "static",
     "assert",
+    "switch",
+    "case",
+    "default",
+    "fallthrough",
 ]
 
 
