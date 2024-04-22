@@ -1226,43 +1226,49 @@ class Parser:
             if res.error:
                 return res
 
-            # TODO: support single-statement cases
-            if self.current_tok.type != TT_LBRACE:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'")
-                )
-            self.advance(res)
+            if self.current_tok.type == TT_LBRACE:
+                single_statement = False
+                self.advance(res)
+            else:
+                single_statement = True
             self.skip_newlines()
 
             self.in_case += 1
-            body = res.register(self.statements())
+            body = res.register(self.statements() if not single_statement else self.statement())
             self.in_case -= 1
-            if self.current_tok.type != TT_RBRACE:
+            if (not single_statement) and self.current_tok.type != TT_RBRACE:
                 return res.failure(
                     InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
                 )
 
             cases.append((expr, body))
 
-            self.advance(res)
+            if not single_statement:
+                self.advance(res)
             self.skip_newlines()
 
         default = None
         if self.current_tok.matches(TT_KEYWORD, "default"):
             self.advance(res)
-            if self.current_tok.type != TT_LBRACE:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'")
-                )
-            self.advance(res)
+            if self.current_tok.type == TT_LBRACE:
+                single_statement = False
+                self.advance(res)
+            else:
+                single_statement = True
             self.skip_newlines()
 
-            default = res.register(self.statements())
-            if self.current_tok.type != TT_RBRACE:
+            self.in_case += 1
+            body = res.register(self.statements() if not single_statement else self.statement())
+            self.in_case -= 1
+            if (not single_statement) and self.current_tok.type != TT_RBRACE:
                 return res.failure(
                     InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
                 )
-            self.advance(res)
+
+            default = body
+
+            if not single_statement:
+                self.advance(res)
             self.skip_newlines()
 
         self.skip_newlines()

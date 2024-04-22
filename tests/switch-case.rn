@@ -1,27 +1,13 @@
 
 fun test(x) {
     switch x {
-        case 1 {
-            print("It's a one!")
-        }
-        case 2 {
-            print("It's a two!")
-        }
-        case 3 {
-            print("It's a three!")
-        }
-        case 4 {
-            print("It's a four!")
-        }
-        case 5 {
-            print("It's a five!")
-        }
-        case 69 {
-            print("haha funi")
-        }
-        default {
-            print("I don't know what "+str(x)+" is")
-        }
+        case 1 print("It's a one!")
+        case 2 print("It's a two!")
+        case 3 print("It's a three!")
+        case 4 print("It's a four!")
+        case 5 print("It's a five!")
+        case 69 print("haha funi")
+        default print("I don't know what "+str(x)+" is")
     }
 }
 
