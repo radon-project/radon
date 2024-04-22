@@ -119,6 +119,7 @@ KEYWORDS = [
     "assert",
     "switch",
     "case",
+    "default",
 ]
 
 

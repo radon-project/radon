@@ -1204,6 +1204,20 @@ class Parser:
 
             self.advance(res)
             self.skip_newlines()
+
+        default = None
+        if self.current_tok.matches(TT_KEYWORD, "default"):
+            self.advance(res)
+            if self.current_tok.type != TT_LBRACE:
+                return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+            self.advance(res)
+            self.skip_newlines()
+
+            default = res.register(self.statements())
+            if self.current_tok.type != TT_RBRACE:
+                return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
+            self.advance(res)
+            self.skip_newlines()
         
         self.skip_newlines()
 
@@ -1211,7 +1225,7 @@ class Parser:
             return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}' or 'case'"))
         self.advance(res)
 
-        return res.success(SwitchNode(subject, cases, pos_start=pos_start, pos_end=self.current_tok.pos_end))
+        return res.success(SwitchNode(subject, cases, default, pos_start=pos_start, pos_end=self.current_tok.pos_end))
 
 
     def try_statement(self):

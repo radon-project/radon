@@ -1,5 +1,5 @@
 
-for x in [5, 1, 2, 69, 4, 3, 42] {
+fun test(x) {
     switch x {
         case 1 {
             print("It's a one!")
@@ -19,6 +19,30 @@ for x in [5, 1, 2, 69, 4, 3, 42] {
         case 69 {
             print("haha funi")
         }
+        default {
+            print("I don't know what "+str(x)+" is")
+        }
     }
+}
+
+test(5)
+test(1)
+test(2)
+test(69)
+test(42)
+test(5)
+test(4)
+
+print("---------------")
+
+try {
+    switch 69 {
+        case 1 {
+            print("unreachable")
+        }
+    }
+    print("unreachable")
+} catch as e {
+    print(e)
 }
 
