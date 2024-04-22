@@ -49,6 +49,7 @@ class Parser:
         self.in_func = 0
         self.in_loop = 0
         self.in_class = 0
+        self.in_case = 0
 
     def advance(self, res: ParseResult):
         self.tok_idx += 1
@@ -157,6 +158,16 @@ class Parser:
                 )
             self.advance(res)
             return res.success(BreakNode(pos_start, self.current_tok.pos_start.copy()))
+
+        if self.current_tok.matches(TT_KEYWORD, "fallthrough"):
+            if not self.in_case:
+                return res.failure(
+                    InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Fallthrough statement must be inside a switch-case statement"
+                    )
+                )
+            self.advance(res)
+            return res.success(FallthroughNode(pos_start, self.current_tok.pos_start.copy()))
 
         if self.current_tok.matches(TT_KEYWORD, "try"):
             self.advance(res)
@@ -1196,7 +1207,9 @@ class Parser:
             self.advance(res)
             self.skip_newlines()
 
+            self.in_case += 1
             body = res.register(self.statements())
+            self.in_case -= 1
             if self.current_tok.type != TT_RBRACE:
                 return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
             
@@ -1324,6 +1337,7 @@ class RTResult:
         self.loop_should_continue = False
         self.loop_should_break = False
         self.should_exit = False
+        self.should_fallthrough = False
 
     def register(self, res):
         self.error = res.error
@@ -1331,10 +1345,13 @@ class RTResult:
         self.loop_should_continue = res.loop_should_continue
         self.loop_should_break = res.loop_should_break
         self.should_exit = res.should_exit
+        self.should_fallthrough = res.should_fallthrough
         return res.value
 
     def success(self, value):
+        should_fallthrough = self.should_fallthrough # Save `should_fallthrough` because we don't want to lose it
         self.reset()
+        self.should_fallthrough = should_fallthrough
         self.value = value
         return self
 
@@ -1357,6 +1374,12 @@ class RTResult:
         self.reset()
         self.should_exit = True
         self.value = exit_value
+        return self
+
+    def fallthrough(self):
+        # No `self.reset()` because this is meant to be used in conjunction with other methods
+        # e.g. `res.success(Number.null).fallthrough()`
+        self.should_fallthrough = True
         return self
 
     def failure(self, error):

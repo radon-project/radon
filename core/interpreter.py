@@ -688,21 +688,31 @@ class Interpreter:
         subject = res.register(self.visit(node.subject_node, context))
         if res.should_return(): return res
 
+        should_continue = False
         for expr, body in node.cases:
-            value = res.register(self.visit(expr, context))
-            if res.should_return(): return res
-            bool_, error = subject.get_comparison_eq(value)
-            if error: return res.failure(error)
+            if not should_continue:
+                value = res.register(self.visit(expr, context))
+                if res.should_return(): return res
+                bool_, error = subject.get_comparison_eq(value)
+                if error: return res.failure(error)
+                should_continue = bool(bool_.is_true())
 
-            if bool_.is_true():
+            if should_continue:
                 res.register(self.visit(body, context))
                 if res.should_return(): return res
 
+                if res.should_fallthrough:
+                    should_continue = True
+                    continue
                 return res.success(Number.null)
+            should_continue = False
 
         if node.default != None:
             res.register(self.visit(node.default, context))
             if res.should_return(): return res
             return res.success(Number.null)
         return res.failure(RTError(node.pos_start, node.subject_node.pos_end, "No cases matched", context))
+
+    def visit_FallthroughNode(self, node, context):
+        return RTResult().success(Number.null).fallthrough()
 

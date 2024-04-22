@@ -236,6 +236,13 @@ class BreakNode:
 
         self.child = None
 
+class FallthroughNode:
+    def __init__(self, pos_start, pos_end):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+        self.child = None
+
 
 class TryNode:
     def __init__(self, try_block, exc_iden, catch_block, pos_start, pos_end):

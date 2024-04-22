@@ -34,7 +34,6 @@ test(5)
 test(4)
 
 print("---------------")
-
 try {
     switch 69 {
         case 1 {
@@ -44,5 +43,33 @@ try {
     print("unreachable")
 } catch as e {
     print(e)
+}
+print("---------------")
+
+for x in [1, 2, 3, 4] {
+    switch x {
+        case 2 { fallthrough }
+        case 3 { print("A two or a three") }
+        default { print("default: " + str(x)) }
+    }
+}
+
+print("---------------")
+i = 0
+for x in [1, 2, 3, 2, 5] {
+    print(str(i) + " " + str(x))
+    switch x {
+        case 1 { print("one") }
+        case 2 {
+            if i == 1 {
+                print("first two")
+            } else { # conditional fallthrough
+                fallthrough
+            }
+        }
+        case 3 { print("three or second two") }
+        default { print("default") }
+    }
+    nonlocal i++
 }
 

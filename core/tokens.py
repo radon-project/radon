@@ -120,6 +120,7 @@ KEYWORDS = [
     "switch",
     "case",
     "default",
+    "fallthrough",
 ]
 
 
