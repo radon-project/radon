@@ -336,4 +336,12 @@ class DecNode:
 
         self.child = None
 
+class SwitchNode:
+    def __init__(self, subject_node, cases, pos_start, pos_end):
+        self.subject_node = subject_node
+        self.cases = cases
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+        self.child = None
 

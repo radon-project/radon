@@ -117,6 +117,8 @@ KEYWORDS = [
     "const",
     "static",
     "assert",
+    "switch",
+    "case",
 ]
 
 

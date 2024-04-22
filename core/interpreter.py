@@ -683,3 +683,22 @@ class Interpreter:
 
         return res.success(new_value if pre else old_value)
 
+    def visit_SwitchNode(self, node, context):
+        res = RTResult()
+        subject = res.register(self.visit(node.subject_node, context))
+        if res.should_return(): return res
+
+        for expr, body in node.cases:
+            value = res.register(self.visit(expr, context))
+            if res.should_return(): return res
+            bool_, error = subject.get_comparison_eq(value)
+            if error: return res.failure(error)
+
+            if bool_.is_true():
+                res.register(self.visit(body, context))
+                if res.should_return(): return res
+
+                return res.success(Number.null)
+
+        return res.failure(RTError(node.pos_start, node.subject_node.pos_end, "No cases matched", context))
+

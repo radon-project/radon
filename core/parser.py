@@ -163,6 +163,11 @@ class Parser:
             try_node = res.register(self.try_statement())
             return res.success(try_node)
 
+        if self.current_tok.matches(TT_KEYWORD, "switch"):
+            self.advance(res)
+            switch_node = res.register(self.switch_statement())
+            return res.success(switch_node)
+
         if self.current_tok.matches(TT_KEYWORD, "include"):
             self.advance(res)
 
@@ -1165,6 +1170,49 @@ class Parser:
         self.advance(res)
 
         return res.success(FuncDefNode(var_name_tok, arg_name_toks, defaults, body, False, static=static))
+
+    def switch_statement(self):
+        res = ParseResult()
+        pos_start = self.current_tok.pos_start.copy()
+
+        subject = res.register(self.expr())
+        if res.error: return res
+
+        if self.current_tok.type != TT_LBRACE:
+            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+        self.advance(res)
+
+        self.skip_newlines()
+
+        cases = []
+        while self.current_tok.matches(TT_KEYWORD, "case"):
+            self.advance(res)
+            expr = res.register(self.expr())
+            if res.error: return res
+
+            # TODO: support single-statement cases
+            if self.current_tok.type != TT_LBRACE:
+                return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+            self.advance(res)
+            self.skip_newlines()
+
+            body = res.register(self.statements())
+            if self.current_tok.type != TT_RBRACE:
+                return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
+            
+            cases.append((expr, body))
+
+            self.advance(res)
+            self.skip_newlines()
+        
+        self.skip_newlines()
+
+        if self.current_tok.type != TT_RBRACE:
+            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}' or 'case'"))
+        self.advance(res)
+
+        return res.success(SwitchNode(subject, cases, pos_start=pos_start, pos_end=self.current_tok.pos_end))
+
 
     def try_statement(self):
         res = ParseResult()
