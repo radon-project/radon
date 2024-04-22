@@ -214,12 +214,19 @@ class Parser:
     def assign_expr(self):
         res = ParseResult()
 
+        pos_start = self.current_tok.pos_start.copy()
+
         if self.current_tok.matches(TT_KEYWORD, "static"):
             self.advance(res)
 
         qualifier = None
         if self.current_tok.type == TT_KEYWORD and self.current_tok.value in ("global", "nonlocal", "const"):
             qualifier = self.current_tok
+            self.advance(res)
+
+        pre_tok = None
+        if self.current_tok.type in (TT_PLUS_PLUS, TT_MINUS_MINUS):
+            pre_tok = self.current_tok
             self.advance(res)
 
         if self.current_tok.type != TT_IDENTIFIER:
@@ -257,14 +264,65 @@ class Parser:
             self.advance(res)
         #####
 
-        if self.current_tok.type != TT_EQ:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '='"))
+        if pre_tok is not None:
+            if pre_tok.type == TT_PLUS_PLUS:
+                self.advance(res)
+                return res.success(
+                    IncNode(
+                        var_name_tok, extra_names, qualifier, pre=True, pos_start=pos_start, pos_end=pre_tok.pos_end.copy()
+                    )
+                )
+
+            if pre_tok.type == TT_MINUS_MINUS:
+                self.advance(res)
+                return res.success(
+                    DecNode(
+                        var_name_tok, extra_names, qualifier, pre=True, pos_start=pos_start, pos_end=pre_tok.pos_end.copy()
+                    )
+                )
+
+        op_tok = self.current_tok
+        if op_tok.type not in (TT_EQ, TT_PLUS_PLUS, TT_MINUS_MINUS, TT_PE, TT_ME, TT_TE, TT_DE, TT_MDE, TT_POWE, TT_IDE):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator")
+            )
+
+        if op_tok.type == TT_PLUS_PLUS:
+            self.advance(res)
+            return res.success(
+                IncNode(
+                    var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
+                )
+            )
+
+        if op_tok.type == TT_MINUS_MINUS:
+            self.advance(res)
+            return res.success(
+                DecNode(
+                    var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
+                )
+            )
 
         self.advance(res)
         assign_expr = res.register(self.expr())
         if res.error:
             return res
 
+        ASSIGN_TO_OPERATORS = {
+            TT_PE: TT_PLUS,
+            TT_ME: TT_MINUS,
+            TT_TE: TT_MUL,
+            TT_DE: TT_DIV,
+            TT_MDE: TT_MOD,
+            TT_POWE: TT_POW,
+            TT_IDE: TT_IDIV,
+        }
+        if op_tok.type != TT_EQ:
+            assign_expr = BinOpNode(
+                VarAccessNode.with_extra_names(var_name_tok, extra_names),
+                Token(ASSIGN_TO_OPERATORS[op_tok.type], pos_start=op_tok.pos_start, pos_end=op_tok.pos_end),
+                assign_expr,
+            )
         return res.success(VarAssignNode(var_name_tok, assign_expr, extra_names, qualifier))
 
     def comp_expr(self):

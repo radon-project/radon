@@ -8,6 +8,42 @@ import os
 
 
 class Interpreter:
+    def assign(self, *, var_name, value, context, extra_names, qualifier, pos_start, pos_end):
+        res = RTResult()
+
+        if extra_names != []:
+            assert qualifier is None
+            nd = context.symbol_table.get(var_name)
+            prev = None
+
+            if not nd:
+                return res.failure(RTError(pos_start, pos_end, f"'{var_name}' not defined", context))
+
+            for index, name_tok in enumerate(extra_names):
+                name = name_tok.value
+
+                if not isinstance(nd, Class) and not isinstance(nd, Instance):
+                    return res.failure(
+                        RTError(pos_start, pos_end, "Value must be instance of class or class", context)
+                    )
+
+                prev = nd
+                nd = nd.symbol_table.symbols[name] if name in nd.symbol_table.symbols else None
+
+                if not nd and index != len(extra_names) - 1:
+                    return res.failure(RTError(pos_start, pos_end, f"'{name}' not defined", context))
+
+            res.register(prev.symbol_table.set(name, value))
+            if res.should_return():
+                return res
+            return res.success(value)
+
+        res.register(context.symbol_table.set(var_name, value, qualifier))
+        if res.should_return():
+            return res
+        return res.success(value)
+
+
     def visit(self, node, context):
         method_name = f"visit_{type(node).__name__}"
         method = getattr(self, method_name, self.no_visit_method)
@@ -92,37 +128,13 @@ class Interpreter:
         if res.should_return():
             return res
 
-        if node.extra_names != []:
-            assert node.qualifier is None
-            nd = context.symbol_table.get(var_name)
-            prev = None
-
-            if not nd:
-                return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' not defined", context))
-
-            for index, name_tok in enumerate(node.extra_names):
-                name = name_tok.value
-
-                if not isinstance(nd, Class) and not isinstance(nd, Instance):
-                    return res.failure(
-                        RTError(node.pos_start, node.pos_end, "Value must be instance of class or class", context)
-                    )
-
-                prev = nd
-                nd = nd.symbol_table.symbols[name] if name in nd.symbol_table.symbols else None
-
-                if not nd and index != len(node.extra_names) - 1:
-                    return res.failure(RTError(node.pos_start, node.pos_end, f"'{name}' not defined", context))
-
-            res.register(prev.symbol_table.set(name, value))
-            if res.should_return():
-                return res
-            return res.success(value)
-
-        res.register(context.symbol_table.set(var_name, value, node.qualifier))
-        if res.should_return():
-            return res
-        return res.success(value)
+        return self.assign(var_name=var_name,
+                           value=value,
+                           context=context,
+                           extra_names=node.extra_names,
+                           qualifier=node.qualifier,
+                           pos_start=node.pos_start,
+                           pos_end=node.pos_end)
 
     def visit_VarManipulateNode(self, node, context):
         res = RTResult()
@@ -248,6 +260,10 @@ class Interpreter:
             result, error = left.anded_by(right)
         elif node.op_tok.matches(TT_KEYWORD, "or"):
             result, error = left.ored_by(right)
+        elif node.op_tok.type == TT_IDIV:
+            result, error = left.idived_by(right)
+        else:
+            assert False, f"invalid binary operation: {node.op_tok}"
 
         if error:
             return res.failure(error)
@@ -618,3 +634,52 @@ class Interpreter:
 
             return res.failure(RTError(node.condition.pos_start, node.condition.pos_end, message, context))
         return res.success(condition)
+
+    def visit_IncNode(self, node, context):
+        res = RTResult()
+        var_name = node.var_name_tok.value
+        extra_names = node.extra_names
+        qualifier = node.qualifier
+        pre = node.is_pre
+
+        old_value = context.symbol_table.get(var_name)
+        if old_value == None:
+            return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
+
+        new_value, error = old_value.added_to(Number.one)
+
+        res.register(self.assign(var_name=var_name,
+                           value=new_value,
+                           context=context,
+                           extra_names=node.extra_names,
+                           qualifier=node.qualifier,
+                           pos_start=node.pos_start,
+                           pos_end=node.pos_end))
+        if res.should_return(): return res
+
+        return res.success(new_value if pre else old_value)
+
+    def visit_DecNode(self, node, context):
+        res = RTResult()
+        var_name = node.var_name_tok.value
+        extra_names = node.extra_names
+        qualifier = node.qualifier
+        pre = node.is_pre
+
+        old_value = context.symbol_table.get(var_name)
+        if old_value == None:
+            return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
+
+        new_value, error = old_value.subbed_by(Number.one)
+
+        res.register(self.assign(var_name=var_name,
+                           value=new_value,
+                           context=context,
+                           extra_names=node.extra_names,
+                           qualifier=node.qualifier,
+                           pos_start=node.pos_start,
+                           pos_end=node.pos_end))
+        if res.should_return(): return res
+
+        return res.success(new_value if pre else old_value)
+

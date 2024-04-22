@@ -1,0 +1,49 @@
+
+x = 69
+print(x)
+x++
+print(x)
+x--
+print(x)
+print(x++)
+print(x++)
+print(x++)
+print(x--)
+print(x--)
+print(x--)
+
+print("----------------")
+y = 69
+print(x + " " + y)
+if true {
+    x++
+    nonlocal y++
+}
+
+print(x + " " + y)
+
+print("----------------")
+y = 5
+
+print(x)
+x += y
+print(x)
+
+x -= y
+print(x)
+
+x *= y
+print(x)
+
+x /= y
+print(x)
+
+x ^= y
+print(x)
+
+x //= y
+print(x)
+
+x %= y
+print(x)
+

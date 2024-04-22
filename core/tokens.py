@@ -80,6 +80,7 @@ TT_DE = "DE"  # Divide Equal
 TT_IDIV = "IDIV"  # Int Divide
 TT_MDE = "MDE"  # Modulo Divide Equal
 TT_POWE = "POWE"  # Power Equal
+TT_IDE = "IDE"  # Int Divide Equal
 TT_COMMA = "COMMA"  # ,
 TT_COLON = "COLON"  # :
 TT_ARROW = "ARROW"  # ->
@@ -87,6 +88,8 @@ TT_NEWLINE = "NEWLINE"  # \n
 TT_DOT = "DOT"  # .
 TT_EOF = "EOF"  # End Of File
 TT_SLICE = "SLICE"  # x[1:2:3]
+TT_PLUS_PLUS = "PLUS_PLUS" # ++
+TT_MINUS_MINUS = "MINUS_MINUS" # --
 
 KEYWORDS = [
     "and",
