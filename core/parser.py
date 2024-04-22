@@ -1229,8 +1229,13 @@ class Parser:
             if self.current_tok.type == TT_LBRACE:
                 single_statement = False
                 self.advance(res)
-            else:
+            elif self.current_tok.type == TT_ARROW:
                 single_statement = True
+                self.advance(res)
+            else:
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{' or '->'")
+                )
             self.skip_newlines()
 
             self.in_case += 1
@@ -1253,8 +1258,13 @@ class Parser:
             if self.current_tok.type == TT_LBRACE:
                 single_statement = False
                 self.advance(res)
-            else:
+            elif self.current_tok.type == TT_ARROW:
                 single_statement = True
+                self.advance(res)
+            else:
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{' or '->'")
+                )
             self.skip_newlines()
 
             self.in_case += 1
