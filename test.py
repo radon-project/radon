@@ -5,6 +5,7 @@ import subprocess
 import json
 
 from typing import NamedTuple
+from difflib import unified_diff # Rule 34 of Python: If it exists, it's in the standard library
 
 
 class Output(NamedTuple):
@@ -84,9 +85,10 @@ def usage(program_name: str, stream: any) -> None:
     print(
         f"""Usage: {program_name} <subcommand> [args]
 SUBCOMMANDS:
-    help   - Print this help message to stdout and exit successfully
-    run    - Run tests
-    record - Record output of tests
+    help           - Print this help message to stdout and exit successfully
+    run            - Run tests
+    record         - Record output of tests
+    diff <test.rn> - Show diff between expected and actual output
 """,
         file=stream,
     )
@@ -108,6 +110,33 @@ def main(argv: list[str]) -> int:
             return run_tests()
         case "record":
             return record_tests()
+        case "diff":
+            if len(argv) < 1:
+                usage(program_name, sys.stderr)
+                print("ERROR: no test to diff provided", file=sys.stderr)
+                return 1
+            test = argv.pop(0)
+            try:
+                actual_output = run_test(f"tests/{test}")
+            except FileNotFoundError:
+                print(f"ERROR: test {test!r} not found", file=sys.stderr)
+                return 1
+            try:
+                expected_output = Output.from_file(f"tests/{test}.json")
+            except FileNotFoundError:
+                print(f"ERROR: test {test!r} has no expected output", file=sys.stderr)
+                return 1
+            if actual_output == expected_output:
+                print(f"Test {test!r} passes!")
+                return 0
+            print("STDOUT DIFF")
+            print("-----------")
+            print("\n".join(unified_diff(expected_output.stdout.splitlines(), actual_output.stdout.splitlines(), "expected", "actual")))
+            print()
+            print("STDERR DIFF")
+            print("-----------")
+            print("\n".join(unified_diff(expected_output.stderr.splitlines(), actual_output.stderr.splitlines())))
+            return 0
         case unknown:
             usage(program_name, sys.stderr)
             print(f"ERROR: unknown subcommand '{unknown}'", file=sys.stderr)
