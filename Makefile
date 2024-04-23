@@ -1,11 +1,31 @@
-test:
-	@python3.11 radon.py -s examples/functions.rn
+PYTHON=python3.11
 
+.PHONY: format-check
+format-check:
+	@ruff format --check .
+
+.PHONY: format
+format:
+	@ruff format .
+
+.PHONY: lint
+lint:
+	@ruff check .
+
+.PHONY: test
+test:
+	$(PYTHON) test.py run
+
+.PHONY: py2c
 py2c:
 	# Need to test it.
-	@python3.11 -m cython -3 -a radon.py -o radon.c --embed -I/usr/include/python3.11 
+	$(PYTHON) -m cython -3 -a radon.py -o radon.c --embed -I/usr/include/python3.11
+
+.PHONY: config2bin
 config2bin:
 
+.PHONY: build
 build:
 
+..PHONY: install
 install:
