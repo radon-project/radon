@@ -1,0 +1,61 @@
+
+fun test(x) {
+    switch x {
+        case 1  -> print("It's a one!")
+        case 2  -> print("It's a two!")
+        case 3  -> print("It's a three!")
+        case 4  -> print("It's a four!")
+        case 5  -> print("It's a five!")
+        case 69 -> print("haha funi")
+        default -> print("I don't know what "+str(x)+" is")
+    }
+}
+
+test(5)
+test(1)
+test(2)
+test(69)
+test(42)
+test(5)
+test(4)
+
+print("---------------")
+try {
+    switch 69 {
+        case 1 {
+            print("unreachable")
+        }
+    }
+    print("unreachable")
+} catch as e {
+    print(e)
+}
+print("---------------")
+
+for x in [1, 2, 3, 4] {
+    switch x {
+        case 2 { fallthrough }
+        case 3 { print("A two or a three") }
+        default { print("default: " + str(x)) }
+    }
+}
+
+print("---------------")
+i = 0
+for x in [1, 2, 3, 2, 5] {
+    print(str(i) + " " + str(x))
+    switch x {
+        case 1 { print("one") }
+        case 2 {
+            if i == 1 {
+                print("first two")
+            } else { # conditional fallthrough
+                fallthrough
+            }
+        }
+        case 3 { print("three or second two") }
+        default { print("default") }
+    }
+    nonlocal i++
+}
+
