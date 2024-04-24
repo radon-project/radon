@@ -5,7 +5,7 @@ import subprocess
 import json
 
 from typing import NamedTuple
-from difflib import unified_diff # Rule 34 of Python: If it exists, it's in the standard library
+from difflib import unified_diff  # Rule 34 of Python: If it exists, it's in the standard library
 
 
 class Output(NamedTuple):
@@ -131,7 +131,13 @@ def main(argv: list[str]) -> int:
                 return 0
             print("STDOUT DIFF")
             print("-----------")
-            print("\n".join(unified_diff(expected_output.stdout.splitlines(), actual_output.stdout.splitlines(), "expected", "actual")))
+            print(
+                "\n".join(
+                    unified_diff(
+                        expected_output.stdout.splitlines(), actual_output.stdout.splitlines(), "expected", "actual"
+                    )
+                )
+            )
             print()
             print("STDERR DIFF")
             print("-----------")
