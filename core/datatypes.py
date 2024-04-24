@@ -1114,3 +1114,17 @@ class Function(BaseFunction):
 
     def __repr__(self):
         return f"<function {self.name}>"
+
+class Module(Value):
+    def __init__(self, name, file_path, symbol_table):
+        super().__init__()
+        self.name = name
+        self.file_path = file_path
+        self.symbol_table = symbol_table
+
+    def copy(self):
+        return self
+    
+    def __repr__(self):
+        return f"<module {self.name} @ {self.file_path!r}>"
+

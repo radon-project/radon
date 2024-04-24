@@ -17,7 +17,10 @@ class Array {
     fun pop(index) -> arr_pop(this.list, index)
     fun extend(list) -> arr_extend(this.list, list)
     fun find(index) -> arr_find(this.list, index)
-    fun slice(start, end) -> arr_slice(this.list, start, end)
+    fun slice(start, end) {
+        # These parentheses are dumb. We need to find another way.
+        return (this.list)[start:end]
+    }
     
     fun len() -> arr_len(this.list)
     fun is_empty() -> this.list == []

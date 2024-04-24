@@ -102,7 +102,10 @@ class BuiltInFunction(BaseFunction):
             print(value)
 
         else:
-            print(value.value)
+            try:
+                print(value.value)
+            except AttributeError:
+                print(repr(value))
         return RTResult().success(Number.null)
 
     @args(["value"])
@@ -539,48 +542,52 @@ BuiltInFunction.time_now = BuiltInFunction("time_now")
 
 
 # Setting all functions to global symbol table
-global_symbol_table = SymbolTable()
-global_symbol_table.set("null", Number.null)
-global_symbol_table.set("false", Boolean.false)
-global_symbol_table.set("true", Boolean.true)
-global_symbol_table.set("print", BuiltInFunction.print)
-global_symbol_table.set("print_ret", BuiltInFunction.print_ret)
-global_symbol_table.set("input", BuiltInFunction.input)
-global_symbol_table.set("input_int", BuiltInFunction.input_int)
-global_symbol_table.set("clear", BuiltInFunction.clear)
-global_symbol_table.set("cls", BuiltInFunction.clear)
-global_symbol_table.set("require", BuiltInFunction.require)
-global_symbol_table.set("exit", BuiltInFunction.exit)
-# Datatype validator methods
-global_symbol_table.set("is_num", BuiltInFunction.is_num)
-global_symbol_table.set("is_int", BuiltInFunction.is_int)
-global_symbol_table.set("is_float", BuiltInFunction.is_float)
-global_symbol_table.set("is_str", BuiltInFunction.is_string)
-global_symbol_table.set("is_bool", BuiltInFunction.is_bool)
-global_symbol_table.set("is_array", BuiltInFunction.is_array)
-global_symbol_table.set("is_fun", BuiltInFunction.is_fun)
-# Internal array methods
-global_symbol_table.set("arr_append", BuiltInFunction.arr_append)
-global_symbol_table.set("arr_pop", BuiltInFunction.arr_pop)
-global_symbol_table.set("arr_extend", BuiltInFunction.arr_extend)
-global_symbol_table.set("arr_find", BuiltInFunction.arr_find)
-global_symbol_table.set("arr_len", BuiltInFunction.arr_len)
-global_symbol_table.set("arr_chunk", BuiltInFunction.arr_chunk)
-global_symbol_table.set("arr_get", BuiltInFunction.arr_get)
-# String methods
-global_symbol_table.set("str_len", BuiltInFunction.str_len)
-global_symbol_table.set("str_find", BuiltInFunction.str_find)
-global_symbol_table.set("str_get", BuiltInFunction.str_get)
-# Typecase methods
-global_symbol_table.set("int", BuiltInFunction.int)
-global_symbol_table.set("float", BuiltInFunction.float)
-global_symbol_table.set("str", BuiltInFunction.str)
-global_symbol_table.set("bool", BuiltInFunction.bool)
-global_symbol_table.set("type", BuiltInFunction.type)
-# PyAPI methods (Python API)
-global_symbol_table.set("pyapi", BuiltInFunction.pyapi)
-# System methods
-global_symbol_table.set("require", BuiltInFunction.require)
-global_symbol_table.set("exit", BuiltInFunction.exit)
-global_symbol_table.set("sys_args", BuiltInFunction.sys_args)
-global_symbol_table.set("time_now", BuiltInFunction.time_now)
+def create_global_symbol_table():
+    ret = SymbolTable()
+    ret.set("null", Number.null)
+    ret.set("false", Boolean.false)
+    ret.set("true", Boolean.true)
+    ret.set("print", BuiltInFunction.print)
+    ret.set("print_ret", BuiltInFunction.print_ret)
+    ret.set("input", BuiltInFunction.input)
+    ret.set("input_int", BuiltInFunction.input_int)
+    ret.set("clear", BuiltInFunction.clear)
+    ret.set("cls", BuiltInFunction.clear)
+    ret.set("require", BuiltInFunction.require)
+    ret.set("exit", BuiltInFunction.exit)
+    # Datatype validator methods
+    ret.set("is_num", BuiltInFunction.is_num)
+    ret.set("is_int", BuiltInFunction.is_int)
+    ret.set("is_float", BuiltInFunction.is_float)
+    ret.set("is_str", BuiltInFunction.is_string)
+    ret.set("is_bool", BuiltInFunction.is_bool)
+    ret.set("is_array", BuiltInFunction.is_array)
+    ret.set("is_fun", BuiltInFunction.is_fun)
+    # Internal array methods
+    ret.set("arr_append", BuiltInFunction.arr_append)
+    ret.set("arr_pop", BuiltInFunction.arr_pop)
+    ret.set("arr_extend", BuiltInFunction.arr_extend)
+    ret.set("arr_find", BuiltInFunction.arr_find)
+    ret.set("arr_len", BuiltInFunction.arr_len)
+    ret.set("arr_chunk", BuiltInFunction.arr_chunk)
+    ret.set("arr_get", BuiltInFunction.arr_get)
+    # String methods
+    ret.set("str_len", BuiltInFunction.str_len)
+    ret.set("str_find", BuiltInFunction.str_find)
+    ret.set("str_get", BuiltInFunction.str_get)
+    # Typecase methods
+    ret.set("int", BuiltInFunction.int)
+    ret.set("float", BuiltInFunction.float)
+    ret.set("str", BuiltInFunction.str)
+    ret.set("bool", BuiltInFunction.bool)
+    ret.set("type", BuiltInFunction.type)
+    # PyAPI methods (Python API)
+    ret.set("pyapi", BuiltInFunction.pyapi)
+    # System methods
+    ret.set("require", BuiltInFunction.require)
+    ret.set("exit", BuiltInFunction.exit)
+    ret.set("sys_args", BuiltInFunction.sys_args)
+    ret.set("time_now", BuiltInFunction.time_now)
+    return ret
+
+global_symbol_table = create_global_symbol_table()
