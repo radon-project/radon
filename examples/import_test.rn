@@ -44,4 +44,5 @@ print(str.len())
 !#
 include Math
 
-print(Math.Math.PI) # Ligal
+print(Math.PI) # Ligal
+
