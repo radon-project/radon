@@ -8,7 +8,7 @@ class NumberNode:
         self.pos_start = self.tok.pos_start
         self.pos_end = self.tok.pos_end
 
-        self.child = None
+        
 
     def __repr__(self):
         return f"{self.tok}"
@@ -21,7 +21,7 @@ class StringNode:
         self.pos_start = self.tok.pos_start
         self.pos_end = self.tok.pos_end
 
-        self.child = None
+        
 
     def __repr__(self):
         return f"{self.tok}"
@@ -34,7 +34,7 @@ class ArrayNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class VarAccessNode:
@@ -44,7 +44,7 @@ class VarAccessNode:
         self.pos_start = self.var_name_tok.pos_start
         self.pos_end = self.var_name_tok.pos_end
 
-        self.child = None
+        
 
     @classmethod
     def with_extra_names(cls, var_name_tok, extra_names):
@@ -69,7 +69,7 @@ class VarAssignNode:
             else self.var_name_tok.pos_end
         )
 
-        self.child = None
+        
 
 
 class VarManipulateNode:
@@ -81,7 +81,7 @@ class VarManipulateNode:
         self.pos_start = self.var_name_tok.pos_start
         self.pos_end = self.value_node.pos_end
 
-        self.child = None
+        
 
 
 class SliceNode:
@@ -94,7 +94,7 @@ class SliceNode:
         self.pos_start = self.var_name_tok.pos_start
         self.pos_end = self.step_value_node.pos_end
 
-        self.child = None
+        
 
 
 class IncludeNode:
@@ -104,7 +104,7 @@ class IncludeNode:
         self.pos_start = self.module.pos_start
         self.pos_end = self.module.pos_end
 
-        self.child = None
+        
 
 
 class BinOpNode:
@@ -116,7 +116,7 @@ class BinOpNode:
         self.pos_start = self.left_node.pos_start
         self.pos_end = self.right_node.pos_end
 
-        self.child = None
+        
 
     def __repr__(self):
         return f"({self.left_node}, {self.op_tok}, {self.right_node})"
@@ -130,7 +130,7 @@ class UnaryOpNode:
         self.pos_start = self.op_tok.pos_start
         self.pos_end = node.pos_end
 
-        self.child = None
+        
 
     def __repr__(self):
         return f"({self.op_tok}, {self.node})"
@@ -144,7 +144,7 @@ class IfNode:
         self.pos_start = self.cases[0][0].pos_start
         self.pos_end = (self.else_case or self.cases[len(self.cases) - 1])[0].pos_end
 
-        self.child = None
+        
 
 
 class ForNode:
@@ -159,7 +159,7 @@ class ForNode:
         self.pos_start = self.var_name_tok.pos_start
         self.pos_end = self.body_node.pos_end
 
-        self.child = None
+        
 
 
 class WhileNode:
@@ -171,7 +171,7 @@ class WhileNode:
         self.pos_start = self.condition_node.pos_start
         self.pos_end = self.body_node.pos_end
 
-        self.child = None
+        
 
 
 class FuncDefNode:
@@ -192,7 +192,7 @@ class FuncDefNode:
 
         self.pos_end = self.body_node.pos_end
 
-        self.child = None
+        
 
 
 class CallNode:
@@ -208,7 +208,7 @@ class CallNode:
         else:
             self.pos_end = self.node_to_call.pos_end
 
-        self.child = None
+        
 
 
 class ReturnNode:
@@ -218,7 +218,7 @@ class ReturnNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class ContinueNode:
@@ -226,7 +226,7 @@ class ContinueNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class BreakNode:
@@ -234,7 +234,7 @@ class BreakNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class FallthroughNode:
@@ -242,7 +242,7 @@ class FallthroughNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class TryNode:
@@ -254,7 +254,7 @@ class TryNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class ForInNode:
@@ -266,7 +266,7 @@ class ForInNode:
         self.pos_end = pos_end
         self.should_return_null = should_return_null
 
-        self.child = None
+        
 
 
 class IndexGetNode:
@@ -278,7 +278,7 @@ class IndexGetNode:
         self.index_end = index_end
         self.index_step = index_step
 
-        self.child = None
+        
 
 
 class IndexSetNode:
@@ -289,7 +289,7 @@ class IndexSetNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class HashMapNode:
@@ -298,7 +298,7 @@ class HashMapNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class ClassNode:
@@ -308,7 +308,7 @@ class ClassNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class AssertNode:
@@ -318,7 +318,7 @@ class AssertNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class IncNode:
@@ -331,7 +331,7 @@ class IncNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class DecNode:
@@ -344,7 +344,7 @@ class DecNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 
 class SwitchNode:
@@ -355,7 +355,7 @@ class SwitchNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+        
 
 class AttrAccessNode:
     def __init__(self, node_to_access, attr_name_tok, pos_start, pos_end):
@@ -364,5 +364,5 @@ class AttrAccessNode:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
-        self.child = None
+       
 

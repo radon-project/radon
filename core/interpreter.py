@@ -92,31 +92,6 @@ class Interpreter:
         if value == None:
             return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
 
-        if node.child:
-            if isinstance(value, BaseClass):
-                name = value.name
-            elif isinstance(value, BaseInstance):
-                name = value.parent_class.name
-            elif isinstance(value, Module):
-                name = value.name
-            else:
-                return res.failure(
-                    RTError(
-                        node.pos_start,
-                        node.pos_end,
-                        f"Dotted attribute access may only be used on classes and instances for now",
-                        context,
-                    )
-                )
-            new_context = Context(name, context, node.pos_start)
-            new_context.symbol_table = value.symbol_table
-
-            child = res.register(self.visit(node.child, new_context))
-            if res.error:
-                return res
-
-            value = child
-
         value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
         return res.success(value)
 
