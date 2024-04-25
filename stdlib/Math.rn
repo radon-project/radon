@@ -1,75 +1,70 @@
 # The Math class provides all types of math functionalites for radon language.
 
-class Math {
-    fun __constructor__() {
-        assert false, "Cannot instantiate `Math` class"
-    }
-    static const PI = 3.14159265358979323846
+static const PI = 3.14159265358979323846
 
-    static fun to_string() -> "<class 'math'>"
-    static fun sqrt(number) -> number ^ 0.5
-    static fun pow(base, power) -> base ^ power
-    static fun mod(a, b) -> a % b
+static fun sqrt(number) -> number ^ 0.5
+static fun pow(base, power) -> base ^ power
+static fun mod(a, b) -> a % b
 
-    static fun factorial(number) {
-        if number == 0 {
-            return 1
-        } 
-        return number * factorial(number - 1)
-    }
-    
-    # Same as mod, but implemented in pure radon.
-    static fun modulas(a, b) {
-        frac = a / b
-        if frac > 0 {
-            floor = int(frac) 
-        } else {
-            floor = int(frac - 0.9999999999999999)
-        }
-        return a - b * floor
-    }
-
-    # Same as pow, but implemented in pure radon.
-    static fun power(n, p) {
-        result = n
-        for i=1 to p {
-            result = result * n
-        }
-        return result
-    }
-
-    # Sine implementation in radon.
-    static fun sin(n) {
-        n = n % (2 * this.PI)
-        
-        if n < 0 {
-            n = 2 * this.PI - n
-        }
-
-        sign = 1
-        if n > this.PI {
-            n = n - this.PI
-            sign = -1
-        }
-
-        result = n
-        coefficient = 3
-
-        for i=0 to 10 {
-            pow_val = n ^ coefficient
-            frac = factorial(coefficient)
-            
-            if i % 2 == 0{
-                result = result - (pow_val / frac)
-            } else {
-
-                result = result + (pow_val / frac)
-            }
-            
-            coefficient = coefficient + 2
-        }
-        return sign * result
-    }
-
-
+static fun factorial(number) {
+    if number == 0 {
+        return 1
+    } 
+    return number * factorial(number - 1)
 }
+
+# Same as mod, but implemented in pure radon.
+static fun modulas(a, b) {
+    frac = a / b
+    if frac > 0 {
+        floor = int(frac) 
+    } else {
+        floor = int(frac - 0.9999999999999999)
+    }
+    return a - b * floor
+}
+# Same as modulas, but actually spelled correctly
+modulus = modulas
+
+# Same as pow, but implemented in pure radon.
+static fun power(n, p) {
+    result = n
+    for i=1 to p {
+        result = result * n
+    }
+    return result
+}
+
+# Sine implementation in radon.
+static fun sin(n) {
+    n = n % (2 * this.PI)
+    
+    if n < 0 {
+        n = 2 * this.PI - n
+    }
+
+    sign = 1
+    if n > this.PI {
+        n = n - this.PI
+        sign = -1
+    }
+
+    result = n
+    coefficient = 3
+
+    for i=0 to 10 {
+        pow_val = n ^ coefficient
+        frac = factorial(coefficient)
+        
+        if i % 2 == 0{
+            result = result - (pow_val / frac)
+        } else {
+
+            result = result + (pow_val / frac)
+        }
+        
+        coefficient = coefficient + 2
+    }
+    return sign * result
+}
+

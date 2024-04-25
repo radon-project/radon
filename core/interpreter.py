@@ -1,14 +1,14 @@
 from core.errors import *
 from core.parser import *
 from core.datatypes import *
-from core.builtin_funcs import run
+from core.builtin_funcs import run, create_global_symbol_table
 import core.builtin_classes
 
 import os
 
 
 class Interpreter:
-    def assign(self, *, var_name, value, context, extra_names, qualifier, pos_start, pos_end):
+    def assign(self, *, var_name, value, context, extra_names=[], qualifier=None, pos_start, pos_end):
         res = RTResult()
 
         if extra_names != []:
@@ -97,6 +97,8 @@ class Interpreter:
                 name = value.name
             elif isinstance(value, BaseInstance):
                 name = value.parent_class.name
+            elif isinstance(value, Module):
+                name = value.name
             else:
                 return res.failure(
                     RTError(
@@ -165,50 +167,59 @@ class Interpreter:
         res = RTResult()
         exec_ctx = context
 
-        module = node.module.value
+        module_name = node.module.value
 
         try:
-            if module not in STDLIBS:
-                file_extension = module.split("/")[-1].split(".")[-1]
+            if module_name not in STDLIBS:
+                file_extension = module_name.split("/")[-1].split(".")[-1]
                 if file_extension != "rn":
                     return res.failure(
                         RTError(node.pos_start, node.pos_end, "A Radon script must have a .rn extension", exec_ctx)
                     )
-                module_file = module.split("/")[-1]
-                module_path = os.path.dirname(os.path.realpath(module))
+                module_file = module_name.split("/")[-1]
+                module_path = os.path.dirname(os.path.realpath(module_name))
                 print(module_file, module_path)
 
                 global CURRENT_DIR
                 # if CURRENT_DIR is None:
                 CURRENT_DIR = module_path
 
-                module = os.path.join(CURRENT_DIR, module_file)
+                module_name = os.path.join(CURRENT_DIR, module_file)
             else:
                 # For STDLIB modules
-                module = os.path.join(BASE_DIR, "stdlib", f"{module}.rn")
+                module_name = os.path.join(BASE_DIR, "stdlib", f"{module_name}.rn")
 
-            with open(module, "r") as f:
+            with open(module_name, "r") as f:
                 script = f.read()
         except Exception as e:
             return RTResult().failure(
-                RTError(node.pos_start, node.pos_end, f'Failed to load script "{module}"\n' + str(e), exec_ctx)
+                RTError(node.pos_start, node.pos_end, f'Failed to load script "{module_name}"\n' + str(e), exec_ctx)
             )
 
-        _, error, should_exit = run(module, script)
+        # symbol_table = create_global_symbol_table()
+        new_ctx = Context(module_name, context, node.pos_start)
+        symbol_table = SymbolTable(context.symbol_table)
+        new_ctx.symbol_table = symbol_table
+        _, error, should_exit = run(module_name, script, context=new_ctx)
 
         if error:
             return RTResult().failure(
                 RTError(
                     node.pos_start,
                     node.pos_end,
-                    f'Failed to finish executing script "{module}"\n' + error.as_string(),
+                    f'Failed to finish executing script "{module_name}"\n' + error.as_string(),
                     exec_ctx,
                 )
             )
 
         if should_exit:
             return RTResult().success_exit(Number.null)
-        return RTResult().success(Number.null)
+        module = Module(node.module.value, module_name, symbol_table)
+        res = RTResult()
+        res.register(self.assign(var_name=node.module.value, value=module, context=context, pos_start=node.pos_start, pos_end=node.pos_end))
+        if res.should_return():
+            return res
+        return res.success(module)
 
     def visit_BinOpNode(self, node, context):
         res = RTResult()

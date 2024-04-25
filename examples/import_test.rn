@@ -34,10 +34,10 @@
 # require("String")
 
 #!
-include "String"
+include String
 
 data = "Hello World !"
-str = String(data)
+str = String.String(data)
 
 print(str.len())
 
@@ -45,3 +45,4 @@ print(str.len())
 include Math
 
 print(Math.PI) # Ligal
+

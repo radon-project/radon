@@ -1,6 +1,6 @@
 include Array
 
-arr = Array([1,2,3,4,5,6,7,8,9,10])
+arr = Array.Array([1,2,3,4,5,6,7,8,9,10])
 arr.append(11)
 print(arr.to_string())
 
@@ -14,7 +14,7 @@ print(arr.to_string())
 
 print(arr.find(6))
 
-fun double(a) -> a * a
+fun double(a) -> a * 2
 print(arr.map(double))
 
 print(arr.to_string())
