@@ -590,4 +590,5 @@ def create_global_symbol_table():
     ret.set("time_now", BuiltInFunction.time_now)
     return ret
 
+
 global_symbol_table = create_global_symbol_table()

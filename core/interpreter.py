@@ -191,7 +191,15 @@ class Interpreter:
             return RTResult().success_exit(Number.null)
         module = Module(node.module.value, module_name, symbol_table)
         res = RTResult()
-        res.register(self.assign(var_name=node.module.value, value=module, context=context, pos_start=node.pos_start, pos_end=node.pos_end))
+        res.register(
+            self.assign(
+                var_name=node.module.value,
+                value=module,
+                context=context,
+                pos_start=node.pos_start,
+                pos_end=node.pos_end,
+            )
+        )
         if res.should_return():
             return res
         return res.success(module)
@@ -715,7 +723,7 @@ class Interpreter:
 
     def visit_FallthroughNode(self, node, context):
         return RTResult().success(Number.null).fallthrough()
-    
+
     def visit_AttrAccessNode(self, node, context):
         res = RTResult()
         value = res.register(self.visit(node.node_to_access, context))
@@ -736,12 +744,7 @@ class Interpreter:
         value = value.symbol_table.get(node.attr_name_tok.value)
         if value == None:
             return res.failure(
-                RTError(
-                    node.pos_start,
-                    node.pos_end,
-                    f"Attribute '{node.attr_name}' does not exist",
-                    context,
-                )
+                RTError(node.pos_start, node.pos_end, f"Attribute '{node.attr_name}' does not exist", context)
             )
 
         value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)

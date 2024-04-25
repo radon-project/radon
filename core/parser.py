@@ -443,11 +443,7 @@ class Parser:
 
             if self.current_tok.type != TT_IDENTIFIER:
                 return res.failure(
-                    InvalidSyntaxError(
-                        self.current_tok.pos_start,
-                        self.current_tok.pos_end,
-                        "Expected identifier",
-                    )
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
                 )
 
             index = AttrAccessNode(index, self.current_tok, index.pos_start, self.current_tok.pos_end)

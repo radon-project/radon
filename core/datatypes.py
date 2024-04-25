@@ -1114,13 +1114,16 @@ class Function(BaseFunction):
         return res.success(ret_value)
 
     def copy(self):
-        copy = Function(self.name, self.symbol_table, self.body_node, self.arg_names, self.defaults, self.should_auto_return)
+        copy = Function(
+            self.name, self.symbol_table, self.body_node, self.arg_names, self.defaults, self.should_auto_return
+        )
         copy.set_context(self.context)
         copy.set_pos(self.pos_start, self.pos_end)
         return copy
 
     def __repr__(self):
         return f"<function {self.name}>"
+
 
 class Module(Value):
     def __init__(self, name, file_path, symbol_table):
@@ -1131,7 +1134,6 @@ class Module(Value):
 
     def copy(self):
         return self
-    
+
     def __repr__(self):
         return f"<module {self.name} @ {self.file_path!r}>"
-
