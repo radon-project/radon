@@ -439,15 +439,15 @@ class Parser:
             return res
 
         while self.current_tok.type == TT_DOT:
-            child = index
             self.advance(res)
 
-            child_ = res.register(self.call())
-            if res.error:
-                return res
+            if self.current_tok.type != TT_IDENTIFIER:
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
+                )
 
-            child.child = child_
-            child = child_
+            index = AttrAccessNode(index, self.current_tok, index.pos_start, self.current_tok.pos_end)
+            self.advance(res)
 
         if self.current_tok.type == TT_LPAREN:
             self.advance(res)

@@ -43,6 +43,10 @@ def shell():
 
             if error:
                 print(error.as_string())
+            else:
+                if len(result) == 1:
+                    result = result[0]
+                print(repr(result))
 
             if should_exit:
                 break

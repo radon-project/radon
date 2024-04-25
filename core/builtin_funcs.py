@@ -22,7 +22,7 @@ def args(arg_names, defaults=None):
 
 class BuiltInFunction(BaseFunction):
     def __init__(self, name, func=None):
-        super().__init__(name)
+        super().__init__(name, None)
         self.func = func
 
     def execute(self, args, kwargs):
@@ -589,5 +589,6 @@ def create_global_symbol_table():
     ret.set("sys_args", BuiltInFunction.sys_args)
     ret.set("time_now", BuiltInFunction.time_now)
     return ret
+
 
 global_symbol_table = create_global_symbol_table()

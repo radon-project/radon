@@ -92,31 +92,6 @@ class Interpreter:
         if value == None:
             return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
 
-        if node.child:
-            if isinstance(value, BaseClass):
-                name = value.name
-            elif isinstance(value, BaseInstance):
-                name = value.parent_class.name
-            elif isinstance(value, Module):
-                name = value.name
-            else:
-                return res.failure(
-                    RTError(
-                        node.pos_start,
-                        node.pos_end,
-                        f"Dotted attribute access may only be used on classes and instances for now",
-                        context,
-                    )
-                )
-            new_context = Context(name, context, node.pos_start)
-            new_context.symbol_table = value.symbol_table
-
-            child = res.register(self.visit(node.child, new_context))
-            if res.error:
-                return res
-
-            value = child
-
         value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
         return res.success(value)
 
@@ -196,9 +171,8 @@ class Interpreter:
                 RTError(node.pos_start, node.pos_end, f'Failed to load script "{module_name}"\n' + str(e), exec_ctx)
             )
 
-        # symbol_table = create_global_symbol_table()
+        symbol_table = create_global_symbol_table()
         new_ctx = Context(module_name, context, node.pos_start)
-        symbol_table = SymbolTable(context.symbol_table)
         new_ctx.symbol_table = symbol_table
         _, error, should_exit = run(module_name, script, context=new_ctx)
 
@@ -216,7 +190,15 @@ class Interpreter:
             return RTResult().success_exit(Number.null)
         module = Module(node.module.value, module_name, symbol_table)
         res = RTResult()
-        res.register(self.assign(var_name=node.module.value, value=module, context=context, pos_start=node.pos_start, pos_end=node.pos_end))
+        res.register(
+            self.assign(
+                var_name=node.module.value,
+                value=module,
+                context=context,
+                pos_start=node.pos_start,
+                pos_end=node.pos_end,
+            )
+        )
         if res.should_return():
             return res
         return res.success(module)
@@ -420,7 +402,7 @@ class Interpreter:
             defaults.append(default_value)
 
         func_value = (
-            Function(func_name, body_node, arg_names, defaults, node.should_auto_return)
+            Function(func_name, context.symbol_table, body_node, arg_names, defaults, node.should_auto_return)
             .set_context(context)
             .set_pos(node.pos_start, node.pos_end)
         )
@@ -740,3 +722,34 @@ class Interpreter:
 
     def visit_FallthroughNode(self, node, context):
         return RTResult().success(Number.null).fallthrough()
+
+    def visit_AttrAccessNode(self, node, context):
+        res = RTResult()
+        value = res.register(self.visit(node.node_to_access, context))
+        if res.should_return():
+            return res
+
+        if not isinstance(value, (BaseClass, BaseInstance, Module)):
+            return res.failure(
+                RTError(
+                    node.pos_start,
+                    node.pos_end,
+                    f"Dotted attribute access may only be used on classes, instances and modules for now",
+                    context,
+                )
+            )
+
+        orig_value = value
+        value = value.symbol_table.get(node.attr_name_tok.value)
+        if value == None:
+            return res.failure(
+                RTError(node.pos_start, node.pos_end, f"Attribute '{node.attr_name}' does not exist", context)
+            )
+
+        value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
+        if isinstance(value, BaseFunction):
+            if value.symbol_table == None:
+                value.symbol_table = SymbolTable(None)
+            value.symbol_table.set("this", orig_value)
+
+        return res.success(value)

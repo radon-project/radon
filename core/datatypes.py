@@ -828,13 +828,14 @@ class PyAPI(Value):
 
 
 class BaseFunction(Value):
-    def __init__(self, name):
+    def __init__(self, name, symbol_table):
         super().__init__()
         self.name = name or "<anonymous>"
+        self.symbol_table = symbol_table
 
     def generate_new_context(self):
         new_context = Context(self.name, self.context, self.pos_start)
-        new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
+        new_context.symbol_table = SymbolTable(self.symbol_table)
         return new_context
 
     def check_args(self, arg_names, args, kwargs, defaults):
@@ -979,6 +980,9 @@ class Instance(BaseInstance):
 
         if method == None or not isinstance(method, Function):
             return None, RTError(self.pos_start, self.pos_end, f"Function '{operator}' not defined", self.context)
+        if method.symbol_table == None:
+            method.symbol_table = SymbolTable()
+        method.symbol_table.set("this", self)
 
         value = res.register(method.execute(list(args), {}))
         if res.should_return():
@@ -1069,6 +1073,9 @@ class Class(BaseClass):
             return res.failure(
                 RTError(self.pos_start, self.pos_end, f"Function '{self.name}' not defined", self.context)
             )
+        if method.symbol_table == None:
+            method.symbol_table = SymbolTable()
+        method.symbol_table.set("this", inst)
 
         res.register(method.execute(args, kwargs))
         if res.should_return():
@@ -1081,8 +1088,8 @@ class Class(BaseClass):
 
 
 class Function(BaseFunction):
-    def __init__(self, name, body_node, arg_names, defaults, should_auto_return):
-        super().__init__(name)
+    def __init__(self, name, symbol_table, body_node, arg_names, defaults, should_auto_return):
+        super().__init__(name, symbol_table)
         self.body_node = body_node
         self.arg_names = arg_names
         self.defaults = defaults
@@ -1107,13 +1114,16 @@ class Function(BaseFunction):
         return res.success(ret_value)
 
     def copy(self):
-        copy = Function(self.name, self.body_node, self.arg_names, self.defaults, self.should_auto_return)
+        copy = Function(
+            self.name, self.symbol_table, self.body_node, self.arg_names, self.defaults, self.should_auto_return
+        )
         copy.set_context(self.context)
         copy.set_pos(self.pos_start, self.pos_end)
         return copy
 
     def __repr__(self):
         return f"<function {self.name}>"
+
 
 class Module(Value):
     def __init__(self, name, file_path, symbol_table):
@@ -1124,7 +1134,6 @@ class Module(Value):
 
     def copy(self):
         return self
-    
+
     def __repr__(self):
         return f"<module {self.name} @ {self.file_path!r}>"
-

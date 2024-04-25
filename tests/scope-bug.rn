@@ -1,0 +1,9 @@
+
+string1 = "this is my string."
+string_obj = String(string1)
+
+v = "i"
+count = string_obj.count(v)
+
+print(count)
+
