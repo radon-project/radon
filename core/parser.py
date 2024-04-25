@@ -748,6 +748,7 @@ class Parser:
 
         if self.current_tok.type == TT_RBRACE:
             self.advance(res)
+            return res.success(HashMapNode(pairs, pos_start, self.current_tok.pos_end.copy()))
         else:
             key = res.register(self.expr())
             if res.error:
