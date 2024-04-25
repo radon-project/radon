@@ -420,7 +420,7 @@ class Interpreter:
             defaults.append(default_value)
 
         func_value = (
-            Function(func_name, body_node, arg_names, defaults, node.should_auto_return)
+            Function(func_name, context.symbol_table, body_node, arg_names, defaults, node.should_auto_return)
             .set_context(context)
             .set_pos(node.pos_start, node.pos_end)
         )
@@ -740,3 +740,39 @@ class Interpreter:
 
     def visit_FallthroughNode(self, node, context):
         return RTResult().success(Number.null).fallthrough()
+    
+    def visit_AttrAccessNode(self, node, context):
+        res = RTResult()
+        value = res.register(self.visit(node.node_to_access, context))
+        if res.should_return():
+            return res
+
+        if not isinstance(value, (BaseClass, BaseInstance, Module)):
+            return res.failure(
+                RTError(
+                    node.pos_start,
+                    node.pos_end,
+                    f"Dotted attribute access may only be used on classes, instances and modules for now",
+                    context,
+                )
+            )
+
+        orig_value = value
+        value = value.symbol_table.get(node.attr_name_tok.value)
+        if value == None:
+            return res.failure(
+                RTError(
+                    node.pos_start,
+                    node.pos_end,
+                    f"Attribute '{node.attr_name}' does not exist",
+                    context,
+                )
+            )
+
+        value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
+        if isinstance(value, BaseFunction):
+            if value.symbol_table == None:
+                value.symbol_table = SymbolTable(None)
+            value.symbol_table.set("this", orig_value)
+
+        return res.success(value)

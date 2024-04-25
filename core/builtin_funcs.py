@@ -22,7 +22,7 @@ def args(arg_names, defaults=None):
 
 class BuiltInFunction(BaseFunction):
     def __init__(self, name, func=None):
-        super().__init__(name)
+        super().__init__(name, None)
         self.func = func
 
     def execute(self, args, kwargs):

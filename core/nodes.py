@@ -356,3 +356,13 @@ class SwitchNode:
         self.pos_end = pos_end
 
         self.child = None
+
+class AttrAccessNode:
+    def __init__(self, node_to_access, attr_name_tok, pos_start, pos_end):
+        self.node_to_access = node_to_access
+        self.attr_name_tok = attr_name_tok
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+        self.child = None
+
