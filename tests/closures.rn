@@ -1,0 +1,25 @@
+
+fun make_var() {
+    val = null
+    return fun(new_val=null) {
+        if new_val == null {
+            return val
+        } else {
+            nonlocal val = new_val
+        }
+    }
+}
+
+v1 = make_var()
+v2 = make_var()
+
+print(v1())
+print(v2())
+v1(69)
+print(v1())
+print(v2())
+v2(420)
+print(v1())
+print(v2())
+
+
