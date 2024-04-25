@@ -171,9 +171,8 @@ class Interpreter:
                 RTError(node.pos_start, node.pos_end, f'Failed to load script "{module_name}"\n' + str(e), exec_ctx)
             )
 
-        # symbol_table = create_global_symbol_table()
+        symbol_table = create_global_symbol_table()
         new_ctx = Context(module_name, context, node.pos_start)
-        symbol_table = SymbolTable(context.symbol_table)
         new_ctx.symbol_table = symbol_table
         _, error, should_exit = run(module_name, script, context=new_ctx)
 
