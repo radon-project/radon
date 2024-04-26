@@ -3,19 +3,21 @@ PYTHON=python3.11
 .PHONY: help
 help:
 	@echo "Usage: make [target]"
-	@echo ""
 	@echo "Targets:"
-	@echo "  help         Show this help message"
-	@echo "  format-check Check code formatting"
-	@echo "  format       Format code"
-	@echo "  lint         Check code quality"
-	@echo "  test         Run tests"
-	@echo "  py2c         Convert Python code to C"
-	@echo "  config2bin   Convert configuration file to binary"
-	@echo "  build        Build the project"
-	@echo "  install      Install the project"
+	@echo "  format             - Format code"
+	@echo "  format-check       - Check code formatting"
+	@echo "  lint               - Check code quality"
+	@echo "  test               - Run tests"
+	@echo "  test-record        - Record tests"
+	@echo "  test-diff [FILE]   - Diff tests"
+	@echo "  py2c               - Convert Python to C"
+	@echo "  config2bin         - Convert config to binary"
+	@echo "  build              - Build the project"
+	@echo "  install            - Install the project"
+	@echo "  help               - Show this help message"
 	@echo ""
 	@echo "Radon Software Foundation - https://radon-project.github.io/"
+
 
 .PHONY: format-check
 format-check:
@@ -31,7 +33,15 @@ lint:
 
 .PHONY: test
 test:
-	$(PYTHON) test.py run
+	@$(PYTHON) test.py run
+
+.PHONY: test-record
+test-record:
+	@$(PYTHON) test.py record
+
+.PHONY: test-diff
+test-diff:
+	@$(PYTHON) test.py diff $(word 2,$(MAKECMDGOALS))
 
 .PHONY: py2c
 py2c:
