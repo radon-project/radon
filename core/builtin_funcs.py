@@ -372,18 +372,21 @@ class BuiltInFunction(BaseFunction):
 
         return RTResult().success(Type(value))
 
-    @args(["code"])
+    @args(["code", "ns"])
     def execute_pyapi(self, exec_ctx):
-        code = exec_ctx.symbol_table.get("code")
+        res = RTResult()
 
-        try:
-            return RTResult().success(
-                # PyAPI(code.value).pyapi()
-                String(PyAPI(code.value).pyapi())
-            )
-        except Exception as e:
-            print(e)
-            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could't run the code", exec_ctx))
+        code = exec_ctx.symbol_table.get("code")
+        ns = exec_ctx.symbol_table.get("ns")
+
+        if not isinstance(code, String):
+            return res.failure(RTError(self.pos_start, self.pos_end, "Code must be string", exec_ctx))
+        if not isinstance(ns, HashMap):
+            return res.failure(RTError(self.pos_start, self.pos_end, "Namespace must be hashmap", exec_ctx))
+
+        res.register(PyAPI(code.value).set_pos(self.pos_start, self.pos_end).set_context(self.context).pyapi(ns))
+        if res.should_return(): return res
+        return res.success(Number.null)
 
     @args([])
     def execute_sys_args(self, exec_ctx):

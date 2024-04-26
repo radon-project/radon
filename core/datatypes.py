@@ -89,7 +89,7 @@ class Value:
         if len(others) == 0:
             others = (self,)
 
-        return RTError(self.pos_start, others[-1].pos_end, "Illegal operation", self.context)
+        return RTError(self.pos_start, others[-1].pos_end, f"Illegal operation for {(self, ) + others}", self.context)
 
 
 class Iterator(Value):
@@ -796,29 +796,71 @@ class Type(Value):
         return f"<class '{self.type}'>"
 
 
+def radonify(value, pos_start, pos_end, context):
+    def _radonify(value):
+        match value:
+            case dict():
+                return HashMap({k: radonify(v, pos_start, pos_end, context) for k, v in value.items()})
+            case str():
+                return String(value)
+            case int() | float():
+                return Number(value)
+            case True:
+                return Boolean.true
+            case False:
+                return Boolean.false
+            case None:
+                return Number.null
+            case _:
+                return PyObj(value)
+    return _radonify(value).set_pos(pos_start, pos_end).set_context(context)
+
+def deradonify(value):
+    match value:
+        case PyObj():
+            return value.value
+        case String():
+            return str(value.value)
+        case HashMap():
+            return {k: deradonify(v) for k, v in value.values.items()}
+        case Number():
+            return value.value
+        case _:
+            assert False, f"no deradonification procedure for type {type(value)}"
+
+class PyObj(Value):
+    """Thin wrapper around a Python object"""
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+    def copy(self): return self
+
+    def __repr__(self): return f"PyObj({self.value!r})"
+
 class PyAPI(Value):
     def __init__(self, code: str):
         super().__init__()
         self.code = code
-        self.pyapi()
 
-    def pyapi(self):
-        """This will execute python code and return the result. Output will be store in a output variable. To access the output, use output variable in the Python string code."""
+    def pyapi(self, ns: HashMap):
+        """TODO: update docs"""
 
-        # Empty dictionary to store the output
-        locals_dict = {}
+        locals_dict = deradonify(ns)
 
         try:
             # Execute the code and store the output in locals_dict
             exec(self.code, {}, locals_dict)
-
-            if "output" in locals_dict:
-                return str(locals_dict["output"])
-            else:
-                return "No output produced."
+            
+            # Update namespace HashMap
+            new_ns = radonify(locals_dict, self.pos_start, self.pos_end, self.context)
+            for key, value in new_ns.values.items():
+                ns.values[key] = value
 
         except Exception as e:
-            return f"Error: {str(e)}"
+            raise e from None # [DEBUG]
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, f"Python {type(e).__name__} during execution of PyAPI: {e}", self.context))
+        return RTResult().success(Number.null)
 
     def copy(self):
         copy = PyAPI(self.code)

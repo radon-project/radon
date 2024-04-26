@@ -98,6 +98,7 @@ class RTError(Error):
 
     def as_string(self):
         """Return error as string"""
+        print(f"[DEBUG] {self.details=}")
         result = self.generate_traceback()
         result += f"{self.error_name}: {self.details}"
         result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
