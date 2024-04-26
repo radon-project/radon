@@ -34,6 +34,9 @@ class Position:
         self.fn = fn
         self.ftxt = ftxt
 
+    def __str__(self):
+        return f"{self.fn}:{self.ln}:{self.col}"
+
     def advance(self, current_char=None):
         self.idx += 1
         self.col += 1

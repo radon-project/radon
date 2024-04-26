@@ -2,7 +2,9 @@ from core.parser import RTResult, Context, SymbolTable
 from core.tokens import Position
 from core.errors import RTError, IndexError as IndexErr
 
+import inspect
 from abc import ABC, abstractmethod
+
 
 
 class Value:
@@ -813,6 +815,24 @@ def radonify(value, pos_start, pos_end, context):
                 return Boolean.false
             case None:
                 return Number.null
+            case _ if inspect.isfunction(value):
+                from core.builtin_funcs import BuiltInFunction, args # Lazy import
+
+                signature = inspect.signature(value)
+                params = list(signature.parameters.keys())
+
+                @args(params)
+                def wrapper(ctx):
+                    res = RTResult()
+
+                    deradonified_params = (deradonify(ctx.symbol_table.get(param)) for param in params)
+
+                    try:
+                        return_value = radonify(value(*deradonified_params), pos_start, pos_end, ctx)
+                    except Exception as e:
+                        return res.failure(RTError(pos_start, pos_end, str(e), ctx))
+                    return res.success(return_value)
+                return BuiltInFunction(value.__name__, wrapper)
             case _:
                 return PyObj(value)
     return _radonify(value).set_pos(pos_start, pos_end).set_context(context)
@@ -829,6 +849,16 @@ def deradonify(value):
             return value.value
         case Array():
             return [deradonify(v) for v in value.elements]
+        case BaseFunction():
+            def ret(*args, **kwargs):
+                res = value.execute([radonify(arg) for arg in args], {k: radonify(arg) for k, arg in kwargs.items()})
+                if res.error:
+                    raise RuntimeError(f"Radon exception: {res.error.as_string()}")
+                elif res.should_return():
+                    assert False, "unreachable!"
+                return deradonify(res.value)
+            ret.__name__ = value.name
+            return ret
         case _:
             assert False, f"no deradonification procedure for type {type(value)}"
 
@@ -862,7 +892,6 @@ class PyAPI(Value):
                 ns.values[key] = value
 
         except Exception as e:
-            raise e from None # [DEBUG]
             return RTResult().failure(RTError(self.pos_start, self.pos_end, f"Python {type(e).__name__} during execution of PyAPI: {e}", self.context))
         return RTResult().success(Number.null)
 
