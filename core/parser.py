@@ -705,11 +705,14 @@ class Parser:
             )
 
         self.advance(res)
+        self.skip_newlines()
 
         if self.current_tok.type == TT_RSQUARE:
             self.advance(res)
+            self.skip_newlines()
         else:
             element_nodes.append(res.register(self.expr()))
+            self.skip_newlines()
             if res.error:
                 return res.failure(
                     InvalidSyntaxError(
@@ -721,8 +724,10 @@ class Parser:
 
             while self.current_tok.type == TT_COMMA:
                 self.advance(res)
+                self.skip_newlines()
 
                 element_nodes.append(res.register(self.expr()))
+                self.skip_newlines()
                 if res.error:
                     return res
 
@@ -748,6 +753,7 @@ class Parser:
 
         if self.current_tok.type == TT_RBRACE:
             self.advance(res)
+            return res.success(HashMapNode(pairs, pos_start, self.current_tok.pos_end.copy()))
         else:
             key = res.register(self.expr())
             if res.error:
@@ -771,6 +777,7 @@ class Parser:
                 self.skip_newlines()
 
                 key = res.register(self.expr())
+                self.skip_newlines()
                 if res.error:
                     return res
 
@@ -780,8 +787,10 @@ class Parser:
                     )
 
                 self.advance(res)
+                self.skip_newlines()
 
                 value = res.register(self.expr())
+                self.skip_newlines()
                 if res.error:
                     return res
 
