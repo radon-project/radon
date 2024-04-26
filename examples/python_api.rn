@@ -1,14 +1,27 @@
 ## This is an example of how to use the `pyapi()` `BuiltInFunction` in Radon
 ## Syntax: pyapi("python code") -> String (output of the python code)
 
-cwd = pyapi("import os; output = os.getcwd()")
-print("Current working directory: " + cwd)
+ns = {}
 
-files = pyapi("import os; output = os.listdir()")
-print("Files in current directory: " + files)
+pyapi("import os; cwd = os.getcwd()", ns)
+print("Current working directory: " + ns["cwd"])
 
-pi = pyapi("import math; output = math.pi")
-print("Value of pi: " + pi)
+pyapi("import os; files = os.listdir()", ns)
+print("Files in current directory: " + str(ns["files"]))
 
-sum = pyapi("output = 2 + 2")
-print("Sum of 2 + 2: " + sum)
+pyapi("import math; pi = math.pi", ns)
+print("Value of pi: " + ns["pi"])
+
+pyapi("sum_ = 2 + 2", ns)
+print("Sum of 2 + 2: " + ns["sum_"])
+
+ns["x"] = x = 6
+ns["y"] = y = 7
+
+pyapi("sum_ = x + y", ns)
+print("Sum of "+str(x)+" + "+str(y)+": " + ns["sum_"])
+
+ns["xs"] = xs = [1, 2, 3, 4, 9]
+
+pyapi("sum_ = sum(xs)", ns)
+print("Sum of "+str(xs)+": " + ns["sum_"])

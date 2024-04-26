@@ -1,0 +1,1 @@
+{"code": 0, "stdout": "Return value (from Radon function in Python): 6969\nfunc is: <built-in function my_func>\nstr('hello')\nstr('world')\nReturn value (from Python function in Radon): helloworld\n", "stderr": ""}

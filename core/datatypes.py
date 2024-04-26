@@ -2,7 +2,9 @@ from core.parser import RTResult, Context, SymbolTable
 from core.tokens import Position
 from core.errors import RTError, IndexError as IndexErr
 
+import inspect
 from abc import ABC, abstractmethod
+
 
 
 class Value:
@@ -89,7 +91,7 @@ class Value:
         if len(others) == 0:
             others = (self,)
 
-        return RTError(self.pos_start, others[-1].pos_end, "Illegal operation", self.context)
+        return RTError(self.pos_start, others[-1].pos_end, f"Illegal operation for {(self, ) + others}", self.context)
 
 
 class Iterator(Value):
@@ -797,29 +799,101 @@ class Type(Value):
         return f"<class '{self.type}'>"
 
 
+def radonify(value, pos_start, pos_end, context):
+    def _radonify(value):
+        match value:
+            case dict():
+                return HashMap({k: radonify(v, pos_start, pos_end, context) for k, v in value.items()})
+            case list():
+                return Array([radonify(v, pos_start, pos_end, context) for v in value])
+            case str():
+                return String(value)
+            case int() | float():
+                return Number(value)
+            case True:
+                return Boolean.true
+            case False:
+                return Boolean.false
+            case None:
+                return Number.null
+            case _ if inspect.isfunction(value):
+                from core.builtin_funcs import BuiltInFunction, args # Lazy import
+
+                signature = inspect.signature(value)
+                params = list(signature.parameters.keys())
+
+                @args(params)
+                def wrapper(ctx):
+                    res = RTResult()
+
+                    deradonified_params = (deradonify(ctx.symbol_table.get(param)) for param in params)
+
+                    try:
+                        return_value = radonify(value(*deradonified_params), pos_start, pos_end, ctx)
+                    except Exception as e:
+                        return res.failure(RTError(pos_start, pos_end, str(e), ctx))
+                    return res.success(return_value)
+                return BuiltInFunction(value.__name__, wrapper)
+            case _:
+                return PyObj(value)
+    return _radonify(value).set_pos(pos_start, pos_end).set_context(context)
+
+def deradonify(value):
+    match value:
+        case PyObj():
+            return value.value
+        case String():
+            return str(value.value)
+        case HashMap():
+            return {k: deradonify(v) for k, v in value.values.items()}
+        case Number():
+            return value.value
+        case Array():
+            return [deradonify(v) for v in value.elements]
+        case BaseFunction():
+            def ret(*args, **kwargs):
+                res = value.execute([radonify(arg, value.pos_start, value.pos_end, value.context) for arg in args], {k: radonify(arg) for k, arg in kwargs.items()})
+                if res.error:
+                    raise RuntimeError(f"Radon exception: {res.error.as_string()}")
+                elif res.should_return():
+                    assert False, "unreachable!"
+                return deradonify(res.value)
+            ret.__name__ = value.name
+            return ret
+        case _:
+            assert False, f"no deradonification procedure for type {type(value)}"
+
+class PyObj(Value):
+    """Thin wrapper around a Python object"""
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+    def copy(self): return self
+
+    def __repr__(self): return f"PyObj({self.value!r})"
+
 class PyAPI(Value):
     def __init__(self, code: str):
         super().__init__()
         self.code = code
-        self.pyapi()
 
-    def pyapi(self):
-        """This will execute python code and return the result. Output will be store in a output variable. To access the output, use output variable in the Python string code."""
-
-        # Empty dictionary to store the output
-        locals_dict = {}
+    def pyapi(self, ns: HashMap):
+        """TODO: update docs"""
 
         try:
+            locals_dict = deradonify(ns)
             # Execute the code and store the output in locals_dict
             exec(self.code, {}, locals_dict)
-
-            if "output" in locals_dict:
-                return str(locals_dict["output"])
-            else:
-                return "No output produced."
+            
+            # Update namespace HashMap
+            new_ns = radonify(locals_dict, self.pos_start, self.pos_end, self.context)
+            for key, value in new_ns.values.items():
+                ns.values[key] = value
 
         except Exception as e:
-            return f"Error: {str(e)}"
+            return RTResult().failure(RTError(self.pos_start, self.pos_end, f"Python {type(e).__name__} during execution of PyAPI: {e}", self.context))
+        return RTResult().success(Number.null)
 
     def copy(self):
         copy = PyAPI(self.code)
