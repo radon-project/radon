@@ -880,9 +880,8 @@ class PyAPI(Value):
     def pyapi(self, ns: HashMap):
         """TODO: update docs"""
 
-        locals_dict = deradonify(ns)
-
         try:
+            locals_dict = deradonify(ns)
             # Execute the code and store the output in locals_dict
             exec(self.code, {}, locals_dict)
             
