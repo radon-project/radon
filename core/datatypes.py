@@ -671,7 +671,7 @@ class Array(Value):
         return copy
 
     def __str__(self):
-        return ", ".join(str(x) for x in self.elements)
+        return self.__repr__()
 
     def __repr__(self):
         return f'[{", ".join(repr(x) for x in self.elements)}]'
@@ -734,10 +734,11 @@ class HashMap(Value):
         return copy
 
     def __str__(self):
-        return ", ".join([str(x) for x in self.values])
+        return self.__repr__()
 
     def __repr__(self):
-        return f'{{{", ".join([repr(x) for x in self.values])}}}'
+        __val = ", ".join([f"{repr(k)}: {repr(v)}" for k, v in self.values.items()])
+        return f"{{{__val}}}"
 
 
 class Type(Value):
