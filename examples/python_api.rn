@@ -12,12 +12,16 @@ print("Files in current directory: " + str(ns["files"]))
 pyapi("import math; pi = math.pi", ns)
 print("Value of pi: " + ns["pi"])
 
-pyapi("sum = 2 + 2", ns)
-print("Sum of 2 + 2: " + ns["sum"])
+pyapi("sum_ = 2 + 2", ns)
+print("Sum of 2 + 2: " + ns["sum_"])
 
 ns["x"] = x = 6
 ns["y"] = y = 7
 
-pyapi("sum = x + y", ns)
-print("Sum of "+str(x)+" + "+str(y)+": " + ns["sum"])
+pyapi("sum_ = x + y", ns)
+print("Sum of "+str(x)+" + "+str(y)+": " + ns["sum_"])
 
+ns["xs"] = xs = [1, 2, 3, 4, 9]
+
+pyapi("sum_ = sum(xs)", ns)
+print("Sum of "+str(xs)+": " + ns["sum_"])

@@ -801,6 +801,8 @@ def radonify(value, pos_start, pos_end, context):
         match value:
             case dict():
                 return HashMap({k: radonify(v, pos_start, pos_end, context) for k, v in value.items()})
+            case list():
+                return Array([radonify(v, pos_start, pos_end, context) for v in value])
             case str():
                 return String(value)
             case int() | float():
@@ -825,6 +827,8 @@ def deradonify(value):
             return {k: deradonify(v) for k, v in value.values.items()}
         case Number():
             return value.value
+        case Array():
+            return [deradonify(v) for v in value.elements]
         case _:
             assert False, f"no deradonification procedure for type {type(value)}"
 
