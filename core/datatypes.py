@@ -851,7 +851,7 @@ def deradonify(value):
             return [deradonify(v) for v in value.elements]
         case BaseFunction():
             def ret(*args, **kwargs):
-                res = value.execute([radonify(arg) for arg in args], {k: radonify(arg) for k, arg in kwargs.items()})
+                res = value.execute([radonify(arg, value.pos_start, value.pos_end, value.context) for arg in args], {k: radonify(arg) for k, arg in kwargs.items()})
                 if res.error:
                     raise RuntimeError(f"Radon exception: {res.error.as_string()}")
                 elif res.should_return():
