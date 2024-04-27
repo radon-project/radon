@@ -605,6 +605,8 @@ class Array(Value):
                     return Boolean(self.value[index_start.value : index_end.value]), None
                 elif isinstance(self.value[index_start.value : index_end.value], list):
                     return Array(self.value[index_start.value : index_end.value]), None
+                elif isinstance(self.value[index_start.value : index_end.value], dict):
+                    return HashMap(self.value[index_start.value : index_end.value]), None
                 else:
                     return None, RTError(
                         index_start.pos_start,
@@ -626,14 +628,16 @@ class Array(Value):
                 return String(self.value[index_start.value]), None
             elif isinstance(self.value[index_start.value], Number):
                 return Number(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], float):
-                return Number(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], bool):
+            # elif isinstance(self.value[index_start.value], float):
+            #     return Number(self.value[index_start.value]), None
+            elif isinstance(self.value[index_start.value], Boolean):
                 return Boolean(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], list):
+            elif isinstance(self.value[index_start.value], Array):
                 return Array(self.value[index_start.value]), None
             elif isinstance(self.value[index_start.value], String):
                 return String(self.value[index_start.value]), None
+            elif isinstance(self.value[index_start.value], HashMap):
+                return HashMap(self.value[index_start.value]), None
             else:
                 return None, RTError(
                     index_start.pos_start,
