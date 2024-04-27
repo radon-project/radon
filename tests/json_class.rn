@@ -232,7 +232,6 @@ radon_object = [
   }
 ]
 
-# print(radon_object)
 json = Json()
 
 json_string = json.dumps(radon_object)
