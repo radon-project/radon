@@ -13,7 +13,7 @@ print(2 in arr)
 
 # with while loop
 while 3 in arr {
-    print(arr_pop(arr, -1))
+    print(arr_pop(arr))
 }
 
 # this should also work for HashMap as well.
