@@ -1,0 +1,28 @@
+# with Array
+arr = [1,2,3,4,5]
+
+# with if-else
+if 1 in arr {
+    print("Data found.")
+} else {
+    print("Not found.")
+}
+
+# Normal testing
+print(2 in arr)
+
+# with while loop
+while 3 in arr {
+    print(arr_pop(arr, -1))
+}
+
+# this should also work for HashMap as well.
+arr = [1,2,3,4,5]
+assert 4 in arr
+
+hm = {
+    "key1": "value1",
+    "key2": "value2"
+}
+assert "key2" in hm # This will search in HashMap->Keys
+

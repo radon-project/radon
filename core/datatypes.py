@@ -81,6 +81,9 @@ class Value:
     def execute(self, args, kwargs):
         return RTResult().failure(self.illegal_operation())
 
+    def contains(self, value):
+        return None, self.illegal_operation(value)
+
     def copy(self):
         raise Exception("No copy method defined")
 
@@ -667,6 +670,17 @@ class Array(Value):
             )
         return self, None
 
+    def contains(self, value):
+        ret = Boolean.false
+        for val in self.elements:
+            cmp, err = val.get_comparison_eq(value)
+            if err:
+                return None, err
+            if cmp.is_true():
+                ret = Boolean.true
+                break
+        return ret, None
+
     def is_true(self):
         return len(self.elements) > 0
 
@@ -732,6 +746,17 @@ class HashMap(Value):
         self.values[index.value] = value
 
         return self, None
+
+    def contains(self, value):
+        ret = Boolean.false
+        for val in self.values.keys():
+            cmp, err = value.get_comparison_eq(String(val))
+            if err:
+                return None, err
+            if cmp.is_true():
+                ret = Boolean.true
+                break
+        return ret, None
 
     def copy(self):
         copy = HashMap(self.values)
