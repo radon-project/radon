@@ -1061,7 +1061,9 @@ class Parser:
             static = True
 
         if not self.current_tok.matches(TT_KEYWORD, "fun"):
-            assert False, "unreachable"
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'fun'")
+            )
 
         self.advance(res)
 
