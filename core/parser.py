@@ -93,9 +93,10 @@ class Parser:
         while self.current_tok.type == TT_NEWLINE:
             self.advance(res)
 
-        statement = res.try_register(self.statement())
-        if not statement:
+        if self.current_tok.type in (TT_EOF, TT_RBRACE):
             return res.success(ArrayNode(list_statements, pos_start, self.current_tok.pos_end.copy()))
+        statement = res.register(self.statement())
+        if res.error: return res
         list_statements.append(statement)
 
         more_statements = True
@@ -110,11 +111,11 @@ class Parser:
 
             if not more_statements:
                 break
-            statement = res.try_register(self.statement())
-            if not statement:
-                self.reverse(res.to_reverse_count)
+            if self.current_tok.type in (TT_EOF, TT_RBRACE):
                 more_statements = False
                 continue
+            statement = res.register(self.statement())
+            if res.error: return res
             list_statements.append(statement)
 
         return res.success(ArrayNode(list_statements, pos_start, self.current_tok.pos_end.copy()))
