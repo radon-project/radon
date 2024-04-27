@@ -548,9 +548,16 @@ class Array(Value):
 
     def get_comparison_eq(self, other):
         if isinstance(other, Array):
-            return Boolean(int(self.elements == other.elements)).set_context(self.context), None
-        elif isinstance(other, String):
-            return Boolean(int(self.elements == other.value)).set_context(self.context), None
+            if len(self.elements) != len(other.elements):
+                return Boolean.false, None
+
+            for a, b in zip(self.elements, other.elements):
+                ret, error = a.get_comparison_eq(b)
+                if error:
+                    return None, error
+                if not ret.is_true():
+                    return Boolean.false, None
+            return Boolean.true, None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -578,81 +585,32 @@ class Array(Value):
 
         if (index_end != None) and (index_step != None):
             try:
-                # return String(self.value[index_start.value:index_end.value:index_step.value]), None
-                if isinstance(self.value[index_start.value : index_end.value : index_step.value], str):
-                    return String(self.value[index_start.value : index_end.value : index_step.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], int):
-                    return Number(self.value[index_start.value : index_end.value : index_step.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], float):
-                    return Number(self.value[index_start.value : index_end.value : index_step.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], bool):
-                    return Boolean(self.value[index_start.value : index_end.value : index_step.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], list):
-                    return Array(self.value[index_start.value : index_end.value : index_step.value]), None
+                return Array(self.elements[index_start.value:index_end.value:index_step.value]), None
             except (IndexError, TypeError):
                 return None, RTError(
                     index_start.pos_start,
                     index_end.pos_end,
-                    f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
+                    f"Cannot retrieve item {index_start} from list {self!r} because it is out of bounds.",
                     self.context,
                 )
         elif index_end != None:
             try:
-                if isinstance(self.value[index_start.value : index_end.value], str):
-                    return String(self.value[index_start.value : index_end.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value], Number):
-                    return Number(self.value[index_start.value : index_end.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value], float):
-                    return Number(self.value[index_start.value : index_end.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value], bool):
-                    return Boolean(self.value[index_start.value : index_end.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value], list):
-                    return Array(self.value[index_start.value : index_end.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value], dict):
-                    return HashMap(self.value[index_start.value : index_end.value]), None
-                else:
-                    return None, RTError(
-                        index_start.pos_start,
-                        index_end.pos_end,
-                        f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
-                        self.context,
-                    )
+                return Array(self.elements[index_start.value:index_end.value]), None
             except (IndexError, TypeError):
                 return None, RTError(
                     index_start.pos_start,
                     index_end.pos_end,
-                    f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
+                    f"Cannot retrieve item {index_start} from list {self!r} because it is out of bounds.",
                     self.context,
                 )
 
         try:
-            # return String(self.value[index_start.value]), None
-            if isinstance(self.value[index_start.value], str):
-                return String(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], Number):
-                return Number(self.value[index_start.value]), None
-            # elif isinstance(self.value[index_start.value], float):
-            #     return Number(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], Boolean):
-                return Boolean(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], Array):
-                return Array(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], String):
-                return String(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], HashMap):
-                return HashMap(self.value[index_start.value]), None
-            else:
-                return None, RTError(
-                    index_start.pos_start,
-                    index_start.pos_end,
-                    f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
-                    self.context,
-                )
+            return self.value[index_start.value], None
         except (TypeError, IndexError):
             return None, RTError(
                 index_start.pos_start,
                 index_start.pos_end,
-                f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
+                f"Cannot retrieve item {index_start} from list {self!r} because it is out of bounds.",
                 self.context,
             )
 
