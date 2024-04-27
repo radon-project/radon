@@ -1,73 +1,62 @@
-include Array
-
 class Argparser {
-    fun __constructor__(name, help) {
-        # Program name
-        this.name = name 
-        
-        # Program help text
-        this.help = help
-        
-        # Command line arguments
-        this.args = sys_args()
-
-        # Added command lists
-        this.commands = []
-    }
-
-    fun to_string() -> "<class 'Argparser'>"
-
-    # This will return the main arguments which has been passed by the user
-    fun get_args() -> arr_slice(this.args, 3, arr_len(this.args))
-    
-    fun add_command(name, help, nargs, action) {
-        # param: name is like -n or --name line argument
-        # param: help is for the help text to be printed
-        # param: nargs is number of args to accept 0-?
-        # param: action for a call back function which will take a single argument
-
-        arr_append(this.commands, [name, help, nargs, action])
-    }
-
-    # Returns all selected commands
-    fun get_commands() -> this.commands
-
-    fun get_help() {
-        # This will return the help text for -h or --help argument
-
-        file_name = str(arr_find(args, 2))
-        title = "usage: " + file_name + "\n\n" + name + "\n\n"
-        options = "options: "
-
-        return title + options
-    }
-
-    fun parse() {
-        # Loop all the commands from module
-        for i=0 to arr_len(this.get_commands()) {
-
-            # Get the commands array
-            cmd = arr_find(this.get_commands(), i)
-
-            # Get the name of the command as an array
-            final_arg = arr_slice(cmd, 0, 1)
-
-            # Get the input command name as array
-            g_arg = arr_slice(this.get_args(), 0, 1)
-            
-            if final_arg == g_arg {
-                print("Got it")
-
-                # action = arr_find(cmd, 3)
-                # n = arr_find(cmd, 2)
-                # print(n)
-                # if n != 0 {
-                #     for i=0 to int(n) {
-                #         print(i)
-                #     }
-                # }
-            }
+    fun __constructor__(description) {
+        this.description = description
+        this.options = {
+            "--help": "Show this help message and exit"
         }
     }
 
+    fun add_option(option, description, is_flag = false) {
+        this.options[option] = {"description": description, "is_flag": is_flag}
+    }
+
+    fun parse_arguments() {
+        arguments = sys_args()
+        parsed_args = {}
+        current_option = null
+        index = 1
+
+        while index < arr_len(arguments) {
+            argument = arguments[index]
+
+            if current_option != null {
+                parsed_args[current_option] = argument
+                current_option = null
+            }
+            elif argument in this.options {
+                current_option = argument
+            }
+            else {
+                print("Unknown argument: " + argument)
+                return
+            }
+
+            nonlocal index++
+        }
+
+        return parsed_args
+    }
+
+    fun print_help() {
+        print("Usage:" + sys_args()[0])
+        print(this.description)
+        print("Options:")
+        for option, data in this.options {
+            print("  " + option + ": " + data["description"])
+        }
+    }
 }
+
+#!
+argparser = Argparser("This is a simple argparser")
+argparser.add_option("--name", "Name of the user")
+argparser.add_option("--age", "Age of the user")
+argparser.add_option("--is-admin", "Is the user an admin", is_flag=true)
+
+args = argparser.parse_arguments()
+if "--help" in args {
+    argparser.print_help()
+} else {
+    print(args)
+}
+!#
