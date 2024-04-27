@@ -26,3 +26,37 @@ hm = {
 }
 assert "key2" in hm # This will search in HashMap->Keys
 
+class Person {
+    fun __constructor__(name) {
+        this.name = name
+        this.friends = []
+    }
+
+    fun befriend(other) {
+        arr_append(this.friends, other)
+        arr_append(other.friends, this)
+    }
+
+    fun dump() {
+        print("Person(name=\"" + this.name + "\", friends=" + this.friends + ")")
+    }
+
+    fun __contains__(friend_name) {
+        for friend in this.friends {
+            if friend.name == friend_name {
+                return true
+            }
+        }
+        return false
+    }
+}
+
+john = Person("John")
+bob = Person("Bob")
+alice = Person("Alice")
+
+john.befriend(bob)
+assert "Bob" in john
+assert "John" in bob
+assert not "Alice" in john
+

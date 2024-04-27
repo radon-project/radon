@@ -1079,6 +1079,9 @@ class BaseInstance(Value, ABC):
     def execute(self, args, kwargs):
         return self.operator("__call__", *args, **kwargs)
 
+    def contains(self, value):
+        return self.operator("__contains__", value)
+
     def is_true(self):
         return self.operator("__truthy__")
 
