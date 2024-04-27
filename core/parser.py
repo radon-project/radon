@@ -1069,7 +1069,7 @@ class Parser:
 
         if not self.current_tok.matches(TT_KEYWORD, "fun"):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'fun'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'fun' or identifier")
             )
 
         self.advance(res)
