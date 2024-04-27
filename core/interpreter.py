@@ -254,8 +254,10 @@ class Interpreter:
             result, error = left.ored_by(right)
         elif node.op_tok.type == TT_IDIV:
             result, error = left.idived_by(right)
+        elif node.op_tok.matches(TT_KEYWORD, "in"):
+            result, error = right.contains(left)
         else:
-            assert False, f"invalid binary operation: {node.op_tok}"
+            assert False, f"invalid binary operation: {node.op_tok}, this is probably a bug in the parser."
 
         if error:
             return res.failure(error)

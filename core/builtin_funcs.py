@@ -181,7 +181,7 @@ class BuiltInFunction(BaseFunction):
         array_.elements.append(value)
         return RTResult().success(Number.null)
 
-    @args(["array", "index"])
+    @args(["array", "index"], [None, Number(-1)])
     def execute_arr_pop(self, exec_ctx):
         array_ = exec_ctx.symbol_table.get("array")
         index = exec_ctx.symbol_table.get("index")
