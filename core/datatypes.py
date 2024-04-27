@@ -802,6 +802,18 @@ class Type(Value):
     def __repr__(self):
         return f"<class '{self.type}'>"
 
+    def get_comparison_eq(self, other):
+        if isinstance(other, Type):
+            return Boolean(self.type == other.type).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
+
+    def get_comparison_ne(self, other):
+        if isinstance(other, Type):
+            return Boolean(self.type != other.type).set_context(self.context), None
+        else:
+            return None, Value.illegal_operation(self, other)
+
 
 def radonify(value, pos_start, pos_end, context):
     def _radonify(value):
