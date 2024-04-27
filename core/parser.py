@@ -76,7 +76,7 @@ class Parser:
         if not res.error and self.current_tok.type != TT_EOF:
             return res.failure(
                 InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end, "Token cannot appear after previous tokens"
+                    self.current_tok.pos_start, self.current_tok.pos_end, "Expected EOF"
                 )
             )
         return res
