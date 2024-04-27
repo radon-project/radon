@@ -27,7 +27,8 @@ class Lexer:
                 self.advance()
             elif self.current_char == "\\":
                 self.advance()
-                if self.current_char != "\n": return tokens, ExpectedCharError(self.pos, self.pos, "newline (after line continuation char)")
+                if self.current_char != "\n":
+                    return tokens, ExpectedCharError(self.pos, self.pos, "newline (after line continuation char)")
                 self.advance()
             elif self.current_char in DIGITS:
                 tokens.append(self.make_number())

@@ -6,7 +6,6 @@ import inspect
 from abc import ABC, abstractmethod
 
 
-
 class Value:
     def __init__(self):
         self.set_pos()
@@ -585,7 +584,7 @@ class Array(Value):
 
         if (index_end != None) and (index_step != None):
             try:
-                return Array(self.elements[index_start.value:index_end.value:index_step.value]), None
+                return Array(self.elements[index_start.value : index_end.value : index_step.value]), None
             except (IndexError, TypeError):
                 return None, RTError(
                     index_start.pos_start,
@@ -595,7 +594,7 @@ class Array(Value):
                 )
         elif index_end != None:
             try:
-                return Array(self.elements[index_start.value:index_end.value]), None
+                return Array(self.elements[index_start.value : index_end.value]), None
             except (IndexError, TypeError):
                 return None, RTError(
                     index_start.pos_start,
@@ -816,7 +815,7 @@ def radonify(value, pos_start, pos_end, context):
             case None:
                 return Number.null
             case _ if inspect.isfunction(value):
-                from core.builtin_funcs import BuiltInFunction, args # Lazy import
+                from core.builtin_funcs import BuiltInFunction, args  # Lazy import
 
                 signature = inspect.signature(value)
                 params = list(signature.parameters.keys())
@@ -832,10 +831,13 @@ def radonify(value, pos_start, pos_end, context):
                     except Exception as e:
                         return res.failure(RTError(pos_start, pos_end, str(e), ctx))
                     return res.success(return_value)
+
                 return BuiltInFunction(value.__name__, wrapper)
             case _:
                 return PyObj(value)
+
     return _radonify(value).set_pos(pos_start, pos_end).set_context(context)
+
 
 def deradonify(value):
     match value:
@@ -850,27 +852,37 @@ def deradonify(value):
         case Array():
             return [deradonify(v) for v in value.elements]
         case BaseFunction():
+
             def ret(*args, **kwargs):
-                res = value.execute([radonify(arg, value.pos_start, value.pos_end, value.context) for arg in args], {k: radonify(arg) for k, arg in kwargs.items()})
+                res = value.execute(
+                    [radonify(arg, value.pos_start, value.pos_end, value.context) for arg in args],
+                    {k: radonify(arg) for k, arg in kwargs.items()},
+                )
                 if res.error:
                     raise RuntimeError(f"Radon exception: {res.error.as_string()}")
                 elif res.should_return():
                     assert False, "unreachable!"
                 return deradonify(res.value)
+
             ret.__name__ = value.name
             return ret
         case _:
             assert False, f"no deradonification procedure for type {type(value)}"
 
+
 class PyObj(Value):
     """Thin wrapper around a Python object"""
+
     def __init__(self, value):
         super().__init__()
         self.value = value
 
-    def copy(self): return self
+    def copy(self):
+        return self
 
-    def __repr__(self): return f"PyObj({self.value!r})"
+    def __repr__(self):
+        return f"PyObj({self.value!r})"
+
 
 class PyAPI(Value):
     def __init__(self, code: str):
@@ -884,14 +896,21 @@ class PyAPI(Value):
             locals_dict = deradonify(ns)
             # Execute the code and store the output in locals_dict
             exec(self.code, {}, locals_dict)
-            
+
             # Update namespace HashMap
             new_ns = radonify(locals_dict, self.pos_start, self.pos_end, self.context)
             for key, value in new_ns.values.items():
                 ns.values[key] = value
 
         except Exception as e:
-            return RTResult().failure(RTError(self.pos_start, self.pos_end, f"Python {type(e).__name__} during execution of PyAPI: {e}", self.context))
+            return RTResult().failure(
+                RTError(
+                    self.pos_start,
+                    self.pos_end,
+                    f"Python {type(e).__name__} during execution of PyAPI: {e}",
+                    self.context,
+                )
+            )
         return RTResult().success(Number.null)
 
     def copy(self):

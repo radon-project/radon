@@ -74,11 +74,7 @@ class Parser:
     def parse(self):
         res = self.statements()
         if not res.error and self.current_tok.type != TT_EOF:
-            return res.failure(
-                InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end, "Expected EOF"
-                )
-            )
+            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected EOF"))
         return res
 
     def skip_newlines(self):
@@ -101,7 +97,8 @@ class Parser:
         if self.current_tok.type in (TT_EOF, TT_RBRACE):
             return res.success(ArrayNode(list_statements, pos_start, self.current_tok.pos_end.copy()))
         statement = res.register(self.statement())
-        if res.error: return res
+        if res.error:
+            return res
         list_statements.append(statement)
 
         more_statements = True
@@ -120,7 +117,8 @@ class Parser:
                 more_statements = False
                 continue
             statement = res.register(self.statement())
-            if res.error: return res
+            if res.error:
+                return res
             list_statements.append(statement)
 
         return res.success(ArrayNode(list_statements, pos_start, self.current_tok.pos_end.copy()))
@@ -193,7 +191,9 @@ class Parser:
             if self.current_tok.type != TT_STRING and self.current_tok.type != TT_IDENTIFIER:
                 return res.failure(
                     InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected string or identifier as included module"
+                        self.current_tok.pos_start,
+                        self.current_tok.pos_end,
+                        "Expected string or identifier as included module",
                     )
                 )
 
@@ -205,11 +205,7 @@ class Parser:
         expr = res.register(self.expr())
         if res.error:
             return res.failure(
-                InvalidSyntaxError(
-                    self.current_tok.pos_start,
-                    self.current_tok.pos_end,
-                    "Expected statement",
-                )
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected statement")
             )
         return res.success(expr)
 
@@ -228,11 +224,7 @@ class Parser:
 
         if res.error:
             return res.failure(
-                InvalidSyntaxError(
-                    self.current_tok.pos_start,
-                    self.current_tok.pos_end,
-                    "Expected expression",
-                )
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression")
             )
 
         return res.success(node)
@@ -257,11 +249,7 @@ class Parser:
 
         if self.current_tok.type != TT_IDENTIFIER:
             return res.failure(
-                InvalidSyntaxError(
-                    self.current_tok.pos_start,
-                    self.current_tok.pos_end,
-                    "Expected expression",
-                )
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression")
             )
 
         var_name_tok = self.current_tok
@@ -384,15 +372,13 @@ class Parser:
                 return res
             return res.success(UnaryOpNode(op_tok, node))
 
-        node = res.register(self.bin_op(self.arith_expr, (TT_EE, TT_NE, TT_LT, TT_GT, TT_LTE, TT_GTE, (TT_KEYWORD, "in"))))
+        node = res.register(
+            self.bin_op(self.arith_expr, (TT_EE, TT_NE, TT_LT, TT_GT, TT_LTE, TT_GTE, (TT_KEYWORD, "in")))
+        )
 
         if res.error:
             return res.failure(
-                InvalidSyntaxError(
-                    self.current_tok.pos_start,
-                    self.current_tok.pos_end,
-                    "Expected expression",
-                )
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression")
             )
 
         return res.success(node)
@@ -475,9 +461,7 @@ class Parser:
                 if res.error:
                     return res.failure(
                         InvalidSyntaxError(
-                            self.current_tok.pos_start,
-                            self.current_tok.pos_end,
-                            "Expected ')' or expression",
+                            self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')' or expression"
                         )
                     )
 
@@ -605,13 +589,7 @@ class Parser:
             node = hashmap_expr
 
         if node is None:
-            return res.failure(
-                InvalidSyntaxError(
-                    tok.pos_start,
-                    tok.pos_end,
-                    "Expected expression",
-                )
-            )
+            return res.failure(InvalidSyntaxError(tok.pos_start, tok.pos_end, "Expected expression"))
 
         while self.current_tok.type == TT_LSQUARE:
             self.advance(res)
@@ -694,9 +672,7 @@ class Parser:
             if res.error:
                 return res.failure(
                     InvalidSyntaxError(
-                        self.current_tok.pos_start,
-                        self.current_tok.pos_end,
-                        "Expected ']' or expression",
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected ']' or expression"
                     )
                 )
 
@@ -1069,7 +1045,9 @@ class Parser:
 
         if not self.current_tok.matches(TT_KEYWORD, "fun"):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'fun' or identifier")
+                InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'fun' or identifier"
+                )
             )
 
         self.advance(res)
@@ -1476,7 +1454,12 @@ class SymbolTable:
                     self.parent.set(name, value, qualifier)
                 else:
                     return RTResult().failure(
-                        RTError(value.pos_start, value.pos_end, f"Cannot assign to undeclared variable {name}", value.context)
+                        RTError(
+                            value.pos_start,
+                            value.pos_end,
+                            f"Cannot assign to undeclared variable {name}",
+                            value.context,
+                        )
                     )
             case Token(TT_KEYWORD, "global"):
                 if self.is_global:
