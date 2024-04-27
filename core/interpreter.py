@@ -538,7 +538,7 @@ class Interpreter:
 
         if error:
             return res.failure(error)
-        return res.success(result)
+        return res.success(result.set_pos(node.pos_start, node.pos_end).set_context(context))
 
     def visit_IndexSetNode(self, node, context):
         res = RTResult()

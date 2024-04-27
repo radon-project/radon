@@ -613,7 +613,7 @@ class Parser:
                 )
             )
 
-        if self.current_tok.type == TT_LSQUARE:
+        while self.current_tok.type == TT_LSQUARE:
             self.advance(res)
 
             # handle empty call [] errors here
@@ -650,9 +650,9 @@ class Parser:
                 if res.error:
                     return res
 
-                return res.success(IndexSetNode(node, index[0], value, tok.pos_start, self.current_tok.pos_end))
-
-            return res.success(IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, *index))
+                node = IndexSetNode(node, index[0], value, tok.pos_start, self.current_tok.pos_end)
+            else:
+                node = IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, *index)
 
         return res.success(node)
 
