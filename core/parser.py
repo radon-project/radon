@@ -7,6 +7,7 @@ class ParseResult:
     """Parser Result"""
 
     def __init__(self):
+        self.unignorable = False
         self.error = None
         self.node = None
         self.last_registered_advance_count = 0
@@ -25,7 +26,7 @@ class ParseResult:
         return res.node
 
     def try_register(self, res):
-        if res.error:
+        if res.error and not res.unignorable:
             self.to_reverse_count = res.advance_count
             return None
         return self.register(res)
@@ -37,6 +38,10 @@ class ParseResult:
     def failure(self, error):
         if not self.error or self.last_registered_advance_count == 0:
             self.error = error
+        return self
+
+    def make_unignorable(self):
+        self.unignorable = True
         return self
 
 
@@ -71,7 +76,7 @@ class Parser:
         if not res.error and self.current_tok.type != TT_EOF:
             return res.failure(
                 InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end, "Token cannot appear after previous tokens"
+                    self.current_tok.pos_start, self.current_tok.pos_end, "Expected EOF"
                 )
             )
         return res
@@ -93,9 +98,10 @@ class Parser:
         while self.current_tok.type == TT_NEWLINE:
             self.advance(res)
 
-        statement = res.try_register(self.statement())
-        if not statement:
+        if self.current_tok.type in (TT_EOF, TT_RBRACE):
             return res.success(ArrayNode(list_statements, pos_start, self.current_tok.pos_end.copy()))
+        statement = res.register(self.statement())
+        if res.error: return res
         list_statements.append(statement)
 
         more_statements = True
@@ -110,11 +116,11 @@ class Parser:
 
             if not more_statements:
                 break
-            statement = res.try_register(self.statement())
-            if not statement:
-                self.reverse(res.to_reverse_count)
+            if self.current_tok.type in (TT_EOF, TT_RBRACE):
                 more_statements = False
                 continue
+            statement = res.register(self.statement())
+            if res.error: return res
             list_statements.append(statement)
 
         return res.success(ArrayNode(list_statements, pos_start, self.current_tok.pos_end.copy()))
@@ -187,7 +193,7 @@ class Parser:
             if self.current_tok.type != TT_STRING and self.current_tok.type != TT_IDENTIFIER:
                 return res.failure(
                     InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected string or identifier"
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected string or identifier as included module"
                     )
                 )
 
@@ -202,7 +208,7 @@ class Parser:
                 InvalidSyntaxError(
                     self.current_tok.pos_start,
                     self.current_tok.pos_end,
-                    "Expected 'return', 'continue', 'break', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '%', '(', '[', '{', or 'not'",
+                    "Expected statement",
                 )
             )
         return res.success(expr)
@@ -213,6 +219,8 @@ class Parser:
         var_assign_node = res.try_register(self.assign_expr())
         if var_assign_node:
             return res.success(var_assign_node)
+        elif res.error:
+            return res
         else:
             self.reverse(res.to_reverse_count)
 
@@ -223,7 +231,7 @@ class Parser:
                 InvalidSyntaxError(
                     self.current_tok.pos_start,
                     self.current_tok.pos_end,
-                    "Expected 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[', '{', or 'not'",
+                    "Expected expression",
                 )
             )
 
@@ -252,7 +260,7 @@ class Parser:
                 InvalidSyntaxError(
                     self.current_tok.pos_start,
                     self.current_tok.pos_end,
-                    "Expected 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[', '{', or 'not'",
+                    "Expected expression",
                 )
             )
 
@@ -345,7 +353,7 @@ class Parser:
         self.advance(res)
         assign_expr = res.register(self.expr())
         if res.error:
-            return res
+            return res.make_unignorable()
 
         ASSIGN_TO_OPERATORS = {
             TT_PE: TT_PLUS,
@@ -383,7 +391,7 @@ class Parser:
                 InvalidSyntaxError(
                     self.current_tok.pos_start,
                     self.current_tok.pos_end,
-                    "Expected int, float, identifier, '+', '-', '(', '[', 'if', 'for', 'while', 'fun' or 'not'",
+                    "Expected expression",
                 )
             )
 
@@ -469,7 +477,7 @@ class Parser:
                         InvalidSyntaxError(
                             self.current_tok.pos_start,
                             self.current_tok.pos_end,
-                            "Expected ')', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[', '{', or 'not'",
+                            "Expected ')' or expression",
                         )
                     )
 
@@ -601,7 +609,7 @@ class Parser:
                 InvalidSyntaxError(
                     tok.pos_start,
                     tok.pos_end,
-                    "Expected int, float, identifier, '+', '-', '(', '[', if', 'for', 'while', 'fun'",
+                    "Expected expression",
                 )
             )
 
@@ -618,34 +626,6 @@ class Parser:
                 )
 
             # [index_start:index_end:index_step] or [index_start:index_end] or [index_start]
-
-            # if it's a HashMap it will be key as string get and set
-            #            if self.current_tok.type == TT_STRING or self.current_tok.type == TT_IDENTIFIER:
-            #                if self.current_tok.type == TT_IDENTIFIER:
-            #                    # get the value from identifier token type
-            #                    key = res.register(self.expr())
-            #                    if res.error:
-            #                        return res
-            #
-            #                elif self.current_tok.type == TT_STRING:
-            #                    key = self.current_tok
-            #
-            #                self.advance(res)
-            #
-            #                if self.current_tok.type != TT_RSQUARE:
-            #                    return res.failure(InvalidSyntaxError(tok.pos_start, self.current_tok.pos_end, "Expected ']'"))
-            #                self.advance(res)
-            #
-            #                if self.current_tok.type == TT_EQ:
-            #                    self.advance(res)
-            #
-            #                    value = res.register(self.expr())
-            #                    if res.error:
-            #                        return res
-            #
-            #                    return res.success(IndexSetNode(node, key, value, tok.pos_start, self.current_tok.pos_end))
-            #
-            #                return res.success(IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, key))
 
             index = []
             while self.current_tok.type != TT_RSQUARE:
@@ -700,9 +680,7 @@ class Parser:
         pos_start = self.current_tok.pos_start.copy()
 
         if self.current_tok.type != TT_LSQUARE:
-            return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected '['")
-            )
+            assert False, "unreachable"
 
         self.advance(res)
         self.skip_newlines()
@@ -718,7 +696,7 @@ class Parser:
                     InvalidSyntaxError(
                         self.current_tok.pos_start,
                         self.current_tok.pos_end,
-                        "Expected ']', 'if', 'for', 'while', 'fun', int, float, identifier, '+', '-', '(', '[', '{' or 'not'",
+                        "Expected ']' or expression",
                     )
                 )
 
@@ -746,7 +724,7 @@ class Parser:
         pos_start = self.current_tok.pos_start.copy()
 
         if self.current_tok.type != TT_LBRACE:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+            assert False, "unreachable"
 
         self.advance(res)
         self.skip_newlines()
@@ -832,12 +810,11 @@ class Parser:
                     return res
                 else_case = (statements, True)
 
-                if self.current_tok.type == TT_RBRACE:
-                    self.advance(res)
-                else:
+                if self.current_tok.type != TT_RBRACE:
                     return res.failure(
                         InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
                     )
+                self.advance(res)
             else:
                 expr = res.register(self.statement())
                 if res.error:
@@ -918,9 +895,7 @@ class Parser:
         pos_start = self.current_tok.pos_start.copy()
 
         if not self.current_tok.matches(TT_KEYWORD, "for"):
-            return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'for'")
-            )
+            assert False, "unreachable"
 
         self.advance(res)
 
@@ -1010,9 +985,7 @@ class Parser:
         res = ParseResult()
 
         if not self.current_tok.matches(TT_KEYWORD, "while"):
-            return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'while'")
-            )
+            assert False, "unreachable"
 
         self.advance(res)
 
@@ -1056,9 +1029,7 @@ class Parser:
         pos_start = self.current_tok.pos_start
 
         if not self.current_tok.matches(TT_KEYWORD, "class"):
-            return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'class'")
-            )
+            assert False, "unreachable"
 
         self.advance(res)
 
@@ -1098,7 +1069,7 @@ class Parser:
 
         if not self.current_tok.matches(TT_KEYWORD, "fun"):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'fun'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'fun' or identifier")
             )
 
         self.advance(res)
@@ -1501,8 +1472,12 @@ class SymbolTable:
             case Token(TT_KEYWORD, "nonlocal"):
                 if name in self.symbols:
                     self.symbols[name] = value
-                else:
+                elif self.parent:
                     self.parent.set(name, value, qualifier)
+                else:
+                    return RTResult().failure(
+                        RTError(value.pos_start, value.pos_end, f"Cannot assign to undeclared variable {name}", value.context)
+                    )
             case Token(TT_KEYWORD, "global"):
                 if self.is_global:
                     self.symbols[name] = value
