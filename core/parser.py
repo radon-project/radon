@@ -1472,8 +1472,12 @@ class SymbolTable:
             case Token(TT_KEYWORD, "nonlocal"):
                 if name in self.symbols:
                     self.symbols[name] = value
-                else:
+                elif self.parent:
                     self.parent.set(name, value, qualifier)
+                else:
+                    return RTResult().failure(
+                        RTError(value.pos_start, value.pos_end, f"Cannot assign to undeclared variable {name}", value.context)
+                    )
             case Token(TT_KEYWORD, "global"):
                 if self.is_global:
                     self.symbols[name] = value
