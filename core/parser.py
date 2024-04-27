@@ -7,6 +7,7 @@ class ParseResult:
     """Parser Result"""
 
     def __init__(self):
+        self.unignorable = False
         self.error = None
         self.node = None
         self.last_registered_advance_count = 0
@@ -25,7 +26,7 @@ class ParseResult:
         return res.node
 
     def try_register(self, res):
-        if res.error:
+        if res.error and not res.unignorable:
             self.to_reverse_count = res.advance_count
             return None
         return self.register(res)
@@ -37,6 +38,10 @@ class ParseResult:
     def failure(self, error):
         if not self.error or self.last_registered_advance_count == 0:
             self.error = error
+        return self
+
+    def make_unignorable(self):
+        self.unignorable = True
         return self
 
 
@@ -214,6 +219,8 @@ class Parser:
         var_assign_node = res.try_register(self.assign_expr())
         if var_assign_node:
             return res.success(var_assign_node)
+        elif res.error:
+            return res
         else:
             self.reverse(res.to_reverse_count)
 
@@ -346,7 +353,7 @@ class Parser:
         self.advance(res)
         assign_expr = res.register(self.expr())
         if res.error:
-            return res
+            return res.make_unignorable()
 
         ASSIGN_TO_OPERATORS = {
             TT_PE: TT_PLUS,
