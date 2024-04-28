@@ -509,7 +509,7 @@ class Interpreter:
             return res.success(Number.null)
         return res.success(elements)
 
-    def visit_IndexGetNode(self, node, context):
+    def visit_SliceGetNode(self, node, context):
         res = RTResult()
         indexee = res.register(self.visit(node.indexee, context))
         if res.should_return():
@@ -533,14 +533,27 @@ class Interpreter:
             if res.should_return():
                 return res
 
-        if index_end == None and index_step == None:
-            result, error = indexee.get_index(index_start)
-        else:
-            result, error = indexee.get_slice(index_start, index_end, index_step)
+        result, error = indexee.get_slice(index_start, index_end, index_step)
 
         if error:
             return res.failure(error)
         return res.success(result.set_pos(node.pos_start, node.pos_end).set_context(context))
+
+    def visit_IndexGetNode(self, node, context):
+        res = RTResult()
+        indexee = res.register(self.visit(node.indexee, context))
+        if res.should_return():
+            return res
+
+        index = res.register(self.visit(node.index, context))
+        if res.should_return():
+            return res
+
+        result, error = indexee.get_index(index)
+        if error:
+            return res.failure(error)
+
+        return res.success(result)
 
     def visit_IndexSetNode(self, node, context):
         res = RTResult()

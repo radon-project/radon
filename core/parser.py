@@ -634,8 +634,10 @@ class Parser:
                     return res
 
                 node = IndexSetNode(node, index[0], value, tok.pos_start, self.current_tok.pos_end)
+            elif len(index) > 1:
+                node = SliceGetNode(tok.pos_start, self.current_tok.pos_end, node, *index)
             else:
-                node = IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, *index)
+                node = IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, index[0])
 
         return res.success(node)
 
