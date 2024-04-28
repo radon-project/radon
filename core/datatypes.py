@@ -408,46 +408,36 @@ class String(Value):
         for char in self.value:
             yield RTResult().success(String(char))
 
-    def get_index(self, index_start, index_end=None, index_step=None):
-        if not isinstance(index_start, Number):
-            return None, self.illegal_operation(index_start)
-
-        if index_end != None and not isinstance(index_end, Number):
-            return None, self.illegal_operation(index_end)
-
-        if index_step != None and not isinstance(index_step, Number):
-            return None, self.illegal_operation(index_step)
-
-        if (index_end != None) and (index_step != None):
-            try:
-                return String(self.value[index_start.value : index_end.value : index_step.value]), None
-            except IndexError:
-                return None, RTError(
-                    index_start.pos_start,
-                    index_end.pos_end,
-                    f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
-                    self.context,
-                )
-        elif index_end != None:
-            try:
-                return String(self.value[index_start.value : index_end.value]), None
-            except IndexError:
-                return None, RTError(
-                    index_start.pos_start,
-                    index_end.pos_end,
-                    f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
-                    self.context,
-                )
-
+    def get_index(self, index):
+        if not isinstance(index, Number):
+            return None, self.illegal_operation(index)
         try:
-            return String(self.value[index_start.value]), None
+            return String(self.value[index.value]), None
         except IndexError:
             return None, RTError(
-                index_start.pos_start,
-                index_start.pos_end,
-                f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
+                index.pos_start,
+                index.pos_end,
+                f"Cannot get char {index} from string {self!r} because it is out of bounds.",
                 self.context,
             )
+    
+    def get_slice(self, start, end, step):
+        for index in (start, end, step):
+            if index != None and not isinstance(index, Number):
+                return None, self.illegal_operation(index)
+
+        if start != None: start = start.value
+        if end != None: end = end.value
+        if step != None:
+            if step.value == 0:
+                return None, RTError(
+                    step.pos_start,
+                    step.pos_end,
+                    "Step cannot be zero.",
+                    self.context,
+                )
+            step = step.value
+        return String(self.value[start:end:step]), None
 
     def set_index(self, index, value):
         if not isinstance(index, Number):
