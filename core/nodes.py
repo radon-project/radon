@@ -226,12 +226,14 @@ class ForInNode:
         self.pos_end = pos_end
         self.should_return_null = should_return_null
 
+
 class IndexGetNode:
     def __init__(self, pos_start, pos_end, indexee, index):
         self.pos_start = pos_start
         self.pos_end = pos_end
         self.indexee = indexee
         self.index = index
+
 
 class SliceGetNode:
     def __init__(self, pos_start, pos_end, indexee, index_start, index_end=None, index_step=None):

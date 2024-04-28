@@ -97,7 +97,9 @@ class Value:
             others = (self,)
 
         try:
-            return RTError(self.pos_start, others[-1].pos_end, f"Illegal operation for {(self, ) + others}", self.context)
+            return RTError(
+                self.pos_start, others[-1].pos_end, f"Illegal operation for {(self, ) + others}", self.context
+            )
         except AttributeError:
             return RTError(self.pos_start, self.pos_end, f"Illegal operation for {self}", self.context)
 
@@ -420,22 +422,19 @@ class String(Value):
                 f"Cannot get char {index} from string {self!r} because it is out of bounds.",
                 self.context,
             )
-    
+
     def get_slice(self, start, end, step):
         for index in (start, end, step):
             if index != None and not isinstance(index, Number):
                 return None, self.illegal_operation(index)
 
-        if start != None: start = start.value
-        if end != None: end = end.value
+        if start != None:
+            start = start.value
+        if end != None:
+            end = end.value
         if step != None:
             if step.value == 0:
-                return None, RTError(
-                    step.pos_start,
-                    step.pos_end,
-                    "Step cannot be zero.",
-                    self.context,
-                )
+                return None, RTError(step.pos_start, step.pos_end, "Step cannot be zero.", self.context)
             step = step.value
         return String(self.value[start:end:step]), None
 
@@ -581,22 +580,19 @@ class Array(Value):
                 self.context,
             )
         return self, None
-    
+
     def get_slice(self, start, end, step):
         for index in (start, end, step):
             if index != None and not isinstance(index, Number):
                 return None, self.illegal_operation(index)
 
-        if start != None: start = start.value
-        if end != None: end = end.value
+        if start != None:
+            start = start.value
+        if end != None:
+            end = end.value
         if step != None:
             if step.value == 0:
-                return None, RTError(
-                    step.pos_start,
-                    step.pos_end,
-                    "Step cannot be zero.",
-                    self.context,
-                )
+                return None, RTError(step.pos_start, step.pos_end, "Step cannot be zero.", self.context)
             step = step.value
         return Array(self.elements[start:end:step]), None
 
