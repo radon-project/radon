@@ -1,4 +1,4 @@
-PYTHON=python3.11
+PYTHON=python3.12
 
 .PHONY: help
 help:
