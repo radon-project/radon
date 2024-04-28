@@ -509,35 +509,50 @@ class Interpreter:
             return res.success(Number.null)
         return res.success(elements)
 
+    def visit_SliceGetNode(self, node, context):
+        res = RTResult()
+        indexee = res.register(self.visit(node.indexee, context))
+        if res.should_return():
+            return res
+
+        index_start = None
+        if node.index_start != None:
+            index_start = res.register(self.visit(node.index_start, context))
+            if res.should_return():
+                return res
+
+        index_end = None
+        if node.index_end != None:
+            index_end = res.register(self.visit(node.index_end, context))
+            if res.should_return():
+                return res
+
+        index_step = None
+        if node.index_step != None:
+            index_step = res.register(self.visit(node.index_step, context))
+            if res.should_return():
+                return res
+
+        result, error = indexee.get_slice(index_start, index_end, index_step)
+
+        if error:
+            return res.failure(error)
+        return res.success(result.set_pos(node.pos_start, node.pos_end).set_context(context))
+
     def visit_IndexGetNode(self, node, context):
         res = RTResult()
         indexee = res.register(self.visit(node.indexee, context))
         if res.should_return():
             return res
 
-        index_start = res.register(self.visit(node.index_start, context))
+        index = res.register(self.visit(node.index, context))
         if res.should_return():
             return res
 
-        if node.index_end != None:
-            index_end = res.register(self.visit(node.index_end, context))
-            if res.should_return():
-                return res
-
-        if node.index_step != None:
-            index_step = res.register(self.visit(node.index_step, context))
-            if res.should_return():
-                return res
-
-        if node.index_end != None and node.index_step != None:
-            result, error = indexee.get_index(index_start, index_end, index_step)
-        elif node.index_end != None:
-            result, error = indexee.get_index(index_start, index_end)
-        else:
-            result, error = indexee.get_index(index_start)
-
+        result, error = indexee.get_index(index)
         if error:
             return res.failure(error)
+
         return res.success(result)
 
     def visit_IndexSetNode(self, node, context):

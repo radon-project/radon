@@ -6,7 +6,6 @@ import inspect
 from abc import ABC, abstractmethod
 
 
-
 class Value:
     def __init__(self):
         self.set_pos()
@@ -75,6 +74,9 @@ class Value:
     def get_index(self, index):
         return None, self.illegal_operation(index)
 
+    def get_slice(self, start, end, step):
+        return None, self.illegal_operation(start, end, step)
+
     def set_index(self, index, value):
         return None, self.illegal_operation(index, value)
 
@@ -94,7 +96,12 @@ class Value:
         if len(others) == 0:
             others = (self,)
 
-        return RTError(self.pos_start, others[-1].pos_end, f"Illegal operation for {(self, ) + others}", self.context)
+        try:
+            return RTError(
+                self.pos_start, others[-1].pos_end, f"Illegal operation for {(self, ) + others}", self.context
+            )
+        except AttributeError:
+            return RTError(self.pos_start, self.pos_end, f"Illegal operation for {self}", self.context)
 
 
 class Iterator(Value):
@@ -403,46 +410,33 @@ class String(Value):
         for char in self.value:
             yield RTResult().success(String(char))
 
-    def get_index(self, index_start, index_end=None, index_step=None):
-        if not isinstance(index_start, Number):
-            return None, self.illegal_operation(index_start)
-
-        if index_end != None and not isinstance(index_end, Number):
-            return None, self.illegal_operation(index_end)
-
-        if index_step != None and not isinstance(index_step, Number):
-            return None, self.illegal_operation(index_step)
-
-        if (index_end != None) and (index_step != None):
-            try:
-                return String(self.value[index_start.value : index_end.value : index_step.value]), None
-            except IndexError:
-                return None, RTError(
-                    index_start.pos_start,
-                    index_end.pos_end,
-                    f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
-                    self.context,
-                )
-        elif index_end != None:
-            try:
-                return String(self.value[index_start.value : index_end.value]), None
-            except IndexError:
-                return None, RTError(
-                    index_start.pos_start,
-                    index_end.pos_end,
-                    f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
-                    self.context,
-                )
-
+    def get_index(self, index):
+        if not isinstance(index, Number):
+            return None, self.illegal_operation(index)
         try:
-            return String(self.value[index_start.value]), None
+            return String(self.value[index.value]), None
         except IndexError:
             return None, RTError(
-                index_start.pos_start,
-                index_start.pos_end,
-                f"Cannot retrieve character {index_start} from string {self!r} because it is out of bounds.",
+                index.pos_start,
+                index.pos_end,
+                f"Cannot get char {index} from string {self!r} because it is out of bounds.",
                 self.context,
             )
+
+    def get_slice(self, start, end, step):
+        for index in (start, end, step):
+            if index != None and not isinstance(index, Number):
+                return None, self.illegal_operation(index)
+
+        if start != None:
+            start = start.value
+        if end != None:
+            end = end.value
+        if step != None:
+            if step.value == 0:
+                return None, RTError(step.pos_start, step.pos_end, "Step cannot be zero.", self.context)
+            step = step.value
+        return String(self.value[start:end:step]), None
 
     def set_index(self, index, value):
         if not isinstance(index, Number):
@@ -548,9 +542,16 @@ class Array(Value):
 
     def get_comparison_eq(self, other):
         if isinstance(other, Array):
-            return Boolean(int(self.elements == other.elements)).set_context(self.context), None
-        elif isinstance(other, String):
-            return Boolean(int(self.elements == other.value)).set_context(self.context), None
+            if len(self.elements) != len(other.elements):
+                return Boolean.false, None
+
+            for a, b in zip(self.elements, other.elements):
+                ret, error = a.get_comparison_eq(b)
+                if error:
+                    return None, error
+                if not ret.is_true():
+                    return Boolean.false, None
+            return Boolean.true, None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -566,95 +567,34 @@ class Array(Value):
         for element in self.elements:
             yield RTResult().success(element)
 
-    def get_index(self, index_start, index_end=None, index_step=None):
-        if not isinstance(index_start, Number):
-            return None, self.illegal_operation(index_start)
-
-        if index_end != None and not isinstance(index_end, Number):
-            return None, self.illegal_operation(index_end)
-
-        if index_step != None and not isinstance(index_step, Number):
-            return None, self.illegal_operation(index_step)
-
-        if (index_end != None) and (index_step != None):
-            try:
-                # return String(self.value[index_start.value:index_end.value:index_step.value]), None
-                if isinstance(self.value[index_start.value : index_end.value : index_step.value], str):
-                    return String(self.value[index_start.value : index_end.value : index_step.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], int):
-                    return Number(self.value[index_start.value : index_end.value : index_step.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], float):
-                    return Number(self.value[index_start.value : index_end.value : index_step.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], bool):
-                    return Boolean(self.value[index_start.value : index_end.value : index_step.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value : index_step.value], list):
-                    return Array(self.value[index_start.value : index_end.value : index_step.value]), None
-            except (IndexError, TypeError):
-                return None, RTError(
-                    index_start.pos_start,
-                    index_end.pos_end,
-                    f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
-                    self.context,
-                )
-        elif index_end != None:
-            try:
-                if isinstance(self.value[index_start.value : index_end.value], str):
-                    return String(self.value[index_start.value : index_end.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value], Number):
-                    return Number(self.value[index_start.value : index_end.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value], float):
-                    return Number(self.value[index_start.value : index_end.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value], bool):
-                    return Boolean(self.value[index_start.value : index_end.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value], list):
-                    return Array(self.value[index_start.value : index_end.value]), None
-                elif isinstance(self.value[index_start.value : index_end.value], dict):
-                    return HashMap(self.value[index_start.value : index_end.value]), None
-                else:
-                    return None, RTError(
-                        index_start.pos_start,
-                        index_end.pos_end,
-                        f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
-                        self.context,
-                    )
-            except (IndexError, TypeError):
-                return None, RTError(
-                    index_start.pos_start,
-                    index_end.pos_end,
-                    f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
-                    self.context,
-                )
-
+    def get_index(self, index):
+        if not isinstance(index, Number):
+            return None, self.illegal_operation(index)
         try:
-            # return String(self.value[index_start.value]), None
-            if isinstance(self.value[index_start.value], str):
-                return String(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], Number):
-                return Number(self.value[index_start.value]), None
-            # elif isinstance(self.value[index_start.value], float):
-            #     return Number(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], Boolean):
-                return Boolean(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], Array):
-                return Array(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], String):
-                return String(self.value[index_start.value]), None
-            elif isinstance(self.value[index_start.value], HashMap):
-                return HashMap(self.value[index_start.value]), None
-            else:
-                return None, RTError(
-                    index_start.pos_start,
-                    index_start.pos_end,
-                    f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
-                    self.context,
-                )
-        except (TypeError, IndexError):
+            return self.elements[index.value], None
+        except IndexError:
             return None, RTError(
-                index_start.pos_start,
-                index_start.pos_end,
-                f"Cannot retrieve character {index_start} from list {self!r} because it is out of bounds.",
+                index.pos_start,
+                index.pos_end,
+                f"Cannot get element {index} from list {self!r} because it is out of bounds.",
                 self.context,
             )
+        return self, None
+
+    def get_slice(self, start, end, step):
+        for index in (start, end, step):
+            if index != None and not isinstance(index, Number):
+                return None, self.illegal_operation(index)
+
+        if start != None:
+            start = start.value
+        if end != None:
+            end = end.value
+        if step != None:
+            if step.value == 0:
+                return None, RTError(step.pos_start, step.pos_end, "Step cannot be zero.", self.context)
+            step = step.value
+        return Array(self.elements[start:end:step]), None
 
     def set_index(self, index, value):
         if not isinstance(index, Number):
@@ -858,7 +798,7 @@ def radonify(value, pos_start, pos_end, context):
             case None:
                 return Number.null
             case _ if inspect.isfunction(value):
-                from core.builtin_funcs import BuiltInFunction, args # Lazy import
+                from core.builtin_funcs import BuiltInFunction, args  # Lazy import
 
                 signature = inspect.signature(value)
                 params = list(signature.parameters.keys())
@@ -874,10 +814,13 @@ def radonify(value, pos_start, pos_end, context):
                     except Exception as e:
                         return res.failure(RTError(pos_start, pos_end, str(e), ctx))
                     return res.success(return_value)
+
                 return BuiltInFunction(value.__name__, wrapper)
             case _:
                 return PyObj(value)
+
     return _radonify(value).set_pos(pos_start, pos_end).set_context(context)
+
 
 def deradonify(value):
     match value:
@@ -892,27 +835,37 @@ def deradonify(value):
         case Array():
             return [deradonify(v) for v in value.elements]
         case BaseFunction():
+
             def ret(*args, **kwargs):
-                res = value.execute([radonify(arg, value.pos_start, value.pos_end, value.context) for arg in args], {k: radonify(arg) for k, arg in kwargs.items()})
+                res = value.execute(
+                    [radonify(arg, value.pos_start, value.pos_end, value.context) for arg in args],
+                    {k: radonify(arg) for k, arg in kwargs.items()},
+                )
                 if res.error:
                     raise RuntimeError(f"Radon exception: {res.error.as_string()}")
                 elif res.should_return():
                     assert False, "unreachable!"
                 return deradonify(res.value)
+
             ret.__name__ = value.name
             return ret
         case _:
             assert False, f"no deradonification procedure for type {type(value)}"
 
+
 class PyObj(Value):
     """Thin wrapper around a Python object"""
+
     def __init__(self, value):
         super().__init__()
         self.value = value
 
-    def copy(self): return self
+    def copy(self):
+        return self
 
-    def __repr__(self): return f"PyObj({self.value!r})"
+    def __repr__(self):
+        return f"PyObj({self.value!r})"
+
 
 class PyAPI(Value):
     def __init__(self, code: str):
@@ -926,14 +879,21 @@ class PyAPI(Value):
             locals_dict = deradonify(ns)
             # Execute the code and store the output in locals_dict
             exec(self.code, {}, locals_dict)
-            
+
             # Update namespace HashMap
             new_ns = radonify(locals_dict, self.pos_start, self.pos_end, self.context)
             for key, value in new_ns.values.items():
                 ns.values[key] = value
 
         except Exception as e:
-            return RTResult().failure(RTError(self.pos_start, self.pos_end, f"Python {type(e).__name__} during execution of PyAPI: {e}", self.context))
+            return RTResult().failure(
+                RTError(
+                    self.pos_start,
+                    self.pos_end,
+                    f"Python {type(e).__name__} during execution of PyAPI: {e}",
+                    self.context,
+                )
+            )
         return RTResult().success(Number.null)
 
     def copy(self):

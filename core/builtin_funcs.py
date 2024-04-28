@@ -385,7 +385,8 @@ class BuiltInFunction(BaseFunction):
             return res.failure(RTError(self.pos_start, self.pos_end, "Namespace must be hashmap", exec_ctx))
 
         res.register(PyAPI(code.value).set_pos(self.pos_start, self.pos_end).set_context(self.context).pyapi(ns))
-        if res.should_return(): return res
+        if res.should_return():
+            return res
         return res.success(Number.null)
 
     @args([])
