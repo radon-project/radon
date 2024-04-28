@@ -515,26 +515,28 @@ class Interpreter:
         if res.should_return():
             return res
 
-        index_start = res.register(self.visit(node.index_start, context))
-        if res.should_return():
-            return res
+        index_start = None
+        if node.index_start != None:
+            index_start = res.register(self.visit(node.index_start, context))
+            if res.should_return():
+                return res
 
+        index_end = None
         if node.index_end != None:
             index_end = res.register(self.visit(node.index_end, context))
             if res.should_return():
                 return res
 
+        index_step = None
         if node.index_step != None:
             index_step = res.register(self.visit(node.index_step, context))
             if res.should_return():
                 return res
 
-        if node.index_end != None and node.index_step != None:
-            result, error = indexee.get_index(index_start, index_end, index_step)
-        elif node.index_end != None:
-            result, error = indexee.get_index(index_start, index_end)
-        else:
+        if index_end == None and index_step == None:
             result, error = indexee.get_index(index_start)
+        else:
+            result, error = indexee.get_slice(index_start, index_end, index_step)
 
         if error:
             return res.failure(error)

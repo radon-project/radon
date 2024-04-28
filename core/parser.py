@@ -451,9 +451,10 @@ class Parser:
             if self.current_tok.type == TT_RPAREN:
                 self.advance(res)
             else:
-                kw, val = res.register(self.func_arg())
+                pair = res.register(self.func_arg())
                 if res.error:
                     return res
+                kw, val = pair
                 if kw is None:
                     arg_nodes.append(val)
                 else:
@@ -607,6 +608,10 @@ class Parser:
 
             index = []
             while self.current_tok.type != TT_RSQUARE:
+                if self.current_tok.type == TT_COLON:
+                    index.append(None)
+                    self.advance(res)
+                    continue
                 index.append(res.register(self.expr()))
                 if res.error:
                     return res
