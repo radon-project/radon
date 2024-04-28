@@ -599,17 +599,16 @@ class Array(Value):
 
         if start != None: start = start.value
         if end != None: end = end.value
-        if step != None: step = step.value
-        try:
-            return Array(self.elements[start:end:step]), None
-        except IndexError:
-            return None, RTError(
-                index.pos_start,
-                index.pos_end,
-                f"Cannot get slice [{start}:{end}:{step}] from list {self!r} because it is out of bounds.",
-                self.context,
-            )
-        return self, None
+        if step != None:
+            if step.value == 0:
+                return None, RTError(
+                    step.pos_start,
+                    step.pos_end,
+                    "Step cannot be zero.",
+                    self.context,
+                )
+            step = step.value
+        return Array(self.elements[start:end:step]), None
 
     def set_index(self, index, value):
         if not isinstance(index, Number):

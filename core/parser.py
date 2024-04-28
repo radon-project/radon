@@ -607,8 +607,10 @@ class Parser:
             # [index_start:index_end:index_step] or [index_start:index_end] or [index_start]
 
             index = []
+            is_slice = False
             while self.current_tok.type != TT_RSQUARE:
                 if self.current_tok.type == TT_COLON:
+                    is_slice = True
                     index.append(None)
                     self.advance(res)
                     continue
@@ -617,6 +619,7 @@ class Parser:
                     return res
 
                 if self.current_tok.type == TT_COLON:
+                    is_slice = True
                     self.advance(res)
                 else:
                     break
@@ -634,7 +637,7 @@ class Parser:
                     return res
 
                 node = IndexSetNode(node, index[0], value, tok.pos_start, self.current_tok.pos_end)
-            elif len(index) > 1:
+            elif is_slice:
                 node = SliceGetNode(tok.pos_start, self.current_tok.pos_end, node, *index)
             else:
                 node = IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, index[0])
