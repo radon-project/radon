@@ -1,6 +1,4 @@
-#######################################
-# ERRORS
-#######################################
+from core.colortools import Log
 
 
 def string_with_arrows(text, pos_start, pos_end):
@@ -22,8 +20,8 @@ def string_with_arrows(text, pos_start, pos_end):
         col_end = pos_end.col if i == line_count - 1 else len(line) - 1
 
         # Append to result
-        result += line + "\n"
-        result += " " * col_start + "^" * (col_end - col_start)
+        result += f"{line[:col_start]}{Log.deep_error(line[col_start:col_end], bold=True)}{line[col_end:]}\n"
+        result += " " * col_start + Log.deep_error("^" * (col_end - col_start), bold=True)
 
         # Re-calculate indices
         idx_start = idx_end
@@ -46,8 +44,9 @@ class Error:
 
     def as_string(self):
         """Return error as string"""
-        result = f"{self.error_name}: {self.details}\n"
-        result += f"File {self.pos_start.fn}, line {self.pos_start.ln + 1}"
+        result = Log.light_purple("Radiation (most recent call last):\n")
+        result += f"  File {Log.deep_info(self.pos_start.fn)}, line {Log.deep_info(str(self.pos_start.ln + 1))}\n"
+        result += f"{Log.deep_error(self.error_name, bold=True)}: {Log.light_error(self.details)}"
         result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
 
@@ -65,56 +64,56 @@ class IllegalCharError(Error):
     """Illegal Character Error class"""
 
     def __init__(self, pos_start, pos_end, details):
-        super().__init__(pos_start, pos_end, "Illegal Character", details)
+        super().__init__(pos_start, pos_end, "IllegalCharacter", details)
 
 
 class ExpectedCharError(Error):
     """Expected Character Error class"""
 
     def __init__(self, pos_start, pos_end, details):
-        super().__init__(pos_start, pos_end, "Expected Character", details)
+        super().__init__(pos_start, pos_end, "ExpectedCharacter", details)
 
 
 class InvalidSyntaxError(Error):
     """Invalid Syntax Error class"""
 
     def __init__(self, pos_start, pos_end, details=""):
-        super().__init__(pos_start, pos_end, "Invalid Syntax", details)
+        super().__init__(pos_start, pos_end, "InvalidSyntax", details)
 
 
 class IndexError(Error):
     """Index Error class"""
 
     def __init__(self, pos_start, pos_end, details=""):
-        super().__init__(pos_start, pos_end, "Index Error", details)
+        super().__init__(pos_start, pos_end, "IndexError", details)
 
 
 class RTError(Error):
     """Runtime Error class"""
 
     def __init__(self, pos_start, pos_end, details, context):
-        super().__init__(pos_start, pos_end, "Runtime Error", details)
+        super().__init__(pos_start, pos_end, "RuntimeError", details)
         self.context = context
 
     def as_string(self):
         """Return error as string"""
-        result = self.generate_traceback()
-        result += f"{self.error_name}: {self.details}"
+        result = self.generate_radiation()
+        result += f"{Log.deep_error(self.error_name, bold=True)}: {Log.light_error(self.details)}"
         result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
 
-    def generate_traceback(self):
+    def generate_radiation(self):
         """Generate traceback for runtime error"""
         result = ""
         pos = self.pos_start
         ctx = self.context
 
         while ctx:
-            result = f"  File {pos.fn}, line {str(pos.ln + 1)}, in {ctx.display_name}\n" + result
+            result = f"  File {Log.deep_info(pos.fn)}, line {Log.deep_info(str(pos.ln + 1))}, in {Log.deep_info(ctx.display_name)}\n" + result
             pos = ctx.parent_entry_pos
             ctx = ctx.parent
 
-        return "Traceback (most recent call last):\n" + result
+        return Log.light_purple("Radiation (most recent call last):\n") + result
 
     def set_context(self, context=None):
         return self
@@ -128,17 +127,17 @@ class TryError(RTError):
         super().__init__(pos_start, pos_end, details, context)
         self.prev_error = prev_error
 
-    def generate_traceback(self):
+    def generate_radiation(self):
         result = ""
         if self.prev_error:
             result += self.prev_error.as_string()
-        result += "\nDuring the handling of the above error, another error occurred:\n\n"
-        return result + super().generate_traceback()
+        result += Log.light_error("\nDuring the handling of the above error, another error occurred:\n\n")
+        return result + super().generate_radiation()
 
 
 class VError(RTError):
     """Value Error class"""
 
     def __init__(self, pos_start, pos_end, details, context):
-        super().__init__(pos_start, pos_end, "Value Error", details)
+        super().__init__(pos_start, pos_end, "ValueError", details)
         self.context = context
