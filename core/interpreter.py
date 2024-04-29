@@ -2,7 +2,7 @@ from core.errors import *
 from core.parser import *
 from core.datatypes import *
 from core.builtin_funcs import run, create_global_symbol_table
-import core.builtin_classes
+from core.colortools import Log
 
 import os
 
@@ -148,7 +148,7 @@ class Interpreter:
                 RTError(
                     node.pos_start,
                     node.pos_end,
-                    f'Failed to finish executing script "{module_name}"\n' + error.as_string(),
+                    f'{Log.light_error("Failed to finish executing script")} {Log.light_info(module_name)}\n' + error.as_string(),
                     exec_ctx,
                 )
             )
