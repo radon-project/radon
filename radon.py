@@ -2,6 +2,7 @@
 # By: Md. Almas Ali
 
 import argparse
+import pathlib
 
 try:
     import readline
@@ -68,8 +69,9 @@ parser.add_argument("-v", "--version", help="Version info", action="store_true")
 args = parser.parse_args()
 
 if args.source:
+    source = pathlib.Path(args.source[0]).read_text()
     (result, error, should_exit) = base_core.run(
-        "<stdin>", f'require("{args.source[0]}")', hide_paths=args.hide_file_paths
+        args.source[0], source, hide_paths=args.hide_file_paths
     )
 
     if error:
