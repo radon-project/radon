@@ -494,6 +494,7 @@ def run(fn, text, context=None, entry_pos=None, return_result=False, hide_paths=
 
 # Setting all functions to global symbol table
 def create_global_symbol_table():
+    from core.builtin_classes import BuiltInClass, FileObject, JSONObject, StringObject
     ret = SymbolTable()
     ret.set("null", Number.null())
     ret.set("false", Boolean.false())
@@ -539,6 +540,10 @@ def create_global_symbol_table():
     ret.set("exit", BuiltInFunction("exit"))
     ret.set("sys_args", BuiltInFunction("sys_args"))
     ret.set("time_now", BuiltInFunction("time_now"))
+    # Built-in classes
+    ret.set("File", BuiltInClass("File", FileObject))
+    ret.set("String", BuiltInClass("String", StringObject))
+    ret.set("Json", BuiltInClass("Json", JSONObject))
     return ret
 
 

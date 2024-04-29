@@ -1,1 +1,1 @@
-{"code": 0, "stdout": "69\nRuntime Error: Cannot reassign to constant x\nRuntime Error: Cannot reassign to constant x\n", "stderr": ""}
+{"code": 0, "stdout": "69\nRuntimeError: Cannot reassign to constant x\nRuntimeError: Cannot reassign to constant x\n", "stderr": ""}

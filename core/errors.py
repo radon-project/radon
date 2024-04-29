@@ -121,8 +121,6 @@ class RTError(Error):
 
         while ctx:
             result = f"  File {Log.light_info(pos.fn)}, line {Log.light_info(str(pos.ln + 1))}, in {Log.light_info(ctx.display_name)}\n" + result
-            assert ctx.parent is not None
-            assert ctx.parent_entry_pos is not None
             pos = ctx.parent_entry_pos
             ctx = ctx.parent
 
