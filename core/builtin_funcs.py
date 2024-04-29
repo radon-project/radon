@@ -352,9 +352,8 @@ class BuiltInFunction(BaseFunction):
         try:
             if isinstance(value, Array):
                 return RTResult().success(String(str(value.elements)))
-            return RTResult().success(String(str(value.value)))
+            return RTResult().success(String(str(value)))
         except Exception as e:
-            # print(e)
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could not convert to string", exec_ctx))
 
     @args(["value"])
