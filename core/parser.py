@@ -286,7 +286,7 @@ class Parser:
                         var_name_tok,
                         extra_names,
                         qualifier,
-                        pre=True,
+                        is_pre=True,
                         pos_start=pos_start,
                         pos_end=pre_tok.pos_end.copy(),
                     )
@@ -299,7 +299,7 @@ class Parser:
                         var_name_tok,
                         extra_names,
                         qualifier,
-                        pre=True,
+                        is_pre=True,
                         pos_start=pos_start,
                         pos_end=pre_tok.pos_end.copy(),
                     )
@@ -326,7 +326,7 @@ class Parser:
             self.advance(res)
             return res.success(
                 IncNode(
-                    var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
+                    var_name_tok, extra_names, qualifier, is_pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
                 )
             )
 
@@ -334,7 +334,7 @@ class Parser:
             self.advance(res)
             return res.success(
                 DecNode(
-                    var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
+                    var_name_tok, extra_names, qualifier, is_pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
                 )
             )
 
@@ -354,7 +354,7 @@ class Parser:
         }
         if op_tok.type != TT_EQ:
             assign_expr = BinOpNode(
-                VarAccessNode.with_extra_names(var_name_tok, extra_names),
+                VarAccessNode(var_name_tok),
                 Token(ASSIGN_TO_OPERATORS[op_tok.type], pos_start=op_tok.pos_start, pos_end=op_tok.pos_end),
                 assign_expr,
             )
@@ -469,9 +469,10 @@ class Parser:
                 while self.current_tok.type == TT_COMMA:
                     self.advance(res)
 
-                    kw, val = res.register(self.func_arg())
+                    pair = res.register(self.func_arg())
                     if res.error:
                         return res
+                    kw, val = pair
                     if kw is None:
                         arg_nodes.append(val)
                     else:

@@ -138,22 +138,15 @@ class Token:
 
     type: TokenType
     value: TokenValue
-    pos_start: Optional[Position]
-    pos_end: Optional[Position]
+    pos_start: Position
+    pos_end: Position
 
-    def __init__(self, type_: TokenType, value: TokenValue = None, pos_start: Position = None, pos_end: Position = None) -> None:
+    def __init__(self, type_: TokenType, value: TokenValue = None, *, pos_start: Position, pos_end: Optional[Position] = None) -> None:
         self.type = type_
         self.value = value
-        self.pos_start = None
-        self.pos_end = None
 
-        if pos_start:
-            self.pos_start = pos_start.copy()
-            self.pos_end = pos_start.copy()
-            self.pos_end.advance()
-
-        if pos_end:
-            self.pos_end = pos_end.copy()
+        self.pos_start = pos_start
+        self.pos_end = pos_end if pos_end is not None else pos_start
 
     def matches(self, type_: TokenType, value: TokenValue) -> bool:
         return self.type == type_ and self.value == value

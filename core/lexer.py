@@ -117,9 +117,9 @@ class Lexer:
             self.advance()
 
         if dot_count == 0:
-            return Token(TT_INT, int(num_str), pos_start, self.pos)
+            return Token(TT_INT, int(num_str), pos_start=pos_start, pos_end=self.pos)
         else:
-            return Token(TT_FLOAT, float(num_str), pos_start, self.pos)
+            return Token(TT_FLOAT, float(num_str), pos_start=pos_start, pos_end=self.pos)
 
     def make_string(self) -> Token:
         string = ""
@@ -136,7 +136,7 @@ class Lexer:
             self.advance()
 
         self.advance()
-        return Token(TT_STRING, string.encode("utf-8").decode("unicode-escape"), pos_start, self.pos)
+        return Token(TT_STRING, string.encode("utf-8").decode("unicode-escape"), pos_start=pos_start, pos_end=self.pos)
 
     def make_identifier(self) -> Token:
         id_str = ""
@@ -147,7 +147,7 @@ class Lexer:
             self.advance()
 
         tok_type = TT_KEYWORD if id_str in KEYWORDS else TT_IDENTIFIER
-        return Token(tok_type, id_str, pos_start, self.pos)
+        return Token(tok_type, id_str, pos_start=pos_start, pos_end=self.pos)
 
     def make_not_equals(self) -> tuple[Token, None] | tuple[None, Error]:
         pos_start = self.pos.copy()

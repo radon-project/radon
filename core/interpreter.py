@@ -112,32 +112,6 @@ class Interpreter:
             pos_end=node.pos_end,
         )
 
-    def visit_VarManipulateNode(self, node, context):
-        res = RTResult()
-        var_name = node.var_name_tok.value
-        value = context.symbol_table.get(var_name)
-
-        if not value:
-            return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
-
-        if node.child:
-            if not isinstance(value, Instance) and not isinstance(value, Class):
-                return res.failure(
-                    RTError(node.pos_start, node.pos_end, f"Value must be instance of class or class", context)
-                )
-
-            new_context = Context(value.parent_class.name, context, node.pos_start)
-            new_context.symbol_table = value.symbol_table
-
-            child = res.register(self.visit(node.child, new_context))
-            if res.error:
-                return res
-
-            value = child
-
-        value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
-        return res.success(value)
-
     def visit_IncludeNode(self, node, context):
         res = RTResult()
         exec_ctx = context
