@@ -436,7 +436,7 @@ class Interpreter:
         return RTResult().success_break()
 
     def visit_TryNode(self, node: TryNode, context):
-        res = RTResult()
+        res = RTResult[Value]()
         res.register(self.visit(node.try_block, context))
         handled_error = res.error
         if res.should_return() and res.error is None:

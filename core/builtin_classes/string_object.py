@@ -10,7 +10,7 @@ class StringObject(BuiltInObject):
     @check([String], [String("")])
     def constructor(self, string: String):
         self.value: str = string.value
-        return RTResult().success(None)
+        return RTResult[None]().success(None)
 
     @operator("__add__")
     @check([String])

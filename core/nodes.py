@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol, Optional, TypeAlias
+from typing import TYPE_CHECKING, Protocol, Optional, TypeAlias, runtime_checkable
 
 if TYPE_CHECKING:
     from core.tokens import Token, Position
 
 
+@runtime_checkable
 class Node(Protocol):
     @property
     def pos_start(self) -> Position: ...
@@ -278,7 +279,7 @@ class CallNode:
 
 @dataclass
 class ReturnNode:
-    node_to_return: Node
+    node_to_return: Optional[Node]
 
     pos_start: Position
     pos_end: Position
@@ -356,7 +357,7 @@ class IndexSetNode:
 
 @dataclass
 class HashMapNode:
-    pairs: list[tuple[str, Node]]
+    pairs: list[tuple[Node, Node]]
 
     pos_start: Position
     pos_end: Position
