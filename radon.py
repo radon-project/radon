@@ -1,4 +1,4 @@
-#!/usr/bin/python3.11
+#!/usr/bin/python3.12
 # By: Md. Almas Ali
 
 import argparse
@@ -7,10 +7,10 @@ try:
     import readline
 
     # Enable arrow key support
-    readline.parse_and_bind('"\e[A": history-search-backward')
-    readline.parse_and_bind('"\e[B": history-search-forward')
-    readline.parse_and_bind('"\e[C": forward-char')
-    readline.parse_and_bind('"\e[D": backward-char')
+    readline.parse_and_bind(r'"\e[A": history-search-backward')
+    readline.parse_and_bind(r'"\e[B": history-search-forward')
+    readline.parse_and_bind(r'"\e[C": forward-char')
+    readline.parse_and_bind(r'"\e[D": backward-char')
 except ImportError:
     pass
 
