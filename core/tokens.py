@@ -131,7 +131,7 @@ KEYWORDS = [
     "fallthrough",
 ]
 
-TokenValue: TypeAlias = Optional[str | int]
+TokenValue: TypeAlias = Optional[str | int | float]
 
 class Token:
     __match_args__ = "type", "value"
