@@ -181,7 +181,7 @@ class Interpreter:
                 RTError(
                     node.pos_start,
                     node.pos_end,
-                    f'{Log.light_error("Failed to finish executing script")} {Log.deep_info(module_name)}\n' + error.as_string(),
+                    f'{Log.light_error("Failed to finish executing script")} {Log.light_info(module_name)}\n' + error.as_string(),
                     exec_ctx,
                 )
             )

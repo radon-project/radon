@@ -45,7 +45,7 @@ class Error:
     def as_string(self):
         """Return error as string"""
         result = Log.light_purple("Radiation (most recent call last):\n")
-        result += f"  File {Log.deep_info(self.pos_start.fn)}, line {Log.deep_info(str(self.pos_start.ln + 1))}\n"
+        result += f"  File {Log.light_info(self.pos_start.fn)}, line {Log.light_info(str(self.pos_start.ln + 1))}\n"
         result += f"{Log.deep_error(self.error_name, bold=True)}: {Log.light_error(self.details)}"
         result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
@@ -109,7 +109,7 @@ class RTError(Error):
         ctx = self.context
 
         while ctx:
-            result = f"  File {Log.deep_info(pos.fn)}, line {Log.deep_info(str(pos.ln + 1))}, in {Log.deep_info(ctx.display_name)}\n" + result
+            result = f"  File {Log.light_info(pos.fn)}, line {Log.light_info(str(pos.ln + 1))}, in {Log.light_info(ctx.display_name)}\n" + result
             pos = ctx.parent_entry_pos
             ctx = ctx.parent
 
