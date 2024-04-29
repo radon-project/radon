@@ -32,7 +32,11 @@ def run_test(test: str) -> Output:
     return Output(proc.returncode, proc.stdout.decode("utf-8"), proc.stderr.decode("utf-8"))
 
 
-def run_tests(directory="tests") -> int:
+def run_tests(directory: str = "tests") -> int:
+    mypy = subprocess.run(["mypy", "radon.py", "test.py"])
+    if mypy.returncode != 0:
+        print("ERROR: mypy failed", file=sys.stderr)
+
     failed_tests = []
     for test in os.listdir(directory):
         json_file = f"{directory}/{test}.json"
@@ -58,11 +62,19 @@ def run_tests(directory="tests") -> int:
     print("TEST SUMMARY:")
     if len(failed_tests) == 0:
         print("All tests passed!")
-        return 0
     else:
         print(f"{len(failed_tests)} tests failed:")
         for test in failed_tests:
             print(f"    {test!r}")
+
+    if mypy.returncode == 0:
+        print("Mypy passed!")
+    else:
+        print("Mypy failed >:(")
+
+    if mypy.returncode == 0 and len(failed_tests) == 0:
+        return 0
+    else:
         return 1
 
 
