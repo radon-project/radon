@@ -106,7 +106,7 @@ class BuiltInFunction(BaseFunction):
                 print(value.value)
             except AttributeError:
                 print(repr(value))
-        return RTResult().success(Number.null)
+        return RTResult().success(Number.null())
 
     @args(["value"])
     def execute_print_ret(self, exec_ctx):
@@ -131,44 +131,44 @@ class BuiltInFunction(BaseFunction):
     @args([])
     def execute_clear(self, exec_ctx):
         os.system("cls" if os.name == "nt" else "clear")
-        return RTResult().success(Number.null)
+        return RTResult().success(Number.null())
 
     @args(["value"])
     def execute_is_number(self, exec_ctx):
         is_number = isinstance(exec_ctx.symbol_table.get("value"), Number)
-        return RTResult().success(Boolean.true if is_number else Boolean.false)
+        return RTResult().success(Boolean.true() if is_number else Boolean.false())
 
     @args(["value"])
     def execute_is_int(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
         is_int = isinstance(value.value, int)
-        return RTResult().success(Boolean.true if is_int else Boolean.false)
+        return RTResult().success(Boolean.true() if is_int else Boolean.false())
 
     @args(["value"])
     def execute_is_float(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
         is_float = isinstance(value.value, float)
-        return RTResult().success(Boolean.true if is_float else Boolean.false)
+        return RTResult().success(Boolean.true() if is_float else Boolean.false())
 
     @args(["value"])
     def execute_is_string(self, exec_ctx):
         is_string = isinstance(exec_ctx.symbol_table.get("value"), String)
-        return RTResult().success(Boolean.true if is_string else Boolean.false)
+        return RTResult().success(Boolean.true() if is_string else Boolean.false())
 
     @args(["value"])
     def execute_is_bool(self, exec_ctx):
         is_boolean = isinstance(exec_ctx.symbol_table.get("value"), Boolean)
-        return RTResult().success(Boolean.true if is_boolean else Boolean.false)
+        return RTResult().success(Boolean.true() if is_boolean else Boolean.false())
 
     @args(["value"])
     def execute_is_array(self, exec_ctx):
         is_arr = isinstance(exec_ctx.symbol_table.get("value"), Array)
-        return RTResult().success(Boolean.true if is_arr else Boolean.false)
+        return RTResult().success(Boolean.true() if is_arr else Boolean.false())
 
     @args(["value"])
     def execute_is_function(self, exec_ctx):
         is_func = isinstance(exec_ctx.symbol_table.get("value"), BaseFunction)
-        return RTResult().success(Boolean.true if is_func else Boolean.false)
+        return RTResult().success(Boolean.true() if is_func else Boolean.false())
 
     @args(["array", "value"])
     def execute_arr_append(self, exec_ctx):
@@ -179,7 +179,7 @@ class BuiltInFunction(BaseFunction):
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx))
 
         array_.elements.append(value)
-        return RTResult().success(Number.null)
+        return RTResult().success(Number.null())
 
     @args(["array", "index"], [None, Number(-1)])
     def execute_arr_pop(self, exec_ctx):
@@ -217,7 +217,7 @@ class BuiltInFunction(BaseFunction):
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "Second argument must be array", exec_ctx))
 
         arrayA.elements.extend(arrayB.elements)
-        return RTResult().success(Number.null)
+        return RTResult().success(Number.null())
 
     @args(["array", "index"])
     def execute_arr_find(self, exec_ctx):
@@ -386,7 +386,7 @@ class BuiltInFunction(BaseFunction):
         res.register(PyAPI(code.value).set_pos(self.pos_start, self.pos_end).set_context(self.context).pyapi(ns))
         if res.should_return():
             return res
-        return res.success(Number.null)
+        return res.success(Number.null())
 
     @args([])
     def execute_sys_args(self, exec_ctx):
@@ -435,8 +435,6 @@ class BuiltInFunction(BaseFunction):
             with open(module, "r") as f:
                 script = f.read()
         except Exception as e:
-            if run.hide_paths:
-                module = "<stdin>"
             return RTResult().failure(
                 RTError(self.pos_start, self.pos_end, f'Failed to load script "{module}"\n' + str(e), exec_ctx)
             )
@@ -444,8 +442,6 @@ class BuiltInFunction(BaseFunction):
         _, error, should_exit = run(module, script)
 
         if error:
-            if run.hide_paths:
-                module = "<stdin>"
             return RTResult().failure(
                 RTError(
                     self.pos_start,
@@ -456,19 +452,16 @@ class BuiltInFunction(BaseFunction):
             )
 
         if should_exit:
-            return RTResult().success_exit(Number.null)
-        return RTResult().success(Number.null)
+            return RTResult().success_exit(Number.null())
+        return RTResult().success(Number.null())
 
     @args([])
     def execute_exit(self, exec_ctx):
-        return RTResult().success_exit(Number.null)
+        return RTResult().success_exit(Number.null())
 
 
 def run(fn, text, context=None, entry_pos=None, return_result=False, hide_paths=False):
     from core.interpreter import Interpreter  # Lazy import
-
-    if hide_paths or run.hide_paths:
-        hide_paths = run.hide_paths = True  # Once hidden, forever hidden
 
     # Generate tokens
     fn = "[REDACTED]" if hide_paths else fn
@@ -499,98 +492,53 @@ def run(fn, text, context=None, entry_pos=None, return_result=False, hide_paths=
         return result
     return result.value, result.error, result.should_exit
 
-
-run.hide_paths = False
-
-# Defining builtin functions
-# I/O methods
-BuiltInFunction.print = BuiltInFunction("print")
-BuiltInFunction.print_ret = BuiltInFunction("print_ret")
-BuiltInFunction.input = BuiltInFunction("input")
-BuiltInFunction.input_int = BuiltInFunction("input_int")
-BuiltInFunction.clear = BuiltInFunction("clear")
-# Datatype validator methods
-BuiltInFunction.is_num = BuiltInFunction("is_num")
-BuiltInFunction.is_int = BuiltInFunction("is_int")
-BuiltInFunction.is_float = BuiltInFunction("is_float")
-BuiltInFunction.is_string = BuiltInFunction("is_string")
-BuiltInFunction.is_bool = BuiltInFunction("is_bool")
-BuiltInFunction.is_array = BuiltInFunction("is_array")
-BuiltInFunction.is_fun = BuiltInFunction("is_fun")
-# Array methods
-BuiltInFunction.arr_append = BuiltInFunction("arr_append")
-BuiltInFunction.arr_pop = BuiltInFunction("arr_pop")
-BuiltInFunction.arr_extend = BuiltInFunction("arr_extend")
-BuiltInFunction.arr_find = BuiltInFunction("arr_find")
-BuiltInFunction.arr_len = BuiltInFunction("arr_len")
-BuiltInFunction.arr_chunk = BuiltInFunction("arr_chunk")
-BuiltInFunction.arr_get = BuiltInFunction("arr_get")
-# String methods
-BuiltInFunction.str_len = BuiltInFunction("str_len")
-BuiltInFunction.str_find = BuiltInFunction("str_find")
-BuiltInFunction.str_get = BuiltInFunction("str_get")
-# Typecase methods
-BuiltInFunction.int = BuiltInFunction("int")
-BuiltInFunction.float = BuiltInFunction("float")
-BuiltInFunction.str = BuiltInFunction("str")
-BuiltInFunction.bool = BuiltInFunction("bool")
-BuiltInFunction.type = BuiltInFunction("type")
-# PyAPI methods (Python API)
-BuiltInFunction.pyapi = BuiltInFunction("pyapi")
-# System methods
-BuiltInFunction.require = BuiltInFunction("require")
-BuiltInFunction.exit = BuiltInFunction("exit")
-BuiltInFunction.sys_args = BuiltInFunction("sys_args")
-BuiltInFunction.time_now = BuiltInFunction("time_now")
-
-
 # Setting all functions to global symbol table
 def create_global_symbol_table():
     ret = SymbolTable()
-    ret.set("null", Number.null)
-    ret.set("false", Boolean.false)
-    ret.set("true", Boolean.true)
-    ret.set("print", BuiltInFunction.print)
-    ret.set("print_ret", BuiltInFunction.print_ret)
-    ret.set("input", BuiltInFunction.input)
-    ret.set("input_int", BuiltInFunction.input_int)
-    ret.set("clear", BuiltInFunction.clear)
-    ret.set("cls", BuiltInFunction.clear)
-    ret.set("require", BuiltInFunction.require)
-    ret.set("exit", BuiltInFunction.exit)
+    ret.set("null", Number.null())
+    ret.set("false", Boolean.false())
+    ret.set("true", Boolean.true())
+    ret.set("print", BuiltInFunction("print"))
+    ret.set("print_ret", BuiltInFunction("print_ret"))
+    ret.set("input", BuiltInFunction("input"))
+    ret.set("input_int", BuiltInFunction("input_int"))
+    ret.set("clear", BuiltInFunction("clear"))
+    ret.set("cls", BuiltInFunction("clear"))
+    ret.set("require", BuiltInFunction("require"))
+    ret.set("exit", BuiltInFunction("exit"))
     # Datatype validator methods
-    ret.set("is_num", BuiltInFunction.is_num)
-    ret.set("is_int", BuiltInFunction.is_int)
-    ret.set("is_float", BuiltInFunction.is_float)
-    ret.set("is_str", BuiltInFunction.is_string)
-    ret.set("is_bool", BuiltInFunction.is_bool)
-    ret.set("is_array", BuiltInFunction.is_array)
-    ret.set("is_fun", BuiltInFunction.is_fun)
+    ret.set("is_num", BuiltInFunction("is_num"))
+    ret.set("is_int", BuiltInFunction("is_int"))
+    ret.set("is_float", BuiltInFunction("is_float"))
+    ret.set("is_str", BuiltInFunction("is_string"))
+    ret.set("is_bool", BuiltInFunction("is_bool"))
+    ret.set("is_array", BuiltInFunction("is_array"))
+    ret.set("is_fun", BuiltInFunction("is_fun"))
     # Internal array methods
-    ret.set("arr_append", BuiltInFunction.arr_append)
-    ret.set("arr_pop", BuiltInFunction.arr_pop)
-    ret.set("arr_extend", BuiltInFunction.arr_extend)
-    ret.set("arr_find", BuiltInFunction.arr_find)
-    ret.set("arr_len", BuiltInFunction.arr_len)
-    ret.set("arr_chunk", BuiltInFunction.arr_chunk)
-    ret.set("arr_get", BuiltInFunction.arr_get)
+    ret.set("arr_append", BuiltInFunction("arr_append"))
+    ret.set("arr_pop", BuiltInFunction("arr_pop"))
+    ret.set("arr_extend", BuiltInFunction("arr_extend"))
+    ret.set("arr_find", BuiltInFunction("arr_find"))
+    ret.set("arr_len", BuiltInFunction("arr_len"))
+    ret.set("arr_chunk", BuiltInFunction("arr_chunk"))
+    ret.set("arr_get", BuiltInFunction("arr_get"))
     # String methods
-    ret.set("str_len", BuiltInFunction.str_len)
-    ret.set("str_find", BuiltInFunction.str_find)
-    ret.set("str_get", BuiltInFunction.str_get)
+    ret.set("str_len", BuiltInFunction("str_len"))
+    ret.set("str_find", BuiltInFunction("str_find"))
+    ret.set("str_get", BuiltInFunction("str_get"))
     # Typecase methods
-    ret.set("int", BuiltInFunction.int)
-    ret.set("float", BuiltInFunction.float)
-    ret.set("str", BuiltInFunction.str)
-    ret.set("bool", BuiltInFunction.bool)
-    ret.set("type", BuiltInFunction.type)
+    ret.set("int", BuiltInFunction("int"))
+    ret.set("float", BuiltInFunction("float"))
+    ret.set("str", BuiltInFunction("str"))
+    ret.set("bool", BuiltInFunction("bool"))
+    ret.set("type", BuiltInFunction("type"))
     # PyAPI methods (Python API)
-    ret.set("pyapi", BuiltInFunction.pyapi)
+    ret.set("pyapi", BuiltInFunction("pyapi"))
     # System methods
-    ret.set("require", BuiltInFunction.require)
-    ret.set("exit", BuiltInFunction.exit)
-    ret.set("sys_args", BuiltInFunction.sys_args)
-    ret.set("time_now", BuiltInFunction.time_now)
+    ret.set("require", BuiltInFunction("require"))
+    ret.set("exit", BuiltInFunction("exit"))
+    ret.set("sys_args", BuiltInFunction("sys_args"))
+    ret.set("time_now", BuiltInFunction("time_now"))
     return ret
 
 

@@ -1396,7 +1396,7 @@ class RTResult:
 
     def fallthrough(self):
         # No `self.reset()` because this is meant to be used in conjunction with other methods
-        # e.g. `res.success(Number.null).fallthrough()`
+        # e.g. `res.success(Number.null()).fallthrough()`
         self.should_fallthrough = True
         return self
 

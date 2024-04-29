@@ -301,6 +301,14 @@ class Number(Value):
     def __repr__(self):
         return str(self.value)
 
+    @classmethod
+    def null(cls):
+        return cls(0)
+
+    @classmethod
+    def one(cls):
+        return cls(1)
+
 
 class Boolean(Value):
     def __init__(self, value):
@@ -356,15 +364,13 @@ class Boolean(Value):
     def __repr__(self):
         return "true" if self.__value else "false"
 
+    @classmethod
+    def true(cls):
+        return cls(True)
 
-Number.null = Number(0)
-Number.false = Number(0)
-Number.true = Number(1)
-Number.one = Number(1)  # used in increment and decrement ops
-
-Boolean.null = Boolean(False)
-Boolean.false = Boolean(False)
-Boolean.true = Boolean(True)
+    @classmethod
+    def false(cls):
+        return cls(False)
 
 
 class String(Value):
@@ -543,15 +549,15 @@ class Array(Value):
     def get_comparison_eq(self, other):
         if isinstance(other, Array):
             if len(self.elements) != len(other.elements):
-                return Boolean.false, None
+                return Boolean.false(), None
 
             for a, b in zip(self.elements, other.elements):
                 ret, error = a.get_comparison_eq(b)
                 if error:
                     return None, error
                 if not ret.is_true():
-                    return Boolean.false, None
-            return Boolean.true, None
+                    return Boolean.false(), None
+            return Boolean.true(), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -611,13 +617,13 @@ class Array(Value):
         return self, None
 
     def contains(self, value):
-        ret = Boolean.false
+        ret = Boolean.false()
         for val in self.elements:
             cmp, err = val.get_comparison_eq(value)
             if err:
                 return None, err
             if cmp.is_true():
-                ret = Boolean.true
+                ret = Boolean.true()
                 break
         return ret, None
 
@@ -688,13 +694,13 @@ class HashMap(Value):
         return self, None
 
     def contains(self, value):
-        ret = Boolean.false
+        ret = Boolean.false()
         for val in self.values.keys():
             cmp, err = value.get_comparison_eq(String(val))
             if err:
                 return None, err
             if cmp.is_true():
-                ret = Boolean.true
+                ret = Boolean.true()
                 break
         return ret, None
 
@@ -792,11 +798,11 @@ def radonify(value, pos_start, pos_end, context):
             case int() | float():
                 return Number(value)
             case True:
-                return Boolean.true
+                return Boolean.true()
             case False:
-                return Boolean.false
+                return Boolean.false()
             case None:
-                return Number.null
+                return Number.null()
             case _ if inspect.isfunction(value):
                 from core.builtin_funcs import BuiltInFunction, args  # Lazy import
 
@@ -894,7 +900,7 @@ class PyAPI(Value):
                     self.context,
                 )
             )
-        return RTResult().success(Number.null)
+        return RTResult().success(Number.null())
 
     def copy(self):
         copy = PyAPI(self.code)
@@ -1189,7 +1195,7 @@ class Function(BaseFunction):
         if res.should_return() and res.func_return_value == None:
             return res
 
-        ret_value = (value if self.should_auto_return else None) or res.func_return_value or Number.null
+        ret_value = (value if self.should_auto_return else None) or res.func_return_value or Number.null()
         return res.success(ret_value)
 
     def copy(self):

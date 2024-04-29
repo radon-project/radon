@@ -187,7 +187,7 @@ class Interpreter:
             )
 
         if should_exit:
-            return RTResult().success_exit(Number.null)
+            return RTResult().success_exit(Number.null())
         module = Module(node.module.value, module_name, symbol_table)
         res = RTResult()
         res.register(
@@ -294,16 +294,16 @@ class Interpreter:
                 expr_value = res.register(self.visit_block(expr, context))
                 if res.should_return():
                     return res
-                return res.success(Number.null if should_return_null else expr_value)
+                return res.success(Number.null() if should_return_null else expr_value)
 
         if node.else_case:
             expr, should_return_null = node.else_case
             expr_value = res.register(self.visit_block(expr, context))
             if res.should_return():
                 return res
-            return res.success(Number.null if should_return_null else expr_value)
+            return res.success(Number.null() if should_return_null else expr_value)
 
-        return res.success(Number.null)
+        return res.success(Number.null())
 
     def visit_ForNode(self, node, context):
         res = RTResult()
@@ -352,7 +352,7 @@ class Interpreter:
             elements.append(value)
 
         return res.success(
-            Number.null
+            Number.null()
             if node.should_return_null
             else Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
@@ -382,7 +382,7 @@ class Interpreter:
             elements.append(value)
 
         return res.success(
-            Number.null
+            Number.null()
             if node.should_return_null
             else Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
@@ -451,7 +451,7 @@ class Interpreter:
             if res.should_return():
                 return res
         else:
-            value = Number.null
+            value = Number.null()
 
         return res.success_return(value)
 
@@ -479,9 +479,9 @@ class Interpreter:
                         res.error.pos_start, res.error.pos_end, res.error.details, res.error.context, handled_error
                     )
                 )
-            return res.success(Number.null)
+            return res.success(Number.null())
         else:
-            return res.success(Number.null)
+            return res.success(Number.null())
 
     def visit_ForInNode(self, node, context):
         res = RTResult()
@@ -506,7 +506,7 @@ class Interpreter:
                 return res
 
         if should_return_null:
-            return res.success(Number.null)
+            return res.success(Number.null())
         return res.success(elements)
 
     def visit_SliceGetNode(self, node, context):
@@ -655,7 +655,7 @@ class Interpreter:
         if old_value == None:
             return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
 
-        new_value, error = old_value.added_to(Number.one)
+        new_value, error = old_value.added_to(Number.one())
 
         res.register(
             self.assign(
@@ -684,7 +684,7 @@ class Interpreter:
         if old_value == None:
             return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
 
-        new_value, error = old_value.subbed_by(Number.one)
+        new_value, error = old_value.subbed_by(Number.one())
 
         res.register(
             self.assign(
@@ -727,18 +727,18 @@ class Interpreter:
                 if res.should_fallthrough:
                     should_continue = True
                     continue
-                return res.success(Number.null)
+                return res.success(Number.null())
             should_continue = False
 
         if node.default != None:
             res.register(self.visit(node.default, context))
             if res.should_return():
                 return res
-            return res.success(Number.null)
+            return res.success(Number.null())
         return res.failure(RTError(node.pos_start, node.subject_node.pos_end, "No cases matched", context))
 
     def visit_FallthroughNode(self, node, context):
-        return RTResult().success(Number.null).fallthrough()
+        return RTResult().success(Number.null()).fallthrough()
 
     def visit_AttrAccessNode(self, node, context):
         res = RTResult()

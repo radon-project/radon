@@ -4,7 +4,7 @@ import os
 import subprocess
 import json
 
-from typing import NamedTuple
+from typing import NamedTuple, IO
 from difflib import unified_diff  # Rule 34 of Python: If it exists, it's in the standard library
 
 
@@ -81,7 +81,7 @@ def record_tests(directory="tests") -> int:
     return 0
 
 
-def usage(program_name: str, stream: any) -> None:
+def usage(program_name: str, stream: IO[str]) -> None:
     print(
         f"""Usage: {program_name} <subcommand> [args]
 SUBCOMMANDS:
