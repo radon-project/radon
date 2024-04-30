@@ -281,7 +281,7 @@ class Lexer:
             self.advance()
 
         while True:
-            if self.current_char == None:
+            if self.current_char is None:
                 return
             if multi_line:
                 if self.current_char == "!":

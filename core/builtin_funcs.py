@@ -158,7 +158,7 @@ class BuiltInFunction(BaseFunction):
 
         try:
             element = array_.elements.pop(index.value)
-        except:
+        except Exception:
             return RTResult().failure(
                 RTError(
                     self.pos_start,
@@ -201,7 +201,7 @@ class BuiltInFunction(BaseFunction):
             elif isinstance(val_, Number):
                 return RTResult().success(Number(val_))
             return RTResult().success(Array(val_))
-        except:
+        except IndexError:
             return RTResult().failure(IndexError(self.pos_start, self.pos_end, "Could't find that index", exec_ctx))
 
     @args(["array", "value"])
@@ -218,7 +218,7 @@ class BuiltInFunction(BaseFunction):
         try:
             # _list = Array(array.elements[start.value:end.value])
             _list = Array([array[i : i + value] for i in range(0, len(array), value)])
-        except:
+        except IndexError:
             return RTResult().failure(IndexError(self.pos_start, self.pos_end, "Could't not complete chunk", exec_ctx))
         return RTResult().success(_list)
 
@@ -272,7 +272,7 @@ class BuiltInFunction(BaseFunction):
 
         try:
             return RTResult().success(Number(string.value.find(value.value)))
-        except:
+        except Exception:
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could't find that index", exec_ctx))
 
     @args(["string", "index"])
@@ -288,7 +288,7 @@ class BuiltInFunction(BaseFunction):
 
         try:
             return RTResult().success(String(string.value[index.value]))
-        except:
+        except IndexError:
             return RTResult().failure(IndexError(self.pos_start, self.pos_end, "Could't find that index", exec_ctx))
 
     @args(["value"])
@@ -297,7 +297,7 @@ class BuiltInFunction(BaseFunction):
 
         try:
             return RTResult().success(Number(int(value.value)))
-        except:
+        except Exception:
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could not convert to int", exec_ctx))
 
     @args(["value"])
@@ -306,7 +306,7 @@ class BuiltInFunction(BaseFunction):
 
         try:
             return RTResult().success(Number(float(value.value)))
-        except:
+        except Exception:
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could not convert to float", exec_ctx))
 
     @args(["value"])
@@ -317,7 +317,7 @@ class BuiltInFunction(BaseFunction):
             if isinstance(value, Array):
                 return RTResult().success(String(str(value.elements)))
             return RTResult().success(String(str(value)))
-        except Exception as e:
+        except Exception:
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could not convert to string", exec_ctx))
 
     @args(["value"])
@@ -326,7 +326,7 @@ class BuiltInFunction(BaseFunction):
 
         try:
             return RTResult().success(Boolean(bool(value.value)))
-        except:
+        except Exception:
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could not convert to boolean", exec_ctx))
 
     @args(["value"])
@@ -457,8 +457,8 @@ def run(fn, text, context=None, entry_pos=None, return_result=False, hide_paths=
     return result.value, result.error, result.should_exit
 
 # Setting all functions to global symbol table
-from core.builtin_classes import *
 def create_global_symbol_table():
+    import core.builtin_classes as bic
     ret = SymbolTable()
     ret.set("null", Number.null())
     ret.set("false", Boolean.false())
@@ -505,10 +505,10 @@ def create_global_symbol_table():
     ret.set("sys_args", BuiltInFunction("sys_args"))
     ret.set("time_now", BuiltInFunction("time_now"))
     # Built-in classes
-    ret.set("File", BuiltInClass("File", FileObject))
-    ret.set("String", BuiltInClass("String", StringObject))
-    ret.set("Json", BuiltInClass("Json", JSONObject))
-    ret.set("Requests", BuiltInClass("Json", RequestsObject))
+    ret.set("File", bic.BuiltInClass("File", bic.FileObject))
+    ret.set("String", bic.BuiltInClass("String", bic.StringObject))
+    ret.set("Json", bic.BuiltInClass("Json", bic.JSONObject))
+    ret.set("Requests", bic.BuiltInClass("Json", bic.RequestsObject))
     return ret
 
 

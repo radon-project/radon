@@ -29,7 +29,7 @@ format:
 
 .PHONY: lint
 lint:
-	@ruff check .
+	@ruff check . --ignore F405 --ignore F403
 
 .PHONY: test
 test:

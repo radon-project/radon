@@ -44,7 +44,7 @@ def run_tests(directory: str = "tests") -> int:
             continue
         if not os.path.isfile(json_file):
             print(f"WARNING: file {json_file!r} not found, skipping...")
-            print(f"NOTE: to create this file, run the `record` subcommand")
+            print("NOTE: to create this file, run the `record` subcommand")
             continue
 
         print(f"Running test {test!r}...", end="", flush=True)

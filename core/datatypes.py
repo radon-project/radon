@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from core.parser import RTResult, Context, SymbolTable
 from core.tokens import Position
-from core.errors import RTError, IndexError as IndexErr
+from core.errors import RTError
 
 import inspect
 from abc import ABC, abstractmethod
 
-from typing import TypeVar, Optional, TYPE_CHECKING, Generator, Callable, TypeAlias, Iterator as PyIterator
+from typing import TypeVar, Optional, TYPE_CHECKING, Generator, TypeAlias, Iterator as PyIterator
 
 if TYPE_CHECKING:
     from core.nodes import Node
@@ -499,7 +499,7 @@ class Array(Value):
             try:
                 new_array.elements.pop(int(other.value))
                 return new_array, None
-            except:
+            except Exception:
                 return None, RTError(
                     other.pos_start,
                     other.pos_end,
@@ -525,7 +525,7 @@ class Array(Value):
         if isinstance(other, Number):
             try:
                 return self.elements[int(other.value)], None
-            except:
+            except IndexError:
                 return None, RTError(
                     other.pos_start,
                     other.pos_end,
@@ -1153,7 +1153,7 @@ class BaseClass(Value, ABC):
 class Class(BaseClass):
     def get(self, name: str) -> Optional[Value]:
         method = self.symbol_table.symbols.get(name, None)
-        if method == None:
+        if method is None:
             return None
         return method
 
@@ -1179,7 +1179,7 @@ class Class(BaseClass):
         res = RTResult[None]()
         method = inst.symbol_table.symbols.get("__constructor__", None)
 
-        if method == None or not isinstance(method, Function):
+        if method is None or not isinstance(method, Function):
             return res.failure(
                 RTError(self.pos_start, self.pos_end, f"Function '{self.name}' not defined", self.context)
             )
@@ -1222,7 +1222,7 @@ class Function(BaseFunction):
             return res
 
         value = res.register(interpreter.visit(self.body_node, exec_ctx))
-        if res.should_return() and res.func_return_value == None:
+        if res.should_return() and res.func_return_value is None:
             return res
 
         ret_value = (value if self.should_auto_return else None) or res.func_return_value or Number.null()

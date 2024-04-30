@@ -3,6 +3,7 @@
 
 import argparse
 import pathlib
+import sys
 
 try:
     import readline
@@ -56,40 +57,45 @@ def shell():
             print("KeyboardInterrupt")
 
 
-parser = argparse.ArgumentParser(description="Radon programming language")
-parser.add_argument(
-    "-p",
-    "--hide-file-paths",
-    help="Don't show file paths in error messages [NOT CURRENTLY WORKING]",
-    action="store_true",
-)
-parser.add_argument("-s", "--source", type=str, help="Radon source file", nargs="*")
-parser.add_argument("-c", "--command", type=str, help="Command to execute as string")
-parser.add_argument("-v", "--version", help="Version info", action="store_true")
-args = parser.parse_args()
-
-if args.source:
-    source = pathlib.Path(args.source[0]).read_text()
-    (result, error, should_exit) = base_core.run(
-        args.source[0], source, hide_paths=args.hide_file_paths
+def main(argv: list[str]) -> None:
+    parser = argparse.ArgumentParser(description="Radon programming language")
+    parser.add_argument(
+        "-p",
+        "--hide-file-paths",
+        help="Don't show file paths in error messages [NOT CURRENTLY WORKING]",
+        action="store_true",
     )
+    parser.add_argument("-s", "--source", type=str, help="Radon source file", nargs="*")
+    parser.add_argument("-c", "--command", type=str, help="Command to execute as string")
+    parser.add_argument("-v", "--version", help="Version info", action="store_true")
+    args = parser.parse_args()
+    
+    if args.source:
+        source = pathlib.Path(args.source[0]).read_text()
+        (result, error, should_exit) = base_core.run(
+            args.source[0], source, hide_paths=args.hide_file_paths
+        )
+    
+        if error:
+            print(error.as_string())
+            exit(1)
+    
+        if should_exit:
+            exit()
+    
+    
+    elif args.command:
+        (result, error, should_exit) = base_core.run("<stdin>", args.command)
+    
+        if error:
+            print(error.as_string())
+    
+    elif args.version:
+        print(base_core.__version__)
+    
+    else:
+        shell()
 
-    if error:
-        print(error.as_string())
-        exit(1)
+if __name__ == "__main__":
+    main(sys.argv[1:])
 
-    if should_exit:
-        exit()
-
-
-elif args.command:
-    (result, error, should_exit) = base_core.run("<stdin>", args.command)
-
-    if error:
-        print(error.as_string())
-
-elif args.version:
-    print(base_core.__version__)
-
-else:
-    shell()

@@ -67,7 +67,7 @@ class BuiltInObjectMeta(type):
             elif hasattr(value, "__is_method__") and value.__is_method__:
                 assert hasattr(value, "arg_names"), "Make sure to use the args() decorator on any built-in methods!"
                 assert hasattr(value, "defaults"), "Unreachable. The first `assert` should have ensured this."
-                symbols[name] = bif = BuiltInFunction(value.__name__, value)
+                symbols[name] = BuiltInFunction(value.__name__, value)
         symbol_table = SymbolTable(None)
         symbol_table.symbols = symbols
 

@@ -206,14 +206,16 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, "try"):
             self.advance(res)
             try_node = res.register(self.try_statement())
-            if res.error: return res
+            if res.error:
+                return res
             assert try_node is not None
             return res.success(try_node)
 
         if self.current_tok.matches(TT_KEYWORD, "switch"):
             self.advance(res)
             switch_node = res.register(self.switch_statement())
-            if res.error: return res
+            if res.error:
+                return res
             assert switch_node is not None
             return res.success(switch_node)
 
@@ -521,7 +523,7 @@ class Parser:
 
                 if self.current_tok.type != TT_RPAREN:
                     return res.failure(
-                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected ',' or ')'")
+                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ')'")
                     )
 
                 self.advance(res)
@@ -763,7 +765,7 @@ class Parser:
 
             if self.current_tok.type != TT_RSQUARE:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected ',' or ']'")
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ']'")
                 )
 
             self.advance(res)
@@ -967,7 +969,7 @@ class Parser:
 
         if self.current_tok.type != TT_IDENTIFIER:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected identifier")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
             )
 
         var_name = self.current_tok
@@ -977,7 +979,7 @@ class Parser:
 
         if self.current_tok.type != TT_EQ and not self.current_tok.matches(TT_KEYWORD, "in"):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected '=' or 'in'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '=' or 'in'")
             )
 
         elif self.current_tok.matches(TT_KEYWORD, "in"):
@@ -997,7 +999,7 @@ class Parser:
 
             if not self.current_tok.matches(TT_KEYWORD, "to"):
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'to'")
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'to'")
                 )
 
             self.advance(res)
@@ -1116,7 +1118,7 @@ class Parser:
 
         if self.current_tok.type != TT_IDENTIFIER:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected identifier")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
             )
 
         class_name_tok = self.current_tok
@@ -1152,7 +1154,7 @@ class Parser:
         if not self.current_tok.matches(TT_KEYWORD, "fun"):
             return res.failure(
                 InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'fun' or identifier"
+                    self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'fun' or identifier"
                 )
             )
 
@@ -1164,14 +1166,14 @@ class Parser:
 
             if self.current_tok.type != TT_LPAREN:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected '('")
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '('")
                 )
         else:
             var_name_tok = None
             if self.current_tok.type != TT_LPAREN:
                 return res.failure(
                     InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, f"Expected identifier or '('"
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or '('"
                     )
                 )
 
@@ -1205,7 +1207,7 @@ class Parser:
 
                 if self.current_tok.type != TT_IDENTIFIER:
                     return res.failure(
-                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected identifier")
+                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
                     )
 
                 pos_start = self.current_tok.pos_start.copy()
@@ -1229,14 +1231,14 @@ class Parser:
             if self.current_tok.type != TT_RPAREN:
                 return res.failure(
                     InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, f"Expected ',', ')' or '='"
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',', ')' or '='"
                     )
                 )
         else:
             if self.current_tok.type != TT_RPAREN:
                 return res.failure(
                     InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, f"Expected identifier or ')'"
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or ')'"
                     )
                 )
 
@@ -1559,11 +1561,13 @@ class SymbolTable:
 
     def get(self, name: str) -> Optional[Value]:
         value = self.symbols.get(name, None)
-        if value == None and self.parent:
+        if value is None and self.parent:
             return self.parent.get(name)
         return value
 
     def set(self, name: str, value: Value, qualifier: Optional[Token] = None) -> RTResult[None]:
+        class dummy:
+            TT_KW = TT_KEYWORD
         if name in self.consts:
             return RTResult[None]().failure(
                 RTError(value.pos_start, value.pos_end, f"Cannot reassign to constant {name}", value.context)
@@ -1571,7 +1575,7 @@ class SymbolTable:
         match qualifier:
             case None:
                 self.symbols[name] = value
-            case Token(TT_KEYWORD, "nonlocal"):
+            case Token(dummy.TT_KW, "nonlocal"):
                 if name in self.symbols:
                     self.symbols[name] = value
                 elif self.parent:
@@ -1585,12 +1589,12 @@ class SymbolTable:
                             value.context,
                         )
                     )
-            case Token(TT_KEYWORD, "global"):
+            case Token(dummy.TT_KW, "global"):
                 if self.parent is None:
                     self.symbols[name] = value
                 else:
                     self.parent.set(name, value, qualifier)
-            case Token(TT_KEYWORD, "const"):
+            case Token(dummy.TT_KW, "const"):
                 self.symbols[name] = value
                 self.consts.add(name)
             case _:

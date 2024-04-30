@@ -3,7 +3,6 @@ from core.parser import *
 from core.datatypes import *
 from core.builtin_funcs import run, create_global_symbol_table
 from core.colortools import Log
-import core.builtin_classes
 
 import os
 import sys
@@ -339,7 +338,7 @@ class Interpreter:
             i += step_value.value
 
             value = res.register(self.visit_block(node.body_node, context))
-            if res.should_return() and res.loop_should_continue == False and res.loop_should_break == False:
+            if res.should_return() and not res.loop_should_continue and not res.loop_should_break:
                 return res
 
             if res.loop_should_continue:
@@ -371,7 +370,7 @@ class Interpreter:
                 break
 
             value = res.register(self.visit_block(node.body_node, context))
-            if res.should_return() and res.loop_should_continue == False and res.loop_should_break == False:
+            if res.should_return() and not res.loop_should_continue and not res.loop_should_break:
                 return res
 
             if res.loop_should_continue:
@@ -661,7 +660,7 @@ class Interpreter:
                 if not isinstance(message_val, String):
                     return res.failure(
                         RTError(
-                            node.message.pos_start, node.message.pos_end, f"Assertion message must be a string", context
+                            node.message.pos_start, node.message.pos_end, "Assertion message must be a string", context
                         )
                     )
                 message = f"Assertion failed: {message_val.value}"
@@ -673,8 +672,6 @@ class Interpreter:
         res = RTResult[Value]()
         var_name = node.var_name_tok.value
         assert isinstance(var_name, str), "This could be a bug in the lexer"
-        extra_names = node.extra_names
-        qualifier = node.qualifier
         pre = node.is_pre
 
         old_value = context.symbol_table.get(var_name)
@@ -706,8 +703,6 @@ class Interpreter:
         res = RTResult[Value]()
         var_name = node.var_name_tok.value
         assert isinstance(var_name, str), "This could be a bug in the lexer"
-        extra_names = node.extra_names
-        qualifier = node.qualifier
         pre = node.is_pre
 
         old_value = context.symbol_table.get(var_name)
@@ -787,7 +782,7 @@ class Interpreter:
                 RTError(
                     node.pos_start,
                     node.pos_end,
-                    f"Dotted attribute access may only be used on classes, instances and modules for now",
+                    "Dotted attribute access may only be used on classes, instances and modules for now",
                     context,
                 )
             )
