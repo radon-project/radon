@@ -1,8 +1,6 @@
 from __future__ import annotations
 from enum import Enum
 import random
-from typing import List
-
 
 class BackgroundColor(Enum):
     """Background color"""
