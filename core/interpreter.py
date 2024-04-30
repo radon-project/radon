@@ -3,6 +3,7 @@ from core.parser import *
 from core.datatypes import *
 from core.builtin_funcs import run, create_global_symbol_table
 from core.colortools import Log
+import core.builtin_classes
 
 import os
 
