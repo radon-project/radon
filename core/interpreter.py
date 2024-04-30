@@ -3,8 +3,10 @@ from core.parser import *
 from core.datatypes import *
 from core.builtin_funcs import run, create_global_symbol_table
 from core.colortools import Log
+import core.builtin_classes
 
 import os
+import sys
 
 from typing import NoReturn
 
@@ -46,7 +48,12 @@ class Interpreter:
     def visit(self, node: Node, context: Context) -> RTResult[Value]:
         method_name = f"visit_{type(node).__name__}"
         method = getattr(self, method_name, self.no_visit_method)
-        return method(node, context)
+        try:
+            return method(node, context)
+        except Exception as e:
+            if sys.version_info >= (3, 11):
+                e.add_note(f"{node.pos_start} - {node.pos_end}: NOTE: happened here")
+            raise
 
     def visit_block(self, node: Node, context: Context) -> RTResult[Value]:
         new_context = Context("<block scope>", context, node.pos_start)

@@ -31,8 +31,11 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
         col_start = pos_start.col if i == 0 else 0
         col_end = pos_end.col if i == line_count - 1 else len(line) - 1
 
+        col_start_color = col_start + 1
+        col_end_color = col_end + 1
+
         # Append to result
-        result += f"{line[:col_start]}{Log.deep_error(line[col_start:col_end], bold=True)}{line[col_end:]}\n"
+        result += f"{line[:col_start_color]}{Log.deep_error(line[col_start_color:col_end_color], bold=True)}{line[col_end_color:]}\n"
         result += " " * col_start + Log.deep_error("^" * (col_end - col_start), bold=True)
 
         # Re-calculate indices

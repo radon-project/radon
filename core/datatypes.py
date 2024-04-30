@@ -692,6 +692,44 @@ class HashMap(Value):
                 break
         return ret, None
 
+    def get_comparison_eq(self, other):
+        if not isinstance(other, HashMap):
+            return None, self.illegal_operation(other)
+
+        if len(self.values) != len(other.values):
+            return Boolean.false(), None
+
+        for key, value in self.values.items():
+            if key not in other.values:
+                return Boolean.false(), None
+
+            cmp, err = value.get_comparison_eq(other.values[key])
+            if err:
+                return None, err
+            if not cmp.is_true():
+                return Boolean.false(), None
+
+        return Boolean.true(), None
+
+    def get_comparison_ne(self, other):
+        if not isinstance(other, HashMap):
+            return None, self.illegal_operation(other)
+
+        if len(self.values) != len(other.values):
+            return Boolean.true(), None
+
+        for key, value in self.values.items():
+            if key not in other.values:
+                return Boolean.true(), None
+
+            cmp, err = value.get_comparison_ne(other.values[key])
+            if err:
+                return None, err
+            if cmp.is_true():
+                return Boolean.true(), None
+
+        return Boolean.false(), None
+
     def copy(self):
         copy = HashMap(self.values)
         copy.set_pos(self.pos_start, self.pos_end)
@@ -845,7 +883,6 @@ def deradonify(value):
             return ret
         case _:
             assert False, f"no deradonification procedure for type {type(value)}"
-
 
 class PyObj(Value):
     """Thin wrapper around a Python object"""
