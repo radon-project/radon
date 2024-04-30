@@ -479,12 +479,13 @@ class String(Value):
 
 
 class Array(Value):
-    def __init__(self, elements):
+    elements: list[Value]
+
+    def __init__(self, elements: list[Value]) -> None:
         super().__init__()
         self.elements = elements
-        self.value = elements  # For matching with other conventions in the code base
 
-    def added_to(self, other):
+    def added_to(self, other: Value) -> ResultTuple:
         new_array = self.copy()
         if isinstance(other, Array):
             new_array.elements.extend(other.elements)
@@ -492,11 +493,11 @@ class Array(Value):
             new_array.elements.append(other)
         return new_array, None
 
-    def subbed_by(self, other):
+    def subbed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             new_array = self.copy()
             try:
-                new_array.elements.pop(other.value)
+                new_array.elements.pop(int(other.value))
                 return new_array, None
             except:
                 return None, RTError(
@@ -508,22 +509,22 @@ class Array(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def multed_by(self, other):
+    def multed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Array):
             new_array = self.copy()
             new_array.elements.extend(other.elements)
             return new_array, None
         elif isinstance(other, Number):
             new_array = self.copy()
-            new_array.elements *= other.value
+            new_array.elements *= int(other.value)
             return new_array, None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def dived_by(self, other):
+    def dived_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             try:
-                return self.elements[other.value], None
+                return self.elements[int(other.value)], None
             except:
                 return None, RTError(
                     other.pos_start,
@@ -534,38 +535,38 @@ class Array(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_eq(self, other):
+    def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, Array):
             if len(self.elements) != len(other.elements):
                 return Boolean.false(), None
 
             for a, b in zip(self.elements, other.elements):
                 ret, error = a.get_comparison_eq(b)
-                if error:
+                if error is not None:
                     return None, error
+                assert ret is not None
                 if not ret.is_true():
                     return Boolean.false(), None
             return Boolean.true(), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_ne(self, other):
-        if isinstance(other, Array):
-            return Boolean(int(self.elements != other.elements)).set_context(self.context), None
-        elif isinstance(other, String):
-            return Boolean(int(self.elements != other.value)).set_context(self.context), None
-        else:
-            return None, Value.illegal_operation(self, other)
+    def get_comparison_ne(self, other: Value) -> ResultTuple:
+        ret, error = self.get_comparison_eq(other)
+        if error is not None:
+            return None, error
+        assert ret is not None
+        return Boolean.false() if ret.is_true() else Boolean.true(), None
 
-    def gen(self):
+    def gen(self) -> Generator[RTResult[Value], None, None]:
         for element in self.elements:
-            yield RTResult().success(element)
+            yield RTResult[Value]().success(element)
 
-    def get_index(self, index):
+    def get_index(self, index: Value) -> ResultTuple:
         if not isinstance(index, Number):
             return None, self.illegal_operation(index)
         try:
-            return self.elements[index.value], None
+            return self.elements[int(index.value)], None
         except IndexError:
             return None, RTError(
                 index.pos_start,
@@ -575,26 +576,38 @@ class Array(Value):
             )
         return self, None
 
-    def get_slice(self, start, end, step):
-        for index in (start, end, step):
-            if index != None and not isinstance(index, Number):
-                return None, self.illegal_operation(index)
+    def get_slice(self, start: Optional[Value], end: Optional[Value], step: Optional[Value]) -> ResultTuple:
+        if start is not None and not isinstance(start, Number):
+            return None, self.illegal_operation(start)
+        if end is not None and not isinstance(end, Number):
+            return None, self.illegal_operation(end)
+        if step is not None and not isinstance(step, Number):
+            return None, self.illegal_operation(step)
 
-        if start != None:
-            start = start.value
-        if end != None:
-            end = end.value
-        if step != None:
+        istart: Optional[int]
+        iend: Optional[int]
+        istep: Optional[int]
+        if start is not None:
+            istart = int(start.value)
+        else:
+            istart = None
+        if end is not None:
+            iend = int(end.value)
+        else:
+            iend = None
+        if step is not None:
             if step.value == 0:
                 return None, RTError(step.pos_start, step.pos_end, "Step cannot be zero.", self.context)
-            step = step.value
-        return Array(self.elements[start:end:step]), None
+            istep = int(step.value)
+        else:
+            istep = None
+        return Array(self.elements[istart:iend:istep]), None
 
-    def set_index(self, index, value):
+    def set_index(self, index: Value, value: Value) -> ResultTuple:
         if not isinstance(index, Number):
             return None, self.illegal_operation(index)
         try:
-            self.elements[index.value] = value
+            self.elements[int(index.value)] = value
         except IndexError:
             return None, RTError(
                 index.pos_start,
@@ -604,21 +617,22 @@ class Array(Value):
             )
         return self, None
 
-    def contains(self, value):
+    def contains(self, value: Value) -> ResultTuple:
         ret = Boolean.false()
         for val in self.elements:
             cmp, err = val.get_comparison_eq(value)
-            if err:
+            if err is not None:
                 return None, err
+            assert cmp is not None
             if cmp.is_true():
                 ret = Boolean.true()
                 break
         return ret, None
 
-    def is_true(self):
+    def is_true(self) -> bool:
         return len(self.elements) > 0
 
-    def copy(self):
+    def copy(self) -> Array:
         copy = Array(self.elements)
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
@@ -641,12 +655,13 @@ class Array(Value):
 
 
 class HashMap(Value):
-    def __init__(self, values):
+    values: dict[str, Value]
+
+    def __init__(self, values: dict[str, Value]) -> None:
         super().__init__()
         self.values = values
-        self.value = values  # For matching with other conventions in the code base
 
-    def added_to(self, other):
+    def added_to(self, other: Value) -> ResultTuple:
         if not isinstance(other, HashMap):
             return None, self.illegal_operation(other)
 
@@ -656,13 +671,13 @@ class HashMap(Value):
 
         return new_dict, None
 
-    def gen(self):
+    def gen(self) -> Generator[RTResult[Value], None, None]:
         fake_pos = Position(0, 0, 0, "<hashmap key>", "<native code>")
         for key in self.values.keys():
             key_as_value = String(key).set_pos(fake_pos, fake_pos).set_context(self.context)
-            yield RTResult().success(key_as_value)
+            yield RTResult[Value]().success(key_as_value)
 
-    def get_index(self, index):
+    def get_index(self, index: Value) -> ResultTuple:
         if not isinstance(index, String):
             return None, self.illegal_operation(index)
 
@@ -673,7 +688,7 @@ class HashMap(Value):
                 self.pos_start, self.pos_end, f"Could not find key {index!r} in dict {self!r}", self.context
             )
 
-    def set_index(self, index, value):
+    def set_index(self, index: Value, value: Value) -> ResultTuple:
         if not isinstance(index, String):
             return None, self.illegal_operation(index)
 
@@ -681,18 +696,19 @@ class HashMap(Value):
 
         return self, None
 
-    def contains(self, value):
+    def contains(self, value: Value) -> ResultTuple:
         ret = Boolean.false()
         for val in self.values.keys():
             cmp, err = value.get_comparison_eq(String(val))
             if err:
                 return None, err
+            assert cmp is not None
             if cmp.is_true():
                 ret = Boolean.true()
                 break
         return ret, None
 
-    def get_comparison_eq(self, other):
+    def get_comparison_eq(self, other: Value) -> ResultTuple:
         if not isinstance(other, HashMap):
             return None, self.illegal_operation(other)
 
@@ -706,12 +722,13 @@ class HashMap(Value):
             cmp, err = value.get_comparison_eq(other.values[key])
             if err:
                 return None, err
+            assert cmp is not None
             if not cmp.is_true():
                 return Boolean.false(), None
 
         return Boolean.true(), None
 
-    def get_comparison_ne(self, other):
+    def get_comparison_ne(self, other: Value) -> ResultTuple:
         if not isinstance(other, HashMap):
             return None, self.illegal_operation(other)
 
@@ -725,95 +742,65 @@ class HashMap(Value):
             cmp, err = value.get_comparison_ne(other.values[key])
             if err:
                 return None, err
+            assert cmp is not None
             if cmp.is_true():
                 return Boolean.true(), None
 
         return Boolean.false(), None
 
-    def copy(self):
+    def copy(self) -> HashMap:
         copy = HashMap(self.values)
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__repr__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         __val = ", ".join([f"{repr(k)}: {repr(v)}" for k, v in self.values.items()])
         return f"{{{__val}}}"
 
 
 class Type(Value):
-    def __init__(self, variable):
+    variable: Value
+    type: str
+
+    def __init__(self, variable: Value) -> None:
         super().__init__()
-        self.variable = variable or "<unknown>"
+        self.variable = variable
         self.get_type()
 
-    def get_type(self):
-        self.type = None
+    def get_type(self) -> None:
+        self.type = self.variable.__class__.__name__
 
-        if isinstance(self.variable, String):
-            self.type = "String"
-        elif isinstance(self.variable, Number):
-            if isinstance(self.variable.value, int):
-                self.type = "Number.Int"
-            elif isinstance(self.variable.value, float):
-                self.type = "Number.Float"
-            else:
-                self.type = "Number"
-        elif isinstance(self.variable, Boolean):
-            self.type = "Boolean"
-        elif isinstance(self.variable, Array):
-            self.type = "Array"
-        elif isinstance(self.variable, Function):
-            self.type = "Function"
-        elif isinstance(self.variable, Class):
-            self.type = "Class"
-        elif isinstance(self.variable, Instance):
-            self.type = "Instance"
-        elif isinstance(self.variable, HashMap):
-            self.type = "HashMap"
-        elif isinstance(self.variable, PyAPI):
-            self.type = "PyAPI"
-        elif isinstance(self.variable, Type):
-            self.type = "Type"
-        elif self.variable.__class__.__name__ == "BuiltInFunction":
-            self.type = "BuiltInFunction"
-        elif self.variable.__class__.__name__ == "BuiltInClass":
-            self.type = "BuiltInClass"
-        elif self.variable.__class__.__name__ == "BuiltInInstance":
-            self.type = "BuiltInInstance"
-        else:
-            self.type = "unknown"
-
-    def copy(self):
+    def copy(self) -> Type:
         copy = Type(self.variable)
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"<class '{self.type}'>"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<class '{self.type}'>"
 
-    def get_comparison_eq(self, other):
+    def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, Type):
             return Boolean(self.type == other.type).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_ne(self, other):
+    def get_comparison_ne(self, other: Value) -> ResultTuple:
         if isinstance(other, Type):
             return Boolean(self.type != other.type).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
 
-def radonify(value, pos_start, pos_end, context):
-    def _radonify(value):
+def radonify(value: object, pos_start: Position, pos_end: Position, context: Context) -> Value:
+    def _radonify(value: object) -> Value:
         match value:
             case dict():
                 return HashMap({k: radonify(v, pos_start, pos_end, context) for k, v in value.items()})
@@ -854,7 +841,7 @@ def radonify(value, pos_start, pos_end, context):
     return _radonify(value).set_pos(pos_start, pos_end).set_context(context)
 
 
-def deradonify(value):
+def deradonify(value: Value) -> object:
     match value:
         case PyObj():
             return value.value
@@ -886,20 +873,23 @@ def deradonify(value):
 
 class PyObj(Value):
     """Thin wrapper around a Python object"""
+    value: object
 
-    def __init__(self, value):
+    def __init__(self, value: object) -> None:
         super().__init__()
         self.value = value
 
-    def copy(self):
+    def copy(self) -> PyObj:
         return self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"PyObj({self.value!r})"
 
 
 class PyAPI(Value):
-    def __init__(self, code: str):
+    code: str
+
+    def __init__(self, code: str) -> None:
         super().__init__()
         self.code = code
 
@@ -908,18 +898,17 @@ class PyAPI(Value):
 
         try:
             locals_dict = deradonify(ns)
+            assert isinstance(locals_dict, dict)
             # Execute the code and store the output in locals_dict
             exec(self.code, {}, locals_dict)
 
             # Update namespace HashMap
             new_ns = radonify(locals_dict, self.pos_start, self.pos_end, self.context)
+            assert isinstance(new_ns, HashMap)
             for key, value in new_ns.values.items():
                 ns.values[key] = value
 
         except Exception as e:
-            assert self.pos_start is not None
-            assert self.pos_end is not None
-            assert self.context is not None
             return RTResult().failure(
                 RTError(
                     self.pos_start,
@@ -930,7 +919,7 @@ class PyAPI(Value):
             )
         return RTResult[Value]().success(Number.null())
 
-    def copy(self):
+    def copy(self) -> PyAPI:
         copy = PyAPI(self.code)
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)

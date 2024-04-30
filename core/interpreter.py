@@ -78,9 +78,11 @@ class Interpreter:
         elements = []
 
         for element_node in node.element_nodes:
-            elements.append(res.register(self.visit(element_node, context)))
+            elt = res.register(self.visit(element_node, context))
             if res.should_return():
                 return res
+            assert elt is not None
+            elements.append(elt)
 
         return res.success(Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end))
 
@@ -346,6 +348,7 @@ class Interpreter:
             if res.loop_should_break:
                 break
 
+            assert value is not None
             elements.append(value)
 
         return res.success(
@@ -377,6 +380,7 @@ class Interpreter:
             if res.loop_should_break:
                 break
 
+            assert value is not None
             elements.append(value)
 
         return res.success(
@@ -616,6 +620,7 @@ class Interpreter:
             value = res.register(self.visit(value_node, context))
             if res.should_return():
                 return res
+            assert value is not None
 
             values[key.value] = value
 
