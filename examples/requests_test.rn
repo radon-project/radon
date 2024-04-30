@@ -1,0 +1,53 @@
+# API testing
+
+request = Requests()
+json = Json()
+
+# get request to the API
+# response_get = request.get("https://jsonplaceholder.typicode.com/posts")
+
+# print(response_get)
+# print(type(response_get))
+# print(response_get.status_code)
+
+# radon_object = json.loads(response_get)
+
+# print(type(radon_object))
+# print(arr_len(radon_object))
+
+# for post in radon_object {
+#     print(post["title"])
+# }
+
+# post request to the API
+# response_post = request.post("https://jsonplaceholder.typicode.com/posts", {"title": "foo", "body": "bar", "userId": 1})
+# print(response_post)
+# print(type(response_post))
+# radon_object = json.loads(response_post)
+# print(radon_object)
+# print(type(radon_object))
+
+
+# put request to the API
+# response_put = request.put("https://jsonplaceholder.typicode.com/posts/1", {"id": 1, "title": "foo", "body": "bar", "userId": 1})
+# print(response_put)
+# print(type(response_put))
+# radon_object = json.loads(response_put)
+# print(radon_object)
+# print(type(radon_object))
+
+# delete request to the API
+# response_delete = request.delete("https://jsonplaceholder.typicode.com/posts/1")
+# print(response_delete)
+# print(type(response_delete))
+# radon_object = json.loads(response_delete)
+# print(radon_object)
+# print(type(radon_object))
+
+# patch request to the API
+# response_patch = request.patch("https://jsonplaceholder.typicode.com/posts/1", {"title": "foo"})
+# print(response_patch)
+# print(type(response_patch))
+# radon_object = json.loads(response_patch)
+# print(radon_object)
+# print(type(radon_object))
