@@ -6,6 +6,7 @@ from core.nodes import *
 
 from typing import TYPE_CHECKING, Optional, Generic, TypeVar, Callable
 from collections.abc import Sequence
+from dataclasses import dataclass, field
 
 if TYPE_CHECKING:
     from core.datatypes import Value
@@ -1539,13 +1540,6 @@ class RTResult(Generic[T]):
             f"exit={self.should_exit})"
         )
 
-@dataclass
-class Context:
-    display_name: str
-    parent: Optional[Context] = None
-    parent_entry_pos: Optional[Position] = None
-    symbol_table: Optional[SymbolTable] = None
-
 
 class SymbolTable:
     symbols: dict[str, Value]
@@ -1613,4 +1607,11 @@ class SymbolTable:
 
 #    def remove(self, name):
 #        del self.symbols[name]
+
+@dataclass
+class Context:
+    display_name: str
+    parent: Optional[Context] = None
+    parent_entry_pos: Optional[Position] = None
+    symbol_table: SymbolTable = field(default_factory=SymbolTable)
 

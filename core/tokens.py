@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 # STANDARD LIBRARIES
 BASE_DIR = pathlib.Path(__file__).parent.parent
-CURRENT_DIR = None
+CURRENT_DIR: Optional[str] = None
 
 STDLIBS = [
     "Argparser",

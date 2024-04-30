@@ -69,43 +69,7 @@ class BuiltInFunction(BaseFunction):
     def execute_print(self, exec_ctx):
         value = exec_ctx.symbol_table.get("value")
 
-        if isinstance(value, String):
-            print(str(value.value))
-
-        elif isinstance(value, Number):
-            print(str(value.value))
-
-        elif isinstance(value, Array):
-            print(repr(value))
-
-        elif isinstance(value, Instance):
-            # print(value.print_to_str())
-            print(value)
-
-        elif isinstance(value, Type):
-            print(value)
-
-        elif isinstance(value, PyAPI):
-            try:
-                print(value.value)
-            except Exception as exe:
-                # print(exe)
-                pass
-
-        elif isinstance(value, BuiltInFunction):
-            print(value)
-
-        elif isinstance(value, Class):
-            print(value)
-
-        elif isinstance(value, Instance):
-            print(value)
-
-        else:
-            try:
-                print(value.value)
-            except AttributeError:
-                print(repr(value))
+        print(value)
         return RTResult().success(Number.null())
 
     @args(["value"])

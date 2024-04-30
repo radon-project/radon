@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from core.parser import RTResult, Context, SymbolTable
 from core.tokens import Position
 from core.errors import RTError, IndexError as IndexErr
@@ -5,97 +7,114 @@ from core.errors import RTError, IndexError as IndexErr
 import inspect
 from abc import ABC, abstractmethod
 
+from typing import TypeVar, Optional, TYPE_CHECKING, Generator, Callable, TypeAlias, Iterator as PyIterator
+
+if TYPE_CHECKING:
+    from core.nodes import Node
+    Self = TypeVar("Self", bound="Value")
+
+ResultTuple: TypeAlias = "tuple[None, RTError] | tuple[Value, None]"
 
 class Value:
-    def __init__(self):
+    pos_start: Position
+    pos_end: Position
+    context: Context
+    def __init__(self) -> None:
         self.set_pos()
         self.set_context()
 
-    def set_pos(self, pos_start=None, pos_end=None):
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    def set_pos(self: Self, pos_start: Optional[Position] = None, pos_end: Optional[Position] = None) -> Self:
+        self.pos_start = pos_start if pos_start is not None else Position(0, 0, 0, "<unset>", "<unset>")
+        self.pos_end = pos_end if pos_end is not None else Position(0, 0, 0, "<unset>", "<unset>")
         return self
 
-    def set_context(self, context=None):
-        self.context = context
+    def set_context(self: Self, context: Optional[Context] = None) -> Self:
+        self.context = context if context is not None else Context("<unset>")
         return self
 
-    def added_to(self, other):
+    def added_to(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def subbed_by(self, other):
+    def subbed_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def multed_by(self, other):
+    def multed_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def dived_by(self, other):
+    def dived_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def idived_by(self, other):
+    def modded_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def powed_by(self, other):
+    def idived_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_eq(self, other):
+    def powed_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_ne(self, other):
+    def get_comparison_eq(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_lt(self, other):
+    def get_comparison_ne(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_gt(self, other):
+    def get_comparison_lt(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_lte(self, other):
+    def get_comparison_gt(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_gte(self, other):
+    def get_comparison_lte(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def anded_by(self, other):
+    def get_comparison_gte(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def ored_by(self, other):
+    def anded_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def notted(self, other):
+    def ored_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def iter(self):
-        return Iterator(self.gen)
+    def notted(self) -> ResultTuple:
+        return None, self.illegal_operation()
 
-    def gen(self):
-        yield RTResult().failure(self.illegal_operation())
+    def iter(self) -> Iterator:
+        return Iterator(self.gen())
 
-    def get_index(self, index):
+    def gen(self) -> Generator[RTResult[Value], None, None]:
+        yield RTResult[Value]().failure(self.illegal_operation())
+
+    def get_index(self, index: Value) -> ResultTuple:
         return None, self.illegal_operation(index)
 
-    def get_slice(self, start, end, step):
-        return None, self.illegal_operation(start, end, step)
+    def get_slice(self, start: Optional[Value], end: Optional[Value], step: Optional[Value]) -> ResultTuple:
+        return None, self.illegal_operation()
 
-    def set_index(self, index, value):
+    def set_index(self, index: Value, value: Value) -> ResultTuple:
         return None, self.illegal_operation(index, value)
 
-    def execute(self, args, kwargs):
-        return RTResult().failure(self.illegal_operation())
+    def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
+        return RTResult[Value]().failure(self.illegal_operation())
 
-    def contains(self, value):
+    def contains(self, value: Value) -> ResultTuple:
         return None, self.illegal_operation(value)
 
-    def copy(self):
+    def copy(self: Self) -> Self:
         raise Exception("No copy method defined")
 
-    def is_true(self):
+    def is_true(self) -> bool:
         return False
 
-    def illegal_operation(self, *others):
+    def illegal_operation(self, *others: Value) -> RTError:
         if len(others) == 0:
             others = (self,)
 
+        assert self.pos_start is not None
+        assert self.pos_end is not None
+        assert others[-1].pos_end is not None
+        assert self.context is not None
         try:
             return RTError(
                 self.pos_start, others[-1].pos_end, f"Illegal operation for {(self, ) + others}", self.context
@@ -105,35 +124,38 @@ class Value:
 
 
 class Iterator(Value):
-    def __init__(self, generator):
+    it: Generator[RTResult[Value], None, None]
+
+    def __init__(self, generator: Generator[RTResult[Value], None, None]) -> None:
         super().__init__()
-        self.it = generator()
+        self.it = generator
 
-    def iter(self):
+    def iter(self) -> Iterator:
         return self
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         return self
 
-    def __next__(self):
+    def __next__(self) -> RTResult[Value]:
         return next(self.it)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<iterator>"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
-    def copy(self):
+    def copy(self) -> Iterator:
         return Iterator(self.it)
 
 
 class Number(Value):
-    def __init__(self, value):
+    value: int | float
+    def __init__(self, value: int | float) -> None:
         super().__init__()
         self.value = value
 
-    def added_to(self, other):
+    def added_to(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(self.value + other.value).set_context(self.context), None
         elif isinstance(other, String):
@@ -141,22 +163,19 @@ class Number(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def subbed_by(self, other):
+    def subbed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(self.value - other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def multed_by(self, other):
+    def multed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
-            try:
-                return Number(self.value * other.value).set_context(self.context), None
-            except TypeError:
-                return Number(self.value.value * other.value.value).set_context(self.context), None
+            return Number(self.value * other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def dived_by(self, other):
+    def dived_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             if other.value == 0:
                 return None, RTError(other.pos_start, other.pos_end, "Division by zero", self.context)
@@ -165,7 +184,7 @@ class Number(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def idived_by(self, other):
+    def idived_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             if other.value == 0:
                 return None, RTError(other.pos_start, other.pos_end, "Division by zero", self.context)
@@ -174,211 +193,168 @@ class Number(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def powed_by(self, other):
+    def powed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(self.value**other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def modded_by(self, other):
+    def modded_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(self.value % other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_eq(self, other):
+    def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
-            return Boolean(int(self.value == other.value)).set_context(self.context), None
+            return Boolean(self.value == other.value).set_context(self.context), None
         elif isinstance(other, String):
-            return Boolean(int(self.value == other.value)).set_context(self.context), None
+            return Boolean(self.value == other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_ne(self, other):
+    def get_comparison_ne(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
-            return Boolean(int(self.value != other.value)).set_context(self.context), None
+            return Boolean(self.value != other.value).set_context(self.context), None
         elif isinstance(other, String):
-            return Boolean(int(self.value != other.value)).set_context(self.context), None
+            return Boolean(self.value != other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_lt(self, other):
+    def get_comparison_lt(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
-            return Boolean(int(self.value < other.value)).set_context(self.context), None
-        elif isinstance(other, String):
-            return Boolean(int(self.value < other.value)).set_context(self.context), None
+            return Boolean(self.value < other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_gt(self, other):
+    def get_comparison_gt(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
-            return Boolean(int(self.value > other.value)).set_context(self.context), None
-        elif isinstance(other, String):
-            return Boolean(int(self.value > other.value)).set_context(self.context), None
+            return Boolean(self.value > other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_lte(self, other):
+    def get_comparison_lte(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
-            return Boolean(int(self.value <= other.value)).set_context(self.context), None
-        if isinstance(other, String):
-            return Boolean(int(self.value <= other.value)).set_context(self.context), None
+            return Boolean(self.value <= other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_gte(self, other):
+    def get_comparison_gte(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
-            return Boolean(int(self.value >= other.value)).set_context(self.context), None
+            return Boolean(self.value >= other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def plus_equals(self, other):
-        if isinstance(other, Number):
-            return Number(self.value + other.value).set_context(self.context), None
-        else:
-            return None, Value.illegal_operation(self, other)
-
-    def minus_equals(self, other):
-        if isinstance(other, Number):
-            return Number(self.value - other.value).set_context(self.context), None
-        else:
-            return None, Value.illegal_operation(self, other)
-
-    def times_equals(self, other):
-        if isinstance(other, Number):
-            return Number(self.value * other.value).set_context(self.context), None
-        else:
-            return None, Value.illegal_operation(self, other)
-
-    def divide_equals(self, other):
-        if isinstance(other, Number):
-            if other.value == 0:
-                return None, RTError(other.pos_start, other.pos_end, "Division by zero", self.context)
-
-            return Number(self.value / other.value).set_context(self.context), None
-        else:
-            return None, Value.illegal_operation(self, other)
-
-    def mod_equals(self, other):
-        if isinstance(other, Number):
-            return Number(self.value % other.value).set_context(self.context), None
-        else:
-            return None, Value.illegal_operation(self, other)
-
-    def power_equals(self, other):
-        if isinstance(other, Number):
-            return Number(self.value**other.value).set_context(self.context), None
-        else:
-            return None, Value.illegal_operation(self, other)
-
-    def anded_by(self, other):
+    def anded_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(int(self.value and other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def ored_by(self, other):
+    def ored_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(int(self.value or other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def notted(self):
+    def notted(self) -> ResultTuple:
         return Number(1 if self.value == 0 else 0).set_context(self.context), None
 
-    def copy(self):
+    def copy(self) -> Number:
         copy = Number(self.value)
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
 
-    def is_true(self):
+    def is_true(self) -> bool:
         return self.value != 0
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self.value)
 
     @classmethod
-    def null(cls):
+    def null(cls) -> Number:
         return cls(0)
 
     @classmethod
-    def one(cls):
+    def one(cls) -> Number:
         return cls(1)
 
 
 class Boolean(Value):
-    def __init__(self, value):
+    value: bool
+    def __init__(self, value: bool) -> None:
         super().__init__()
-        self.__value = value
-        self.value = self.__str__()
+        self.value = value
 
-    def anded_by(self, other):
-        return Boolean(self.__value and other.__value).set_context(self.context), None
+    def anded_by(self, other: Value) -> ResultTuple:
+        return Boolean(self.value and other.is_true()).set_context(self.context), None
 
-    def ored_by(self, other):
-        return Boolean(self.__value or other.__value).set_context(self.context), None
+    def ored_by(self, other: Value) -> ResultTuple:
+        return Boolean(self.value or other.is_true()).set_context(self.context), None
 
-    def notted(self):
-        return Boolean(not self.__value).set_context(self.context), None
+    def notted(self) -> ResultTuple:
+        return Boolean(not self.value).set_context(self.context), None
 
-    def get_comparison_eq(self, other):
+    def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, Boolean):
-            return Boolean(int(self.__value == other.__value)).set_context(self.context), None
+            return Boolean(self.value == other.value).set_context(self.context), None
         elif isinstance(other, Number):
-            return Boolean(int(self.__value == other.value)).set_context(self.context), None
+            return Boolean(self.value == other.value).set_context(self.context), None
         elif isinstance(other, String):
-            return Boolean(int(self.__value == other.value)).set_context(self.context), None
+            return Boolean(self.value == other.value).set_context(self.context), None
         elif isinstance(other, Array):
-            return Boolean(int(self.__value == other.elements)).set_context(self.context), None
+            return Boolean(self.value == other.elements).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_ne(self, other):
+    def get_comparison_ne(self, other: Value) -> ResultTuple:
         if isinstance(other, Boolean):
-            return Boolean(int(self.__value != other.__value)).set_context(self.context), None
+            return Boolean(self.value != other.value).set_context(self.context), None
         elif isinstance(other, Number):
-            return Boolean(int(self.__value != other.value)).set_context(self.context), None
+            return Boolean(self.value != other.value).set_context(self.context), None
         elif isinstance(other, String):
-            return Boolean(int(self.__value != other.value)).set_context(self.context), None
+            return Boolean(self.value != other.value).set_context(self.context), None
         elif isinstance(other, Array):
-            return Boolean(int(self.__value != other.elements)).set_context(self.context), None
+            return Boolean(self.value != other.elements).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def copy(self):
-        copy = Boolean(self.__value)
+    def copy(self) -> Boolean:
+        copy = Boolean(self.value)
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
 
-    def is_true(self):
-        return self.__value
+    def is_true(self) -> bool:
+        return self.value
 
-    def __str__(self):
-        return "true" if self.__value else "false"
+    def __str__(self) -> str:
+        return "true" if self.value else "false"
 
-    def __repr__(self):
-        return "true" if self.__value else "false"
+    def __repr__(self) -> str:
+        return "true" if self.value else "false"
 
     @classmethod
-    def true(cls):
+    def true(cls) -> Boolean:
         return cls(True)
 
     @classmethod
-    def false(cls):
+    def false(cls) -> Boolean:
         return cls(False)
 
 
 class String(Value):
-    def __init__(self, value):
+    value: str
+
+    def __init__(self, value: str) -> None:
         super().__init__()
         self.value = value
 
-    def added_to(self, other):
+    def added_to(self, other: Value) -> ResultTuple:
         if isinstance(other, String):
             return String(self.value + other.value).set_context(self.context), None
         elif isinstance(other, Number):
@@ -386,41 +362,41 @@ class String(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def multed_by(self, other):
+    def multed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
-            return String(self.value * other.value).set_context(self.context), None
+            return String(self.value * int(other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_eq(self, other):
+    def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, String):
-            return Boolean(int(self.value == other.value)).set_context(self.context), None
+            return Boolean(self.value == other.value).set_context(self.context), None
         elif isinstance(other, Array):
-            return Boolean(int(self.value == other.elements)).set_context(self.context), None
+            return Boolean(self.value == other.elements).set_context(self.context), None
         elif isinstance(other, Number):
-            return Boolean(int(self.value == other.value)).set_context(self.context), None
+            return Boolean(self.value == other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_ne(self, other):
+    def get_comparison_ne(self, other: Value) -> ResultTuple:
         if isinstance(other, String):
-            return Boolean(int(self.value != other.value)).set_context(self.context), None
+            return Boolean(self.value != other.value).set_context(self.context), None
         elif isinstance(other, Array):
-            return Boolean(int(self.value != other.elements)).set_context(self.context), None
+            return Boolean(self.value != other.elements).set_context(self.context), None
         elif isinstance(other, Number):
-            return Boolean(int(self.value != other.value)).set_context(self.context), None
+            return Boolean(self.value != other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def gen(self):
+    def gen(self) -> Generator[RTResult[Value], None, None]:
         for char in self.value:
-            yield RTResult().success(String(char))
+            yield RTResult[Value]().success(String(char))
 
-    def get_index(self, index):
+    def get_index(self, index: Value) -> ResultTuple:
         if not isinstance(index, Number):
             return None, self.illegal_operation(index)
         try:
-            return String(self.value[index.value]), None
+            return String(self.value[int(index.value)]), None
         except IndexError:
             return None, RTError(
                 index.pos_start,
@@ -429,28 +405,40 @@ class String(Value):
                 self.context,
             )
 
-    def get_slice(self, start, end, step):
-        for index in (start, end, step):
-            if index != None and not isinstance(index, Number):
-                return None, self.illegal_operation(index)
+    def get_slice(self, start: Optional[Value], end: Optional[Value], step: Optional[Value]) -> ResultTuple:
+        if start is not None and not isinstance(start, Number):
+            return None, self.illegal_operation(start)
+        if end is not None and not isinstance(end, Number):
+            return None, self.illegal_operation(end)
+        if step is not None and not isinstance(step, Number):
+            return None, self.illegal_operation(step)
 
-        if start != None:
-            start = start.value
-        if end != None:
-            end = end.value
-        if step != None:
+        istart: int | None
+        iend: int | None
+        istep: int | None
+        if start is not None:
+            istart = int(start.value)
+        else:
+            istart = start
+        if end is not None:
+            iend = int(end.value)
+        else:
+            iend = end
+        if step is not None:
             if step.value == 0:
                 return None, RTError(step.pos_start, step.pos_end, "Step cannot be zero.", self.context)
-            step = step.value
-        return String(self.value[start:end:step]), None
+            istep = int(step.value)
+        else:
+            istep = None
+        return String(self.value[istart:iend:istep]), None
 
-    def set_index(self, index, value):
+    def set_index(self, index: Value, value: Value) -> ResultTuple:
         if not isinstance(index, Number):
             return None, self.illegal_operation(index)
         if not isinstance(value, String):
             return None, self.illegal_operation(value)
         try:
-            self.value = self.value[: index.value] + value.value + self.value[index.value + 1 :]
+            self.value = self.value[:int(index.value)] + value.value + self.value[int(index.value + 1):]
         except IndexError:
             return None, RTError(
                 index.pos_start,
@@ -460,27 +448,27 @@ class String(Value):
             )
         return self, None
 
-    def is_true(self):
+    def is_true(self) -> bool:
         return len(self.value) > 0
 
-    def copy(self):
+    def copy(self) -> String:
         copy = String(self.value)
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
 
-    def to_int(self):
+    def to_int(self) -> Optional[int]:
         if self.value.isdigit():
             return int(self.value)
         return None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'"{self.value}"'
 
-    def __iter__(self):
+    def __iter__(self) -> PyIterator[str]:
         return iter(self.value)
 
     def __getitem__(self, index):
@@ -878,7 +866,7 @@ class PyAPI(Value):
         super().__init__()
         self.code = code
 
-    def pyapi(self, ns: HashMap):
+    def pyapi(self, ns: HashMap) -> RTResult[Value]:
         """TODO: update docs"""
 
         try:
@@ -892,6 +880,9 @@ class PyAPI(Value):
                 ns.values[key] = value
 
         except Exception as e:
+            assert self.pos_start is not None
+            assert self.pos_end is not None
+            assert self.context is not None
             return RTResult().failure(
                 RTError(
                     self.pos_start,
@@ -900,7 +891,7 @@ class PyAPI(Value):
                     self.context,
                 )
             )
-        return RTResult().success(Number.null())
+        return RTResult[Value]().success(Number.null())
 
     def copy(self):
         copy = PyAPI(self.code)
@@ -910,18 +901,21 @@ class PyAPI(Value):
 
 
 class BaseFunction(Value):
-    def __init__(self, name, symbol_table):
+    name: str
+    symbol_table: Optional[SymbolTable]
+
+    def __init__(self, name: Optional[str], symbol_table: Optional[SymbolTable]) -> None:
         super().__init__()
-        self.name = name or "<anonymous>"
+        self.name = name if name is not None else "<anonymous>"
         self.symbol_table = symbol_table
 
-    def generate_new_context(self):
+    def generate_new_context(self) -> Context:
         new_context = Context(self.name, self.context, self.pos_start)
         new_context.symbol_table = SymbolTable(self.symbol_table)
         return new_context
 
-    def check_args(self, arg_names, args, kwargs, defaults):
-        res = RTResult()
+    def check_args(self, arg_names: list[str], args: list[Value], kwargs: dict[str, Value], defaults: list[Optional[Value]]) -> RTResult[None]:
+        res = RTResult[None]()
 
         args_count = len(args) + len(kwargs)
         if args_count > len(arg_names):
@@ -981,159 +975,164 @@ class BaseFunction(Value):
 
 
 class BaseInstance(Value, ABC):
+    parent_class: BaseClass
+    symbol_table: SymbolTable
     def __init__(self, parent_class, symbol_table):
         super().__init__()
         self.parent_class = parent_class
         self.symbol_table = SymbolTable(symbol_table)
-        self.value = f"<type {self.__class__.__name__}>"
 
     @abstractmethod
-    def operator(self, operator, *args): ...
+    def operator(self, operator: str, *args: Value) -> ResultTuple: ...
 
-    def added_to(self, other):
+    def added_to(self, other: Value) -> ResultTuple:
         return self.operator("__add__", other)
 
-    def subbed_by(self, other):
+    def subbed_by(self, other: Value) -> ResultTuple:
         return self.operator("__sub__", other)
 
-    def multed_by(self, other):
+    def multed_by(self, other: Value) -> ResultTuple:
         return self.operator("__mul__", other)
 
-    def dived_by(self, other):
+    def dived_by(self, other: Value) -> ResultTuple:
         return self.operator("__div__", other)
 
-    def powed_by(self, other):
+    def powed_by(self, other: Value) -> ResultTuple:
         return self.operator("__pow__", other)
 
-    def get_comparison_eq(self, other):
+    def get_comparison_eq(self, other: Value) -> ResultTuple:
         return self.operator("__eq__", other)
 
-    def get_comparison_ne(self, other):
+    def get_comparison_ne(self, other: Value) -> ResultTuple:
         return self.operator("__ne__", other)
 
-    def get_comparison_lt(self, other):
+    def get_comparison_lt(self, other: Value) -> ResultTuple:
         return self.operator("__lt__", other)
 
-    def get_comparison_gt(self, other):
+    def get_comparison_gt(self, other: Value) -> ResultTuple:
         return self.operator("__gt__", other)
 
-    def get_comparison_lte(self, other):
+    def get_comparison_lte(self, other: Value) -> ResultTuple:
         return self.operator("__lte__", other)
 
-    def get_comparison_gte(self, other):
+    def get_comparison_gte(self, other: Value) -> ResultTuple:
         return self.operator("__gte__", other)
 
-    def anded_by(self, other):
+    def anded_by(self, other: Value) -> ResultTuple:
         return self.operator("__and__", other)
 
-    def ored_by(self, other):
+    def ored_by(self, other: Value) -> ResultTuple:
         return self.operator("__or__", other)
 
-    def notted(self, other):
-        return self.operator("__not__", other)
+    def notted(self) -> ResultTuple:
+        return self.operator("__not__")
 
-    def gen(self):
-        # TODO: change this when we have generator functions
-        return self.operator("__iter__", other).gen()
-
-    def get_index(self, index):
+    def get_index(self, index: Value) -> ResultTuple:
         return self.operator("__getitem__", index)
 
-    def set_index(self, index, value):
+    def set_index(self, index: Value, value: Value) -> ResultTuple:
         return self.operator("__setitem__", index, value)
 
-    def execute(self, args, kwargs):
-        return self.operator("__call__", *args, **kwargs)
+    def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
+        res, err = self.operator("__call__", *args)
+        if err is not None:
+            return RTResult[Value]().failure(err)
+        assert res is not None
+        return RTResult[Value]().success(res)
 
-    def contains(self, value):
+    def contains(self, value: Value) -> ResultTuple:
         return self.operator("__contains__", value)
 
-    def is_true(self):
-        return self.operator("__truthy__")
+    def is_true(self) -> bool:
+        res, err = self.operator("__truthy__")
+        if err is not None:
+            return False
+        assert res is not None
+        return res.is_true()
 
-    def copy(self):
+    def copy(self: Self) -> Self:
         return self
 
 
 class Instance(BaseInstance):
-    def __init__(self, parent_class):
+    def __init__(self, parent_class: Class) -> None:
         super().__init__(parent_class, None)
 
-    def operator(self, operator, *args):
-        res = RTResult()
+    def operator(self, operator: str, *args: Value) -> ResultTuple:
+        res = RTResult[Value]()
         method = self.symbol_table.symbols.get(operator, None)
 
-        if method == None or not isinstance(method, Function):
+        if method is None or not isinstance(method, Function):
             return None, RTError(self.pos_start, self.pos_end, f"Function '{operator}' not defined", self.context)
-        if method.symbol_table == None:
+        if method.symbol_table is None:
             method.symbol_table = SymbolTable()
         method.symbol_table.set("this", self)
 
         value = res.register(method.execute(list(args), {}))
-        if res.should_return():
+        if res.error is not None:
             return None, res.error
+        assert value is not None
         return value, None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # TODO: make this overloadable as well
         return f"<instance of class {self.parent_class.name}>"
 
 
 class BaseClass(Value, ABC):
-    def __init__(self, name):
+    name: str
+    symbol_table: SymbolTable
+
+    def __init__(self, name: str, symbol_table: SymbolTable) -> None:
         super().__init__()
         self.name = name
-        self.value = f"<type {self.__class__.__name__}>"
+        self.symbol_table = symbol_table
 
     @abstractmethod
-    def get(self, name): ...
+    def get(self, name: str) -> Optional[Value]: ...
 
-    def dived_by(self, other):
+    def dived_by(self, other: Value) -> ResultTuple:
         if not isinstance(other, String):
             return None, self.illegal_operation(other)
 
         value = self.get(other.value)
-        if value == None:
+        if value is None:
             return None, RTError(self.pos_start, self.pos_end, f"'{other.value}' is not defined", self.context)
 
         return value, None
 
     @abstractmethod
-    def create(self, args): ...
+    def create(self, args: list[Value]) -> RTResult[BaseInstance]: ...
 
     @abstractmethod
-    def init(self, inst, args, kwargs): ...
+    def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]: ...
 
-    def execute(self, args, kwargs):
-        res = RTResult()
+    def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
+        res = RTResult[Value]()
 
         inst = res.register(self.create(args))
         if res.should_return():
             return res
+        assert inst is not None
 
         res.register(self.init(inst, args, kwargs))
         if res.should_return():
             return res
         return res.success(inst)
 
-    def copy(self):
+    def copy(self: Self) -> Self:
         return self
 
 
 class Class(BaseClass):
-    def __init__(self, name, symbol_table):
-        super().__init__(name)
-        self.name = name
-        self.symbol_table = symbol_table
-
-    def get(self, name):
+    def get(self, name: str) -> Optional[Value]:
         method = self.symbol_table.symbols.get(name, None)
         if method == None:
             return None
         return method
 
-    def create(self, args):
-        res = RTResult()
+    def create(self, args: list[Value]) -> RTResult[BaseInstance]:
+        res = RTResult[BaseInstance]()
 
         # TODO: Some issue here when direct accessing class methods without instantiation
         inst = Instance(self)
@@ -1150,15 +1149,15 @@ class Class(BaseClass):
         inst.symbol_table.set("this", inst)
         return res.success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
 
-    def init(self, inst, args, kwargs):
-        res = RTResult()
+    def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]:
+        res = RTResult[None]()
         method = inst.symbol_table.symbols.get("__constructor__", None)
 
         if method == None or not isinstance(method, Function):
             return res.failure(
                 RTError(self.pos_start, self.pos_end, f"Function '{self.name}' not defined", self.context)
             )
-        if method.symbol_table == None:
+        if method.symbol_table is None:
             method.symbol_table = SymbolTable()
         method.symbol_table.set("this", inst)
 
@@ -1168,22 +1167,27 @@ class Class(BaseClass):
 
         return res.success(None)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<class {self.name}>"
 
 
 class Function(BaseFunction):
-    def __init__(self, name, symbol_table, body_node, arg_names, defaults, should_auto_return):
+    body_node: Node
+    arg_names: list[str]
+    defaults: list[Optional[Value]]
+    should_auto_return: bool
+
+    def __init__(self, name: Optional[str], symbol_table: Optional[SymbolTable], body_node: Node, arg_names: list[str], defaults: list[Optional[Value]], should_auto_return: bool) -> None:
         super().__init__(name, symbol_table)
         self.body_node = body_node
         self.arg_names = arg_names
         self.defaults = defaults
         self.should_auto_return = should_auto_return
 
-    def execute(self, args, kwargs):
+    def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         from core.interpreter import Interpreter  # Lazy import
 
-        res = RTResult()
+        res = RTResult[Value]()
         interpreter = Interpreter()
         exec_ctx = self.generate_new_context()
 
@@ -1198,7 +1202,7 @@ class Function(BaseFunction):
         ret_value = (value if self.should_auto_return else None) or res.func_return_value or Number.null()
         return res.success(ret_value)
 
-    def copy(self):
+    def copy(self) -> Function:
         copy = Function(
             self.name, self.symbol_table, self.body_node, self.arg_names, self.defaults, self.should_auto_return
         )
@@ -1206,19 +1210,24 @@ class Function(BaseFunction):
         copy.set_pos(self.pos_start, self.pos_end)
         return copy
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<function {self.name}>"
 
 
 class Module(Value):
-    def __init__(self, name, file_path, symbol_table):
+    name: str
+    file_path: str
+    symbol_table: SymbolTable
+
+    def __init__(self, name: str, file_path: str, symbol_table: SymbolTable) -> None:
         super().__init__()
         self.name = name
         self.file_path = file_path
         self.symbol_table = symbol_table
 
-    def copy(self):
+    def copy(self) -> Module:
         return self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<module {self.name} @ {self.file_path!r}>"
+

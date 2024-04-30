@@ -6,7 +6,7 @@ from core.builtin_funcs import BuiltInFunction
 
 class BuiltInClass(BaseClass):
     def __init__(self, name, instance_class):
-        super().__init__(name)
+        super().__init__(name, instance_class.__symbol_table__)
         self.instance_class = instance_class
 
     def create(self, args):
