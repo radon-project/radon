@@ -424,7 +424,14 @@ class BuiltInFunction(BaseFunction):
         return RTResult().success_exit(Number.null())
 
 
-def run(fn: str, text: str, context: Optional[Context] = None, entry_pos: Optional[Position] = None, return_result: bool = False, hide_paths: bool = False):
+def run(
+    fn: str,
+    text: str,
+    context: Optional[Context] = None,
+    entry_pos: Optional[Position] = None,
+    return_result: bool = False,
+    hide_paths: bool = False,
+):
     from core.interpreter import Interpreter  # Lazy import
 
     # Generate tokens
