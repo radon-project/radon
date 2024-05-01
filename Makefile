@@ -7,6 +7,7 @@ help:
 	@echo "  format             - Format code"
 	@echo "  format-check       - Check code formatting"
 	@echo "  lint               - Check code quality"
+	@echo "  typecheck          - Type checking all codes"
 	@echo "  test               - Run tests"
 	@echo "  test-record        - Record tests"
 	@echo "  test-diff [FILE]   - Diff tests"
@@ -29,7 +30,11 @@ format:
 
 .PHONY: lint
 lint:
-	@ruff check . --ignore F405 --ignore F403
+	@ruff check .
+
+.PHONY: typecheck
+typecheck:
+	@pyright
 
 .PHONY: test
 test:
