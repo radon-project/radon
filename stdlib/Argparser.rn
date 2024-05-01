@@ -113,6 +113,9 @@ class Argparser {
                         case FULLNAME_INVALID -> this.report_error(program_name, "unknown flag: '"+arg+"'")
                         case FULLNAME_FLAG -> parsed[arg] = true
                         case FULLNAME_NAMED {
+                            if arr_len(args) == 0 {
+                                this.report_error(program_name, "missing value for flag: '"+arg+"'")
+                            }
                             value = arr_pop(args, 0)
                             parsed[arg] = value
                         }
