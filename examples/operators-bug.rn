@@ -1,0 +1,12 @@
+x = 5
+y = 2
+
+x /= y
+print(x) # 2.5 OK as floor division.
+
+x //= y
+print(x) # 1.0 Failed as Integer division
+
+assert 5 / 5 == 1.0 # 1.0 OK as floor division.
+
+assert 5 // 5 == 1 # Invalid Syntax: Token cannot appear after previous tokens

@@ -101,7 +101,7 @@ class VarAssignNode:
         )
 
 
-class IncludeNode:
+class ImportNode:
     module: Token
 
     pos_start: Position
