@@ -117,7 +117,7 @@ KEYWORDS = [
     "continue",
     "break",
     "class",
-    "include",
+    "import",
     "try",
     "catch",
     "as",

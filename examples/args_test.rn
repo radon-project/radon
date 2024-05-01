@@ -1,4 +1,4 @@
-include Argparser
+import Argparser
 
 parser = Argparser.Argparser()
 parser.add_flag("--version", "-v", "Show version")

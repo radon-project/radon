@@ -1,4 +1,4 @@
-include Colorlib
+import Colorlib
 
 # Print colored text to the console using the colorlib library
 print(Colorlib.white("My name is John Doe"))

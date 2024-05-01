@@ -28,7 +28,7 @@ lint:
 
 .PHONY: test
 test:
-	@$(PYTHON) test.py run
+	@$(PYTHON) test.py full
 
 .PHONY: test-record
 test-record:

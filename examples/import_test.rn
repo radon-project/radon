@@ -34,7 +34,7 @@
 # require("String")
 
 #!
-include String
+import String
 
 data = "Hello World !"
 str = String.String(data)
@@ -42,7 +42,7 @@ str = String.String(data)
 print(str.len())
 
 !#
-include Math
+import Math
 
 print(Math.PI) # Ligal
 

@@ -2,6 +2,15 @@
 <img src="radon.png" height=250>
 
 <h1>The Radon Programming Language</h1>
+<p>A general-purpose programming language, focused on simplicity, safety and stability.</p>
+
+[Website](https://radon-project.github.io)
+•
+[Documentation](https://radon-project.github.io/docs)
+•
+[Tests](tests/)
+•
+[Examples](examples/)
 
 <a href="https://github.com/radon-project/radon" title="GitHub stars">
   <img src="https://img.shields.io/github/stars/radon-project/radon?style=flat&logo=github" alt="GitHub stars">
@@ -274,4 +283,4 @@ Before making a pull request create an issue and discuss the changes you want to
 
 ## License
 
-This project will be licensed soon. We are still deciding on the license. We will update the license as soon as we decide on the license.
+We are using GNU General Public License v3.0. You can check the license [here](LICENSE).

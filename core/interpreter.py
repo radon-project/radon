@@ -120,7 +120,7 @@ class Interpreter:
             pos_end=node.pos_end,
         )
 
-    def visit_IncludeNode(self, node: IncludeNode, context: Context) -> RTResult[Value]:
+    def visit_ImportNode(self, node: ImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         exec_ctx = context
 
