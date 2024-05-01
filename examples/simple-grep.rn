@@ -3,8 +3,8 @@ import Argparser
 fun main() {
     parser = Argparser.Argparser()
     parser.add_flag("--help", "-h", "Show this help text and exit")
-    parser.add_pos_opt("query", "String to query")
-    parser.add_pos_opt("file", "File to query string in")
+    parser.add_pos_opt("query", "String to query", required=true)
+    parser.add_pos_opt("file", "File to query string in", required=true)
     parser.add_flag("--line-numbers", "-n", "Show line numbers")
     parser.add_named("--max-lines", "Maximum amount of lines to show")
     args = parser.parse(argv[:])
@@ -12,13 +12,6 @@ fun main() {
     if args["--help"] {
         print(parser.usage(argv[0]))
         exit()
-    }
-
-    if is_null(args["query"]) {
-        parser.report_error(argv[0], "no query string provided")
-    }
-    if is_null(args["file"]) {
-        parser.report_error(argv[0], "no file provided")
     }
 
     f = File(args["file"], "r")
