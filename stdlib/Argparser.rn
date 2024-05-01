@@ -107,7 +107,10 @@ class Argparser {
         return FULLNAME_INVALID
     }
 
-    fun parse(args) {
+    fun parse(args=null) {
+        if is_null(args) {
+            nonlocal args = argv[:]
+        }
         pos_opts = this.pos_opts
         flags = this.flags
 

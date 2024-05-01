@@ -4,5 +4,5 @@ parser = Argparser.Argparser()
 parser.add_flag("--version", "-v", "Show version")
 parser.add_named("--output", "Output file")
 parser.add_pos_opt("filename", "File")
-print(parser.parse(argv))
+print(parser.parse())
 
