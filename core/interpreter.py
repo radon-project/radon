@@ -171,7 +171,7 @@ class Interpreter:
             )
 
         if should_exit:
-            return RTResult[Value]().success_exit(Number.null())
+            return RTResult[Value]().success_exit(Null.null())
         assert isinstance(node.module.value, str), "this could be a bug in the parser"
         module = Module(node.module.value, module_name, symbol_table)
         res = RTResult[Value]()
@@ -277,7 +277,7 @@ class Interpreter:
                 if res.should_return():
                     return res
                 assert expr_value is not None
-                return res.success(Number.null() if should_return_null else expr_value)
+                return res.success(Null.null() if should_return_null else expr_value)
 
         if node.else_case is not None:
             expr, should_return_null = node.else_case
@@ -285,9 +285,9 @@ class Interpreter:
             if res.should_return():
                 return res
             assert expr_value is not None
-            return res.success(Number.null() if should_return_null else expr_value)
+            return res.success(Null.null() if should_return_null else expr_value)
 
-        return res.success(Number.null())
+        return res.success(Null.null())
 
     def visit_ForNode(self, node: ForNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
@@ -363,7 +363,7 @@ class Interpreter:
             elements.append(value)
 
         return res.success(
-            Number.null()
+            Null.null()
             if node.should_return_null
             else Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
@@ -395,7 +395,7 @@ class Interpreter:
             elements.append(value)
 
         return res.success(
-            Number.null()
+            Null.null()
             if node.should_return_null
             else Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
@@ -473,7 +473,7 @@ class Interpreter:
             if res.should_return():
                 return res
         else:
-            value = Number.null()
+            value = Null.null()
         assert value is not None
 
         return res.success_return(value)
@@ -502,9 +502,9 @@ class Interpreter:
                         res.error.pos_start, res.error.pos_end, res.error.details, res.error.context, handled_error
                     )
                 )
-            return res.success(Number.null())
+            return res.success(Null.null())
         else:
-            return res.success(Number.null())
+            return res.success(Null.null())
 
     def visit_ForInNode(self, node: ForInNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
@@ -536,7 +536,7 @@ class Interpreter:
             elements.append(element)
 
         if should_return_null:
-            return res.success(Number.null())
+            return res.success(Null.null())
         return res.success(Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end))
 
     def visit_SliceGetNode(self, node: SliceGetNode, context: Context) -> RTResult[Value]:
@@ -766,18 +766,18 @@ class Interpreter:
                 if res.should_fallthrough:
                     should_continue = True
                     continue
-                return res.success(Number.null())
+                return res.success(Null.null())
             should_continue = False
 
         if node.default is not None:
             res.register(self.visit(node.default, context))
             if res.should_return():
                 return res
-            return res.success(Number.null())
+            return res.success(Null.null())
         return res.failure(RTError(node.pos_start, node.subject_node.pos_end, "No cases matched", context))
 
     def visit_FallthroughNode(self, node: FallthroughNode, context: Context) -> RTResult[Value]:
-        return RTResult[Value]().success(Number.null()).fallthrough()
+        return RTResult[Value]().success(Null.null()).fallthrough()
 
     def visit_AttrAccessNode(self, node: AttrAccessNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()

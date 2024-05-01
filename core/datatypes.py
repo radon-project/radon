@@ -280,10 +280,6 @@ class Number(Value):
         return str(self.value)
 
     @classmethod
-    def null(cls) -> Number:
-        return cls(0)
-
-    @classmethod
     def one(cls) -> Number:
         return cls(1)
 
@@ -820,7 +816,7 @@ def radonify(value: object, pos_start: Position, pos_end: Position, context: Con
             case False:
                 return Boolean.false()
             case None:
-                return Number.null()
+                return Null.null()
             case _ if inspect.isfunction(value):
                 from core.builtin_funcs import BuiltInFunction, args  # Lazy import
 
@@ -924,7 +920,7 @@ class PyAPI(Value):
                     self.context,
                 )
             )
-        return RTResult[Value]().success(Number.null())
+        return RTResult[Value]().success(Null.null())
 
     def copy(self) -> PyAPI:
         copy = PyAPI(self.code)
@@ -1243,7 +1239,7 @@ class Function(BaseFunction):
         if res.should_return() and res.func_return_value is None:
             return res
 
-        ret_value = (value if self.should_auto_return else None) or res.func_return_value or Number.null()
+        ret_value = (value if self.should_auto_return else None) or res.func_return_value or Null.null()
         return res.success(ret_value)
 
     def copy(self) -> Function:
@@ -1274,3 +1270,30 @@ class Module(Value):
 
     def __repr__(self) -> str:
         return f"<module {self.name} @ {self.file_path!r}>"
+
+
+class Null(Value):
+    def __repr__(self) -> str:
+        return "null"
+
+    def copy(self) -> Null:
+        return self
+
+    def is_true(self) -> bool:
+        return False
+
+    def get_comparison_eq(self, other: Value) -> ResultTuple:
+        if isinstance(other, Null):
+            return Boolean.true(), None
+        else:
+            return Boolean.false(), None
+
+    def get_comparison_ne(self, other: Value) -> ResultTuple:
+        if isinstance(other, Null):
+            return Boolean.false(), None
+        else:
+            return Boolean.true(), None
+
+    @classmethod
+    def null(cls) -> Null:
+        return cls()

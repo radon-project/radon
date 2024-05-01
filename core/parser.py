@@ -1528,7 +1528,7 @@ class RTResult(Generic[T]):
 
     def fallthrough(self) -> RTResult[T]:
         # No `self.reset()` because this is meant to be used in conjunction with other methods
-        # e.g. `res.success(Number.null()).fallthrough()`
+        # e.g. `res.success(Null.null()).fallthrough()`
         self.should_fallthrough = True
         return self
 

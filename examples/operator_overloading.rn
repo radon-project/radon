@@ -13,7 +13,7 @@ class WrongOp {
     }
 
     fun dump(name = null) {
-        if name == null {
+        if is_null(name) {
             print("WrongOp("+this.x+")")
         } else {
             print(name+" = WrongOp("+this.x+")")
