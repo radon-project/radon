@@ -1,9 +1,8 @@
 #!/usr/bin/python3.12
 # By: Md. Almas Ali
 
-import argparse
-import pathlib
 import sys
+from typing import IO
 
 try:
     import readline
@@ -17,6 +16,8 @@ except ImportError:
     pass
 
 import core as base_core
+from core.parser import Context
+from core.lexer import Position
 
 
 def shell() -> None:
@@ -57,22 +58,51 @@ def shell() -> None:
             print("KeyboardInterrupt")
 
 
-def main(argv: list[str]) -> None:
-    parser = argparse.ArgumentParser(description="Radon programming language")
-    parser.add_argument(
-        "-p",
-        "--hide-file-paths",
-        help="Don't show file paths in error messages [NOT CURRENTLY WORKING]",
-        action="store_true",
+def usage(program_name: str, stream: IO[str]) -> None:
+    print(
+        f"Usage: {program_name} [--source | -s] [--command | -c] [source_file] [--version | -v] [--help | -h]",
+        file=stream,
     )
-    parser.add_argument("-s", "--source", type=str, help="Radon source file", nargs="*")
-    parser.add_argument("-c", "--command", type=str, help="Command to execute as string")
-    parser.add_argument("-v", "--version", help="Version info", action="store_true")
-    args = parser.parse_args()
 
-    if args.source:
-        source = pathlib.Path(args.source[0]).read_text()
-        (result, error, should_exit) = base_core.run(args.source[0], source, hide_paths=args.hide_file_paths)
+
+def main(argv: list[str]) -> None:
+    program_name = argv.pop(0)
+    source_file = None
+    command = None
+    while len(argv) > 0:
+        arg = argv.pop(0)
+        match arg:
+            case "--help" | "-h":
+                usage(program_name, sys.stdout)
+                exit(0)
+            case "--source" | "-s":
+                if len(argv) == 0:
+                    usage(program_name, sys.stderr)
+                    print(f"ERROR: {arg} requires an argument", file=sys.stderr)
+                    exit(1)
+                source_file = argv[0]
+                break  # allow program to use remaining args
+            case "--version" | "-v":
+                print(base_core.__version__)
+                exit(0)
+            case "--command" | "-c":
+                if len(argv) == 0:
+                    usage(program_name, sys.stderr)
+                    print(f"ERROR: {arg} requires an argument", file=sys.stderr)
+                    exit(1)
+                command = argv[0]
+                break  # allow program to use remaining args
+            case _:
+                usage(program_name, sys.stderr)
+                print(f"ERROR: Unknown argument '{arg}'", file=sys.stderr)
+                exit(1)
+
+    pos = Position(0, 0, 0, "<argv>", "<argv>")
+    base_core.global_symbol_table.set("argv", base_core.radonify(argv, pos, pos, Context("<global>")))
+    if source_file is not None:
+        with open(source_file, "r") as f:
+            source = f.read()
+        (result, error, should_exit) = base_core.run(source_file, source)
 
         if error:
             print(error.as_string())
@@ -81,18 +111,15 @@ def main(argv: list[str]) -> None:
         if should_exit:
             exit()
 
-    elif args.command:
-        (result, error, should_exit) = base_core.run("<stdin>", args.command)
+    elif command is not None:
+        (result, error, should_exit) = base_core.run("<cli>", command)
 
         if error:
             print(error.as_string())
-
-    elif args.version:
-        print(base_core.__version__)
 
     else:
         shell()
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main(sys.argv)

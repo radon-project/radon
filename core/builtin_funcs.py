@@ -353,16 +353,6 @@ class BuiltInFunction(BaseFunction):
         return res.success(Null.null())
 
     @args([])
-    def execute_sys_args(self, exec_ctx):
-        from sys import argv  # Lazy import
-
-        try:
-            return RTResult().success(radonify(argv, self.pos_start, self.pos_end, exec_ctx))
-        except Exception as e:
-            print(e)
-            return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could't run the sys_args", exec_ctx))
-
-    @args([])
     def execute_time_now(self, exec_ctx):
         import time  # Lazy import
 
@@ -522,7 +512,6 @@ def create_global_symbol_table() -> SymbolTable:
     # System methods
     ret.set("require", BuiltInFunction("require"))
     ret.set("exit", BuiltInFunction("exit"))
-    ret.set("sys_args", BuiltInFunction("sys_args"))
     ret.set("time_now", BuiltInFunction("time_now"))
     # Built-in classes
     ret.set("File", bic.BuiltInClass("File", bic.FileObject))
