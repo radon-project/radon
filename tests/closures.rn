@@ -2,7 +2,7 @@
 fun make_var() {
     val = null
     return fun(new_val=null) {
-        if new_val == null {
+        if is_null(new_val) {
             return val
         } else {
             nonlocal val = new_val

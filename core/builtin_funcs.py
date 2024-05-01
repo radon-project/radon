@@ -70,7 +70,7 @@ class BuiltInFunction(BaseFunction):
         value = exec_ctx.symbol_table.get("value")
 
         print(value)
-        return RTResult().success(Number.null())
+        return RTResult().success(Null.null())
 
     @args(["value"])
     def execute_print_ret(self, exec_ctx):
@@ -95,7 +95,7 @@ class BuiltInFunction(BaseFunction):
     @args([])
     def execute_clear(self, exec_ctx):
         os.system("cls" if os.name == "nt" else "clear")
-        return RTResult().success(Number.null())
+        return RTResult().success(Null.null())
 
     @args(["value"])
     def execute_is_number(self, exec_ctx):
@@ -143,7 +143,7 @@ class BuiltInFunction(BaseFunction):
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx))
 
         array_.elements.append(value)
-        return RTResult().success(Number.null())
+        return RTResult().success(Null.null())
 
     @args(["array", "index"], [None, Number(-1)])
     def execute_arr_pop(self, exec_ctx):
@@ -181,7 +181,7 @@ class BuiltInFunction(BaseFunction):
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "Second argument must be array", exec_ctx))
 
         arrayA.elements.extend(arrayB.elements)
-        return RTResult().success(Number.null())
+        return RTResult().success(Null.null())
 
     @args(["array", "index"])
     def execute_arr_find(self, exec_ctx):
@@ -350,7 +350,7 @@ class BuiltInFunction(BaseFunction):
         res.register(PyAPI(code.value).set_pos(self.pos_start, self.pos_end).set_context(self.context).pyapi(ns))
         if res.should_return():
             return res
-        return res.success(Number.null())
+        return res.success(Null.null())
 
     @args([])
     def execute_sys_args(self, exec_ctx):
@@ -416,12 +416,21 @@ class BuiltInFunction(BaseFunction):
             )
 
         if should_exit:
-            return RTResult().success_exit(Number.null())
-        return RTResult().success(Number.null())
+            return RTResult().success_exit(Null.null())
+        return RTResult().success(Null.null())
 
     @args([])
     def execute_exit(self, exec_ctx):
-        return RTResult().success_exit(Number.null())
+        return RTResult().success_exit(Null.null())
+
+    @args(["value"])
+    def execute_is_null(self, ctx):
+        value = ctx.symbol_table.get("value")
+
+        if isinstance(value, Null):
+            return RTResult().success(Boolean(True))
+        else:
+            return RTResult().success(Boolean(False))
 
 
 def run(
@@ -470,7 +479,7 @@ def create_global_symbol_table() -> SymbolTable:
     import core.builtin_classes as bic
 
     ret = SymbolTable()
-    ret.set("null", Number.null())
+    ret.set("null", Null.null())
     ret.set("false", Boolean.false())
     ret.set("true", Boolean.true())
     ret.set("print", BuiltInFunction("print"))
@@ -489,6 +498,7 @@ def create_global_symbol_table() -> SymbolTable:
     ret.set("is_bool", BuiltInFunction("is_bool"))
     ret.set("is_array", BuiltInFunction("is_array"))
     ret.set("is_fun", BuiltInFunction("is_fun"))
+    ret.set("is_null", BuiltInFunction("is_null"))
     # Internal array methods
     ret.set("arr_append", BuiltInFunction("arr_append"))
     ret.set("arr_pop", BuiltInFunction("arr_pop"))
