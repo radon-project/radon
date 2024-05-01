@@ -25,8 +25,8 @@ class Argparser {
         this.named = []
     }
 
-    fun add_pos_opt(name, desc) {
-        arr_append(this.pos_opts, {"name": name, "desc": desc})
+    fun add_pos_opt(name, desc, default_=null) {
+        arr_append(this.pos_opts, {"name": name, "desc": desc, "default": default_})
         return this
     }
 
@@ -38,9 +38,9 @@ class Argparser {
         return this
     }
 
-    fun add_named(name, desc) {
+    fun add_named(name, desc, default_=null) {
         assert str_starts_with(name, "--"), "Named arguments must start with '--'"
-        arr_append(this.named, {"name": name, "desc": desc})
+        arr_append(this.named, {"name": name, "desc": desc, "default": default_})
         return this
     }
 
@@ -96,13 +96,13 @@ class Argparser {
         program_name = arr_pop(args, 0)
         parsed = {}
         for pos_opt in pos_opts {
-            parsed[pos_opt["name"]] = null
+            parsed[pos_opt["name"]] = pos_opt["default"]
         }
         for flag in flags {
             parsed[flag["fullname"]] = false
         }
         for named in this.named {
-            parsed[named["name"]] = null
+            parsed[named["name"]] = named["default"]
         }
         pos_opts_idx = 0
         while arr_len(args) > 0 {
