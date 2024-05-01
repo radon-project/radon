@@ -13,7 +13,12 @@ class FileObject(BuiltInObject):
         res = RTResult()
         if mode.value not in allowed_modes:
             return res.failure(RTError(mode.pos_start, mode.pos_end, f"Invalid mode '{mode.value}'", mode.context))
-        self.file = open(path.value, mode.value)
+        try:
+            self.file = open(path.value, mode.value)
+        except OSError as e:
+            return res.failure(
+                RTError(path.pos_start, path.pos_end, f"Could not open file {path.value}: {e}", path.context)
+            )
         return res.success(None)
 
     @args(["count"], [Number(-1)])
