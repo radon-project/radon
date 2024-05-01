@@ -150,8 +150,8 @@ class Token:
         self.type = type_
         self.value = value
 
-        self.pos_start = pos_start
-        self.pos_end = pos_end if pos_end is not None else pos_start
+        self.pos_start = pos_start.copy()
+        self.pos_end = pos_end.copy() if pos_end is not None else pos_start.copy()
 
     def matches(self, type_: TokenType, value: TokenValue) -> bool:
         return self.type == type_ and self.value == value

@@ -357,7 +357,7 @@ class BuiltInFunction(BaseFunction):
         from sys import argv  # Lazy import
 
         try:
-            return RTResult().success(Array(argv))
+            return RTResult().success(radonify(argv, self.pos_start, self.pos_end, exec_ctx))
         except Exception as e:
             print(e)
             return RTResult().failure(RTError(self.pos_start, self.pos_end, "Could't run the sys_args", exec_ctx))
