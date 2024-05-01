@@ -33,9 +33,7 @@ def run_test(test: str) -> Output:
 
 
 def run_tests(directory: str = "tests") -> int:
-    mypy = subprocess.run(["mypy", "."])
-    if mypy.returncode != 0:
-        print("ERROR: mypy failed", file=sys.stderr)
+    mypy = subprocess.Popen(["mypy", "."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(**os.environ, MYPY_FORCE_COLOR="1"))
 
     failed_tests = []
     for test in os.listdir(directory):
@@ -67,10 +65,12 @@ def run_tests(directory: str = "tests") -> int:
         for test in failed_tests:
             print(f"    {test!r}")
 
-    if mypy.returncode == 0:
-        print("Mypy passed!")
-    else:
-        print("Mypy failed >:(")
+    print("Waiting on mypy...")
+    mypy.wait()
+    assert mypy.stdout is not None
+    assert mypy.stderr is not None
+    sys.stdout.buffer.write(mypy.stdout.read())
+    sys.stderr.buffer.write(mypy.stderr.read())
 
     if mypy.returncode == 0 and len(failed_tests) == 0:
         return 0

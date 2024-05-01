@@ -447,6 +447,7 @@ def run(
     ast = parser.parse()
     if ast.error:
         return None, ast.error, False
+    assert ast.node is not None
 
     # Run program
     interpreter = Interpreter()
