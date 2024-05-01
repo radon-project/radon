@@ -78,7 +78,7 @@ class Style(Enum):
     CLEAR = "\033[2;0m"
     CONCEALED = "\033[8m"
     INVISIBLE = "\033[8m"
-    ITALIC = "\x1B[3m"
+    ITALIC = "\x1b[3m"
     OVERLINE = "\033[53m"
     REVERSE = "\033[7m"
     STRIKE = "\033[9m"

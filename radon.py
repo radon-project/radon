@@ -19,7 +19,7 @@ except ImportError:
 import core as base_core
 
 
-def shell():
+def shell() -> None:
     print(f"Radon {base_core.__version__}\nType to exit()")
     brace_count = 0
 
