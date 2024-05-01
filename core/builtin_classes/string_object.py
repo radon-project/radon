@@ -68,8 +68,7 @@ class StringObject(BuiltInObject):
         string = ctx.symbol_table.get("string")
         if len(string.value) == 0:
             return res.failure(
-                RTError(string.pos_start, string.pos_end,
-                        "Cannot count an empty string", string.context)
+                RTError(string.pos_start, string.pos_end, "Cannot count an empty string", string.context)
             )
         return res.success(Number(self.value.count(string.value)))
 
