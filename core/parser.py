@@ -221,7 +221,7 @@ class Parser:
             assert switch_node is not None
             return res.success(switch_node)
 
-        if self.current_tok.matches(TT_KEYWORD, "include"):
+        if self.current_tok.matches(TT_KEYWORD, "import"):
             self.advance(res)
 
             if self.current_tok.type != TT_STRING and self.current_tok.type != TT_IDENTIFIER:
@@ -229,14 +229,14 @@ class Parser:
                     InvalidSyntaxError(
                         self.current_tok.pos_start,
                         self.current_tok.pos_end,
-                        "Expected string or identifier as included module",
+                        "Expected string or identifier as imported module",
                     )
                 )
 
             module = self.current_tok
             self.advance(res)
 
-            return res.success(IncludeNode(module))
+            return res.success(ImportNode(module))
 
         expr = res.register(self.expr())
         if res.error:

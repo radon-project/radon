@@ -1,4 +1,4 @@
-include Argparser
+import Argparser
 
 parser = Argparser("Utility Tool", "A simple utility tool.")
 
