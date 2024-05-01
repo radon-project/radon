@@ -1,7 +1,5 @@
 from __future__ import annotations
 from enum import Enum
-import random
-from typing import List
 
 
 class BackgroundColor(Enum):
@@ -80,7 +78,7 @@ class Style(Enum):
     CLEAR = "\033[2;0m"
     CONCEALED = "\033[8m"
     INVISIBLE = "\033[8m"
-    ITALIC = "\x1B[3m"
+    ITALIC = "\x1b[3m"
     OVERLINE = "\033[53m"
     REVERSE = "\033[7m"
     STRIKE = "\033[9m"
@@ -149,14 +147,14 @@ class Log:
         if bold:
             return f"{Style.BOLD.value}{value}"
         return value
-    
+
     @staticmethod
     def deep_purple(text: str, bold: bool = False) -> str:
         value = f"{ForegroundColor.PURPLE.value}{text}{ForegroundColor.TRANSPARENT.value}"
         if bold:
             return f"{Style.BOLD.value}{value}"
         return value
-    
+
     @staticmethod
     def light_purple(text: str, bold: bool = False) -> str:
         value = f"{ForegroundColor.LIGHTORANGE.value}{text}{ForegroundColor.TRANSPARENT.value}"

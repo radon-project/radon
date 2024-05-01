@@ -1,1 +1,0 @@
-{"code": 1, "stdout": "\u001b[38;5;208mRadiation (most recent call last):\n\u001b[0m  File \u001b[38;5;117m[REDACTED]\u001b[0m, line \u001b[38;5;117m2\u001b[0m\n\u001b[1m\u001b[31mInvalidSyntax\u001b[0m: \u001b[38;5;203mExpected expression\u001b[0m\n\n1 -\u001b[1m\u001b[31m\u001b[0m\n   \u001b[1m\u001b[31m^\u001b[0m\n", "stderr": ""}

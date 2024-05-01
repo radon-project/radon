@@ -5,8 +5,7 @@ help:
 	@echo "Usage: make [target]"
 	@echo "Targets:"
 	@echo "  format             - Format code"
-	@echo "  format-check       - Check code formatting"
-	@echo "  lint               - Check code quality"
+	@echo "  lint               - Check code quality and formattings"
 	@echo "  test               - Run tests"
 	@echo "  test-record        - Record tests"
 	@echo "  test-diff [FILE]   - Diff tests"
@@ -18,17 +17,13 @@ help:
 	@echo ""
 	@echo "Radon Software Foundation - https://radon-project.github.io/"
 
-
-.PHONY: format-check
-format-check:
-	@ruff format --check .
-
 .PHONY: format
 format:
 	@ruff format .
 
 .PHONY: lint
 lint:
+	@ruff format --check .
 	@ruff check .
 
 .PHONY: test

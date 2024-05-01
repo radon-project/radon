@@ -1,30 +1,62 @@
 """All Nodes"""
 
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Protocol, Optional, TypeAlias, runtime_checkable
+
+if TYPE_CHECKING:
+    from core.tokens import Token, Position
+
+
+@runtime_checkable
+class Node(Protocol):
+    @property
+    def pos_start(self) -> Position: ...
+
+    @property
+    def pos_end(self) -> Position: ...
+
 
 class NumberNode:
-    def __init__(self, tok):
+    tok: Token
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, tok: Token) -> None:
         self.tok = tok
 
         self.pos_start = self.tok.pos_start
         self.pos_end = self.tok.pos_end
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.tok}"
 
 
 class StringNode:
-    def __init__(self, tok):
+    tok: Token
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, tok: Token) -> None:
         self.tok = tok
 
         self.pos_start = self.tok.pos_start
         self.pos_end = self.tok.pos_end
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.tok}"
 
 
 class ArrayNode:
-    def __init__(self, element_nodes, pos_start, pos_end):
+    element_nodes: list[Node]
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, element_nodes: list[Node], pos_start: Position, pos_end: Position) -> None:
         self.element_nodes = element_nodes
 
         self.pos_start = pos_start
@@ -32,23 +64,30 @@ class ArrayNode:
 
 
 class VarAccessNode:
-    def __init__(self, var_name_tok):
+    var_name_tok: Token
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, var_name_tok: Token) -> None:
         self.var_name_tok = var_name_tok
 
         self.pos_start = self.var_name_tok.pos_start
         self.pos_end = self.var_name_tok.pos_end
 
-    @classmethod
-    def with_extra_names(cls, var_name_tok, extra_names):
-        ret = cls(var_name_tok)
-        if len(extra_names) == 0:
-            return ret
-        ret.child = cls.with_extra_names(extra_names[0], extra_names[1:])
-        return ret
-
 
 class VarAssignNode:
-    def __init__(self, var_name_tok, value_node, extra_names=[], qualifier=None):
+    var_name_tok: Token
+    value_node: Node
+    extra_names: list[Token]
+    qualifier: Optional[Token]
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(
+        self, var_name_tok: Token, value_node: Node, extra_names: list[Token] = [], qualifier: Optional[Token] = None
+    ):
         self.var_name_tok = var_name_tok
         self.value_node = value_node
         self.extra_names = extra_names
@@ -62,29 +101,13 @@ class VarAssignNode:
         )
 
 
-class VarManipulateNode:
-    def __init__(self, var_name_tok, op_tok, value_node):
-        self.var_name_tok = var_name_tok
-        self.op_tok = op_tok
-        self.value_node = value_node
-
-        self.pos_start = self.var_name_tok.pos_start
-        self.pos_end = self.value_node.pos_end
-
-
-class SliceNode:
-    def __init__(self, var_name_tok, start_value_node, end_value_node, step_value_node):
-        self.var_name_tok = var_name_tok
-        self.start_value_node = start_value_node
-        self.end_value_node = end_value_node
-        self.step_value_node = step_value_node
-
-        self.pos_start = self.var_name_tok.pos_start
-        self.pos_end = self.step_value_node.pos_end
-
-
 class IncludeNode:
-    def __init__(self, module):
+    module: Token
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, module: Token) -> None:
         self.module = module
 
         self.pos_start = self.module.pos_start
@@ -92,7 +115,14 @@ class IncludeNode:
 
 
 class BinOpNode:
-    def __init__(self, left_node, op_tok, right_node):
+    left_node: Node
+    op_tok: Token
+    right_node: Node
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, left_node: Node, op_tok: Token, right_node: Node) -> None:
         self.left_node = left_node
         self.op_tok = op_tok
         self.right_node = right_node
@@ -100,33 +130,67 @@ class BinOpNode:
         self.pos_start = self.left_node.pos_start
         self.pos_end = self.right_node.pos_end
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"({self.left_node}, {self.op_tok}, {self.right_node})"
 
 
 class UnaryOpNode:
-    def __init__(self, op_tok, node):
+    op_tok: Token
+    node: Node
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, op_tok: Token, node: Node) -> None:
         self.op_tok = op_tok
         self.node = node
 
         self.pos_start = self.op_tok.pos_start
         self.pos_end = node.pos_end
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"({self.op_tok}, {self.node})"
 
 
+Case: TypeAlias = tuple[Node, Node, bool]
+
+
 class IfNode:
-    def __init__(self, cases, else_case):
+    cases: list[Case]
+    else_case: Optional[tuple[Node, bool]]
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, cases: list[Case], else_case: Optional[tuple[Node, bool]]):
         self.cases = cases
         self.else_case = else_case
 
         self.pos_start = self.cases[0][0].pos_start
-        self.pos_end = (self.else_case or self.cases[len(self.cases) - 1])[0].pos_end
+        self.pos_end = (else_case or cases[len(self.cases) - 1])[0].pos_end
 
 
 class ForNode:
-    def __init__(self, var_name_tok, start_value_node, end_value_node, step_value_node, body_node, should_return_null):
+    var_name_tok: Token
+    start_value_node: Node
+    end_value_node: Node
+    step_value_node: Optional[Node]
+
+    body_node: Node
+    should_return_null: bool
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(
+        self,
+        var_name_tok: Token,
+        start_value_node: Node,
+        end_value_node: Node,
+        step_value_node: Optional[Node],
+        body_node: Node,
+        should_return_null: bool,
+    ) -> None:
         self.var_name_tok = var_name_tok
         self.start_value_node = start_value_node
         self.end_value_node = end_value_node
@@ -139,7 +203,14 @@ class ForNode:
 
 
 class WhileNode:
-    def __init__(self, condition_node, body_node, should_return_null):
+    condition_node: Node
+    body_node: Node
+    should_return_null: bool
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, condition_node: Node, body_node: Node, should_return_null: bool) -> None:
         self.condition_node = condition_node
         self.body_node = body_node
         self.should_return_null = should_return_null
@@ -149,7 +220,25 @@ class WhileNode:
 
 
 class FuncDefNode:
-    def __init__(self, var_name_tok, arg_name_toks, defaults, body_node, should_auto_return, static=False):
+    var_name_tok: Optional[Token]
+    arg_name_toks: list[Token]
+    defaults: list[Optional[Node]]
+    body_node: Node
+    should_auto_return: bool
+    static: bool
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(
+        self,
+        var_name_tok: Optional[Token],
+        arg_name_toks: list[Token],
+        defaults: list[Optional[Node]],
+        body_node: Node,
+        should_auto_return: bool,
+        static: bool = False,
+    ) -> None:
         self.var_name_tok = var_name_tok
         self.arg_name_toks = arg_name_toks
         self.defaults = defaults
@@ -168,7 +257,14 @@ class FuncDefNode:
 
 
 class CallNode:
-    def __init__(self, node_to_call, arg_nodes, kwarg_nodes):
+    node_to_call: Node
+    arg_nodes: list[Node]
+    kwarg_nodes: dict[str, Node]
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, node_to_call: Node, arg_nodes: list[Node], kwarg_nodes: dict[str, Node]):
         self.node_to_call = node_to_call
         self.arg_nodes = arg_nodes
         self.kwarg_nodes = kwarg_nodes
@@ -181,136 +277,146 @@ class CallNode:
             self.pos_end = self.node_to_call.pos_end
 
 
+@dataclass
 class ReturnNode:
-    def __init__(self, node_to_return, pos_start, pos_end):
-        self.node_to_return = node_to_return
+    node_to_return: Optional[Node]
 
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class ContinueNode:
-    def __init__(self, pos_start, pos_end):
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class BreakNode:
-    def __init__(self, pos_start, pos_end):
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class FallthroughNode:
-    def __init__(self, pos_start, pos_end):
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class TryNode:
-    def __init__(self, try_block, exc_iden, catch_block, pos_start, pos_end):
-        self.try_block = try_block
-        self.exc_iden = exc_iden
-        self.catch_block = catch_block
+    try_block: Node
+    exc_iden: Token
+    catch_block: Node
 
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class ForInNode:
-    def __init__(self, var_name_tok, iterable_node, body_node, pos_start, pos_end, should_return_null):
-        self.var_name_tok = var_name_tok
-        self.iterable_node = iterable_node
-        self.body_node = body_node
-        self.pos_start = pos_start
-        self.pos_end = pos_end
-        self.should_return_null = should_return_null
+    var_name_tok: Token
+    iterable_node: Node
+    body_node: Node
+
+    pos_start: Position
+    pos_end: Position
+
+    should_return_null: bool
 
 
+@dataclass
 class IndexGetNode:
-    def __init__(self, pos_start, pos_end, indexee, index):
-        self.pos_start = pos_start
-        self.pos_end = pos_end
-        self.indexee = indexee
-        self.index = index
+    pos_start: Position
+    pos_end: Position
+
+    indexee: Node
+    index: Node
 
 
+@dataclass
 class SliceGetNode:
-    def __init__(self, pos_start, pos_end, indexee, index_start, index_end=None, index_step=None):
-        self.pos_start = pos_start
-        self.pos_end = pos_end
-        self.indexee = indexee
-        self.index_start = index_start
-        self.index_end = index_end
-        self.index_step = index_step
+    pos_start: Position
+    pos_end: Position
+
+    indexee: Node
+    index_start: Node
+    index_end: Optional[Node] = None
+    index_step: Optional[Node] = None
 
 
+@dataclass
 class IndexSetNode:
-    def __init__(self, indexee, index, value, pos_start, pos_end):
-        self.indexee = indexee
-        self.index = index
-        self.value = value
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    indexee: Node
+    index: Node
+    value: Node
+
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class HashMapNode:
-    def __init__(self, pairs, pos_start, pos_end):
-        self.pairs = pairs
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    pairs: list[tuple[Node, Node]]
+
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class ClassNode:
-    def __init__(self, class_name_tok, body_nodes, pos_start, pos_end):
-        self.class_name_tok = class_name_tok
-        self.body_nodes = body_nodes
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    class_name_tok: Token
+    body_nodes: Node
+
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class AssertNode:
-    def __init__(self, condition_node, message_node, pos_start, pos_end):
-        self.condition = condition_node
-        self.message = message_node
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    condition: Node
+    message: Optional[Node]
+
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class IncNode:
-    def __init__(self, var_name_tok, extra_names, qualifier, pre, pos_start, pos_end):
-        self.var_name_tok = var_name_tok
-        self.extra_names = extra_names
-        self.qualifier = qualifier
-        self.is_pre = pre
+    var_name_tok: Token
+    extra_names: list[Token]
+    qualifier: Optional[Token]
+    is_pre: bool
 
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class DecNode:
-    def __init__(self, var_name_tok, extra_names, qualifier, pre, pos_start, pos_end):
-        self.var_name_tok = var_name_tok
-        self.extra_names = extra_names
-        self.qualifier = qualifier
-        self.is_pre = pre
+    var_name_tok: Token
+    extra_names: list[Token]
+    qualifier: Optional[Token]
+    is_pre: bool
 
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class SwitchNode:
-    def __init__(self, subject_node, cases, default, pos_start, pos_end):
-        self.subject_node = subject_node
-        self.cases = cases
-        self.default = default
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    subject_node: Node
+    cases: list[tuple[Node, Node]]
+    default: Optional[Node]
+
+    pos_start: Position
+    pos_end: Position
 
 
+@dataclass
 class AttrAccessNode:
-    def __init__(self, node_to_access, attr_name_tok, pos_start, pos_end):
-        self.node_to_access = node_to_access
-        self.attr_name_tok = attr_name_tok
-        self.pos_start = pos_start
-        self.pos_end = pos_end
+    node_to_access: Node
+    attr_name_tok: Token
+
+    pos_start: Position
+    pos_end: Position

@@ -81,7 +81,7 @@ class FileObject(BuiltInObject):
         res = RTResult()
         self = ctx.symbol_table.get("this")
         self.file.close()
-        return res.success(Number.null)
+        return res.success(Number.null())
 
     @args([])
     @method

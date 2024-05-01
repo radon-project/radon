@@ -6,7 +6,7 @@ from core.builtin_funcs import BuiltInFunction
 
 class BuiltInClass(BaseClass):
     def __init__(self, name, instance_class):
-        super().__init__(name)
+        super().__init__(name, instance_class.__symbol_table__)
         self.instance_class = instance_class
 
     def create(self, args):
@@ -67,7 +67,7 @@ class BuiltInObjectMeta(type):
             elif hasattr(value, "__is_method__") and value.__is_method__:
                 assert hasattr(value, "arg_names"), "Make sure to use the args() decorator on any built-in methods!"
                 assert hasattr(value, "defaults"), "Unreachable. The first `assert` should have ensured this."
-                symbols[name] = bif = BuiltInFunction(value.__name__, value)
+                symbols[name] = BuiltInFunction(value.__name__, value)
         symbol_table = SymbolTable(None)
         symbol_table.symbols = symbols
 

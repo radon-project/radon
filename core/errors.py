@@ -1,7 +1,19 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from dataclasses import dataclass
 from core.colortools import Log
 
+if TYPE_CHECKING:
+    from core.tokens import Position
+    from core.parser import Context
 
-def string_with_arrows(text, pos_start, pos_end):
+#######################################
+# ERRORS
+#######################################
+
+
+def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str:
     """Return string with arrows"""
     result = ""
 
@@ -35,17 +47,16 @@ def string_with_arrows(text, pos_start, pos_end):
     return result.replace("\t", "")
 
 
+@dataclass
 class Error:
     """Base Error class"""
 
-    def __init__(self, pos_start, pos_end, error_name, details):
-        self.pos_start = pos_start
-        self.pos_end = pos_end
-        self.error_name = error_name
-        self.details = details
-        self.value = details
+    pos_start: Position
+    pos_end: Position
+    error_name: str
+    details: str
 
-    def as_string(self):
+    def as_string(self) -> str:
         """Return error as string"""
         result = Log.light_purple("Radiation (most recent call last):\n")
         result += f"  File {Log.light_info(self.pos_start.fn)}, line {Log.light_info(str(self.pos_start.ln + 1))}\n"
@@ -54,6 +65,7 @@ class Error:
         return result
 
     def set_pos(self, pos_start=None, pos_end=None):
+        """Says it's gonna set the position, but actually does NOTHING"""
         return self
 
     def __repr__(self) -> str:
@@ -66,71 +78,81 @@ class Error:
 class IllegalCharError(Error):
     """Illegal Character Error class"""
 
-    def __init__(self, pos_start, pos_end, details):
+    def __init__(self, pos_start: Position, pos_end: Position, details: str) -> None:
         super().__init__(pos_start, pos_end, "IllegalCharacter", details)
 
 
 class ExpectedCharError(Error):
     """Expected Character Error class"""
 
-    def __init__(self, pos_start, pos_end, details):
+    def __init__(self, pos_start: Position, pos_end: Position, details: str) -> None:
         super().__init__(pos_start, pos_end, "ExpectedCharacter", details)
 
 
 class InvalidSyntaxError(Error):
     """Invalid Syntax Error class"""
 
-    def __init__(self, pos_start, pos_end, details=""):
+    def __init__(self, pos_start: Position, pos_end: Position, details: str = "") -> None:
         super().__init__(pos_start, pos_end, "InvalidSyntax", details)
 
 
 class IndexError(Error):
     """Index Error class"""
 
-    def __init__(self, pos_start, pos_end, details=""):
+    def __init__(self, pos_start: Position, pos_end: Position, details: str = "") -> None:
         super().__init__(pos_start, pos_end, "IndexError", details)
 
 
 class RTError(Error):
     """Runtime Error class"""
 
-    def __init__(self, pos_start, pos_end, details, context):
+    context: Context
+
+    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Context) -> None:
         super().__init__(pos_start, pos_end, "RuntimeError", details)
         self.context = context
 
-    def as_string(self):
+    def as_string(self) -> str:
         """Return error as string"""
         result = self.generate_radiation()
         result += f"{Log.deep_error(self.error_name, bold=True)}: {Log.light_error(self.details)}"
         result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
 
-    def generate_radiation(self):
+    def generate_radiation(self) -> str:
         """Generate traceback for runtime error"""
         result = ""
         pos = self.pos_start
         ctx = self.context
 
         while ctx:
-            result = f"  File {Log.light_info(pos.fn)}, line {Log.light_info(str(pos.ln + 1))}, in {Log.light_info(ctx.display_name)}\n" + result
-            pos = ctx.parent_entry_pos
-            ctx = ctx.parent
+            result = (
+                f"  File {Log.light_info(pos.fn)}, line {Log.light_info(str(pos.ln + 1))}, in {Log.light_info(ctx.display_name)}\n"
+                + result
+            )
+            pos = ctx.parent_entry_pos  # type: ignore
+            ctx = ctx.parent  # type: ignore
 
         return Log.light_purple("Radiation (most recent call last):\n") + result
 
     def set_context(self, context=None):
+        """Says it's gonna set the context, but actually does nothing"""
         return self
 
-    def copy(self):
-        return __class__(self.pos_start, self.pos_end, self.details, self.context)
+    def copy(self) -> RTError:
+        return type(self)(self.pos_start, self.pos_end, self.details, self.context)
 
 
 class TryError(RTError):
-    def __init__(self, pos_start, pos_end, details, context, prev_error):
+    prev_error: RTError
+
+    def __init__(
+        self, pos_start: Position, pos_end: Position, details: str, context: Context, prev_error: RTError
+    ) -> None:
         super().__init__(pos_start, pos_end, details, context)
         self.prev_error = prev_error
 
-    def generate_radiation(self):
+    def generate_radiation(self) -> str:
         result = ""
         if self.prev_error:
             result += self.prev_error.as_string()

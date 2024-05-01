@@ -1,12 +1,30 @@
+from __future__ import annotations
+
 from core.errors import *
 from core.tokens import *
 from core.nodes import *
 
+from typing import TYPE_CHECKING, Optional, Generic, TypeVar, Callable
+from collections.abc import Sequence
+from dataclasses import dataclass, field
 
-class ParseResult:
+if TYPE_CHECKING:
+    from core.datatypes import Value
+
+T = TypeVar("T")
+
+
+class ParseResult(Generic[T]):
     """Parser Result"""
 
-    def __init__(self):
+    unignorable: bool
+    error: Optional[InvalidSyntaxError]
+    node: Optional[T]
+    last_registered_advance_count: int
+    advance_count: int
+    to_reverse_count: int
+
+    def __init__(self) -> None:
         self.unignorable = False
         self.error = None
         self.node = None
@@ -14,71 +32,81 @@ class ParseResult:
         self.advance_count = 0
         self.to_reverse_count = 0
 
-    def register_advancement(self):
+    def register_advancement(self) -> None:
         self.last_registered_advance_count = 1
         self.advance_count += 1
 
-    def register(self, res):
+    U = TypeVar("U")
+
+    def register(self, res: ParseResult[U]) -> Optional[U]:
         self.last_registered_advance_count = res.advance_count
         self.advance_count += res.advance_count
         if res.error:
             self.error = res.error
         return res.node
 
-    def try_register(self, res):
+    def try_register(self, res: ParseResult[U]) -> Optional[U]:
         if res.error and not res.unignorable:
             self.to_reverse_count = res.advance_count
             return None
         return self.register(res)
 
-    def success(self, node):
+    def success(self, node: T) -> ParseResult[T]:
         self.node = node
         return self
 
-    def failure(self, error):
+    def failure(self, error: InvalidSyntaxError) -> ParseResult[T]:
         if not self.error or self.last_registered_advance_count == 0:
             self.error = error
         return self
 
-    def make_unignorable(self):
+    def make_unignorable(self) -> ParseResult[T]:
         self.unignorable = True
         return self
 
 
 class Parser:
-    def __init__(self, tokens):
+    tokens: list[Token]
+    current_tok: Token
+    tok_idx: int
+    in_func: int
+    in_loop: int
+    in_class: int
+    in_case: int
+
+    def __init__(self, tokens: list[Token]) -> None:
         self.tokens = tokens
-        self.tok_idx = -1
-        dummy = ParseResult()
-        self.advance(dummy)
+        self.tok_idx = 0
         self.in_func = 0
         self.in_loop = 0
         self.in_class = 0
         self.in_case = 0
 
-    def advance(self, res: ParseResult):
+        self.update_current_tok()
+
+    def advance(self, res: ParseResult) -> Token:
         self.tok_idx += 1
         self.update_current_tok()
         res.register_advancement()
         return self.current_tok
 
-    def reverse(self, amount=1):
+    def reverse(self, amount: int = 1) -> Token:
         self.tok_idx -= amount
         self.update_current_tok()
         return self.current_tok
 
-    def update_current_tok(self):
+    def update_current_tok(self) -> None:
         if self.tok_idx >= 0 and self.tok_idx < len(self.tokens):
             self.current_tok = self.tokens[self.tok_idx]
 
-    def parse(self):
+    def parse(self) -> ParseResult[Node]:
         res = self.statements()
         if not res.error and self.current_tok.type != TT_EOF:
             return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected EOF"))
         return res
 
-    def skip_newlines(self):
-        res = ParseResult()
+    def skip_newlines(self) -> ParseResult[None]:
+        res = ParseResult[None]()
         while self.current_tok.type == TT_NEWLINE:
             self.advance(res)
 
@@ -86,9 +114,9 @@ class Parser:
 
     ###################################
 
-    def statements(self):
-        res = ParseResult()
-        list_statements = []
+    def statements(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
+        list_statements: list[Node] = []
         pos_start = self.current_tok.pos_start.copy()
 
         while self.current_tok.type == TT_NEWLINE:
@@ -99,6 +127,7 @@ class Parser:
         statement = res.register(self.statement())
         if res.error:
             return res
+        assert statement is not None
         list_statements.append(statement)
 
         more_statements = True
@@ -119,12 +148,13 @@ class Parser:
             statement = res.register(self.statement())
             if res.error:
                 return res
+            assert statement is not None
             list_statements.append(statement)
 
         return res.success(ArrayNode(list_statements, pos_start, self.current_tok.pos_end.copy()))
 
-    def statement(self):
-        res = ParseResult()
+    def statement(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
         pos_start = self.current_tok.pos_start.copy()
 
         if self.current_tok.matches(TT_KEYWORD, "return"):
@@ -139,7 +169,7 @@ class Parser:
             self.advance(res)
 
             expr = res.try_register(self.expr())
-            if not expr:
+            if expr is None:
                 self.reverse(res.to_reverse_count)
             return res.success(ReturnNode(expr, pos_start, self.current_tok.pos_start.copy()))
 
@@ -178,11 +208,17 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, "try"):
             self.advance(res)
             try_node = res.register(self.try_statement())
+            if res.error:
+                return res
+            assert try_node is not None
             return res.success(try_node)
 
         if self.current_tok.matches(TT_KEYWORD, "switch"):
             self.advance(res)
             switch_node = res.register(self.switch_statement())
+            if res.error:
+                return res
+            assert switch_node is not None
             return res.success(switch_node)
 
         if self.current_tok.matches(TT_KEYWORD, "include"):
@@ -207,13 +243,14 @@ class Parser:
             return res.failure(
                 InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected statement")
             )
+        assert expr is not None
         return res.success(expr)
 
-    def expr(self):
-        res = ParseResult()
+    def expr(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
 
         var_assign_node = res.try_register(self.assign_expr())
-        if var_assign_node:
+        if var_assign_node is not None:
             return res.success(var_assign_node)
         elif res.error:
             return res
@@ -227,10 +264,11 @@ class Parser:
                 InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression")
             )
 
+        assert node is not None
         return res.success(node)
 
-    def assign_expr(self):
-        res = ParseResult()
+    def assign_expr(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
 
         pos_start = self.current_tok.pos_start.copy()
 
@@ -286,7 +324,7 @@ class Parser:
                         var_name_tok,
                         extra_names,
                         qualifier,
-                        pre=True,
+                        is_pre=True,
                         pos_start=pos_start,
                         pos_end=pre_tok.pos_end.copy(),
                     )
@@ -299,7 +337,7 @@ class Parser:
                         var_name_tok,
                         extra_names,
                         qualifier,
-                        pre=True,
+                        is_pre=True,
                         pos_start=pos_start,
                         pos_end=pre_tok.pos_end.copy(),
                     )
@@ -326,7 +364,12 @@ class Parser:
             self.advance(res)
             return res.success(
                 IncNode(
-                    var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
+                    var_name_tok,
+                    extra_names,
+                    qualifier,
+                    is_pre=False,
+                    pos_start=pos_start,
+                    pos_end=op_tok.pos_end.copy(),
                 )
             )
 
@@ -334,7 +377,12 @@ class Parser:
             self.advance(res)
             return res.success(
                 DecNode(
-                    var_name_tok, extra_names, qualifier, pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
+                    var_name_tok,
+                    extra_names,
+                    qualifier,
+                    is_pre=False,
+                    pos_start=pos_start,
+                    pos_end=op_tok.pos_end.copy(),
                 )
             )
 
@@ -342,6 +390,7 @@ class Parser:
         assign_expr = res.register(self.expr())
         if res.error:
             return res.make_unignorable()
+        assert assign_expr is not None
 
         ASSIGN_TO_OPERATORS = {
             TT_PE: TT_PLUS,
@@ -354,14 +403,14 @@ class Parser:
         }
         if op_tok.type != TT_EQ:
             assign_expr = BinOpNode(
-                VarAccessNode.with_extra_names(var_name_tok, extra_names),
+                VarAccessNode(var_name_tok),
                 Token(ASSIGN_TO_OPERATORS[op_tok.type], pos_start=op_tok.pos_start, pos_end=op_tok.pos_end),
                 assign_expr,
             )
         return res.success(VarAssignNode(var_name_tok, assign_expr, extra_names, qualifier))
 
-    def comp_expr(self):
-        res = ParseResult()
+    def comp_expr(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
 
         if self.current_tok.matches(TT_KEYWORD, "not"):
             op_tok = self.current_tok
@@ -370,6 +419,7 @@ class Parser:
             node = res.register(self.comp_expr())
             if res.error:
                 return res
+            assert node is not None
             return res.success(UnaryOpNode(op_tok, node))
 
         node = res.register(
@@ -380,17 +430,18 @@ class Parser:
             return res.failure(
                 InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression")
             )
+        assert node is not None
 
         return res.success(node)
 
-    def arith_expr(self):
+    def arith_expr(self) -> ParseResult[Node]:
         return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
 
-    def term(self):
+    def term(self) -> ParseResult[Node]:
         return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_MOD))
 
-    def factor(self):
-        res = ParseResult()
+    def factor(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
         tok = self.current_tok
 
         if tok.type in (TT_PLUS, TT_MINUS):
@@ -398,39 +449,41 @@ class Parser:
             factor = res.register(self.factor())
             if res.error:
                 return res
+            assert factor is not None
             return res.success(UnaryOpNode(tok, factor))
 
         return self.power()
 
-    def power(self):
+    def power(self) -> ParseResult[Node]:
         return self.bin_op(self.call, (TT_POW,), self.factor)
 
-    def mod(self):
+    def mod(self) -> ParseResult[Node]:
         return self.bin_op(self.factor, (TT_MOD,))
 
-    def plus_equals(self):
+    def plus_equals(self) -> ParseResult[Node]:
         return self.bin_op(self.factor, (TT_PE,))
 
-    def minus_equals(self):
+    def minus_equals(self) -> ParseResult[Node]:
         return self.bin_op(self.factor, (TT_ME,))
 
-    def times_equals(self):
+    def times_equals(self) -> ParseResult[Node]:
         return self.bin_op(self.factor, (TT_TE,))
 
-    def divide_equals(self):
+    def divide_equals(self) -> ParseResult[Node]:
         return self.bin_op(self.factor, (TT_DE,))
 
-    def mod_equals(self):
+    def mod_equals(self) -> ParseResult[Node]:
         return self.bin_op(self.factor, (TT_MDE,))
 
-    def power_equals(self):
+    def power_equals(self) -> ParseResult[Node]:
         return self.bin_op(self.factor, (TT_POWE,))
 
-    def call(self):
-        res = ParseResult()
+    def call(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
         index = res.register(self.atom())
         if res.error:
             return res
+        assert index is not None
 
         while self.current_tok.type == TT_DOT:
             self.advance(res)
@@ -454,6 +507,7 @@ class Parser:
                 pair = res.register(self.func_arg())
                 if res.error:
                     return res
+                assert pair is not None
                 kw, val = pair
                 if kw is None:
                     arg_nodes.append(val)
@@ -469,9 +523,11 @@ class Parser:
                 while self.current_tok.type == TT_COMMA:
                     self.advance(res)
 
-                    kw, val = res.register(self.func_arg())
+                    pair = res.register(self.func_arg())
                     if res.error:
                         return res
+                    assert pair is not None
+                    kw, val = pair
                     if kw is None:
                         arg_nodes.append(val)
                     else:
@@ -479,15 +535,15 @@ class Parser:
 
                 if self.current_tok.type != TT_RPAREN:
                     return res.failure(
-                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected ',' or ')'")
+                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ')'")
                     )
 
                 self.advance(res)
             return res.success(CallNode(index, arg_nodes, kwarg_nodes))
         return res.success(index)
 
-    def func_arg(self):
-        res = ParseResult()
+    def func_arg(self) -> ParseResult[tuple[Optional[str], Node]]:
+        res = ParseResult[tuple[Optional[str], Node]]()
 
         kw = None
         if (
@@ -495,18 +551,19 @@ class Parser:
             and self.tokens[self.tok_idx + 0].type == TT_IDENTIFIER
             and self.tokens[self.tok_idx + 1].type == TT_EQ
         ):
-            kw = self.tokens[self.tok_idx].value
+            kw = str(self.tokens[self.tok_idx].value)
             self.advance(res)
             self.advance(res)
         val = res.register(self.expr())
         if res.error:
             return res
+        assert val is not None
         return res.success((kw, val))
 
-    def atom(self):
-        res = ParseResult()
+    def atom(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
         tok = self.current_tok
-        node = None
+        node: Optional[Node] = None
 
         if tok.type in (TT_INT, TT_FLOAT):
             self.advance(res)
@@ -525,6 +582,7 @@ class Parser:
             expr = res.register(self.expr())
             if res.error:
                 return res
+            assert expr is not None
             if self.current_tok.type == TT_RPAREN:
                 self.advance(res)
                 node = expr
@@ -537,12 +595,14 @@ class Parser:
             array_expr = res.register(self.array_expr())
             if res.error:
                 return res
+            assert array_expr is not None
             node = array_expr
 
         elif tok.matches(TT_KEYWORD, "if"):
             if_expr = res.register(self.if_expr())
             if res.error:
                 return res
+            assert if_expr is not None
             node = if_expr
 
         elif tok.matches(TT_KEYWORD, "for"):
@@ -551,6 +611,7 @@ class Parser:
             self.in_loop -= 1
             if res.error:
                 return res
+            assert for_expr is not None
             node = for_expr
 
         elif tok.matches(TT_KEYWORD, "while"):
@@ -559,6 +620,7 @@ class Parser:
             self.in_loop -= 1
             if res.error:
                 return res
+            assert while_expr is not None
             node = while_expr
 
         elif tok.matches(TT_KEYWORD, "fun") or tok.matches(TT_KEYWORD, "static"):
@@ -567,6 +629,7 @@ class Parser:
             self.in_func -= 1
             if res.error:
                 return res
+            assert func_def is not None
             node = func_def
 
         elif tok.matches(TT_KEYWORD, "class"):
@@ -575,24 +638,28 @@ class Parser:
             self.in_class -= 1
             if res.error:
                 return res
+            assert class_node is not None
             node = class_node
 
         elif tok.matches(TT_KEYWORD, "assert"):
             assert_expr = res.register(self.assert_expr())
             if res.error:
                 return res
+            assert assert_expr is not None
             node = assert_expr
 
         elif tok.type == TT_LBRACE:
             hashmap_expr = res.register(self.hashmap_expr())
             if res.error:
                 return res
+            assert hashmap_expr is not None
             node = hashmap_expr
 
         if node is None:
             return res.failure(InvalidSyntaxError(tok.pos_start, tok.pos_end, "Expected expression"))
 
         while self.current_tok.type == TT_LSQUARE:
+            assert node is not None
             self.advance(res)
 
             # handle empty call [] errors here
@@ -606,7 +673,7 @@ class Parser:
 
             # [index_start:index_end:index_step] or [index_start:index_end] or [index_start]
 
-            index = []
+            index: list[Optional[Node]] = []
             is_slice = False
             while self.current_tok.type != TT_RSQUARE:
                 if self.current_tok.type == TT_COLON:
@@ -614,9 +681,11 @@ class Parser:
                     index.append(None)
                     self.advance(res)
                     continue
-                index.append(res.register(self.expr()))
+                val = res.register(self.expr())
                 if res.error:
                     return res
+                assert val is not None
+                index.append(val)
 
                 if self.current_tok.type == TT_COLON:
                     is_slice = True
@@ -635,23 +704,29 @@ class Parser:
                 value = res.register(self.expr())
                 if res.error:
                     return res
+                assert value is not None
 
+                assert index[0] is not None
                 node = IndexSetNode(node, index[0], value, tok.pos_start, self.current_tok.pos_end)
             elif is_slice:
-                node = SliceGetNode(tok.pos_start, self.current_tok.pos_end, node, *index)
+                assert node is not None
+                node = SliceGetNode(tok.pos_start, self.current_tok.pos_end, node, *index)  # type: ignore
             else:
+                assert node is not None
+                assert index[0] is not None
                 node = IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, index[0])
 
         return res.success(node)
 
-    def assert_expr(self):
-        res = ParseResult()
+    def assert_expr(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
         assert self.current_tok.matches(TT_KEYWORD, "assert"), "`assert`-ception :D"
         self.advance(res)
 
         condition = res.register(self.expr())
         if res.error:
             return res
+        assert condition is not None
 
         message = None
         if self.current_tok.type == TT_COMMA:
@@ -659,11 +734,12 @@ class Parser:
             message = res.register(self.expr())
             if res.error:
                 return res
+            assert message is not None
 
         return res.success(AssertNode(condition, message, self.current_tok.pos_start, self.current_tok.pos_end))
 
-    def array_expr(self):
-        res = ParseResult()
+    def array_expr(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
         element_nodes = []
         pos_start = self.current_tok.pos_start.copy()
 
@@ -677,7 +753,7 @@ class Parser:
             self.advance(res)
             self.skip_newlines()
         else:
-            element_nodes.append(res.register(self.expr()))
+            elt = res.register(self.expr())
             self.skip_newlines()
             if res.error:
                 return res.failure(
@@ -685,28 +761,32 @@ class Parser:
                         self.current_tok.pos_start, self.current_tok.pos_end, "Expected ']' or expression"
                     )
                 )
+            assert elt is not None
+            element_nodes.append(elt)
 
             while self.current_tok.type == TT_COMMA:
                 self.advance(res)
                 self.skip_newlines()
 
-                element_nodes.append(res.register(self.expr()))
+                elt = res.register(self.expr())
                 self.skip_newlines()
                 if res.error:
                     return res
+                assert elt is not None
+                element_nodes.append(elt)
 
             if self.current_tok.type != TT_RSQUARE:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected ',' or ']'")
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ']'")
                 )
 
             self.advance(res)
 
         return res.success(ArrayNode(element_nodes, pos_start, self.current_tok.pos_end.copy()))
 
-    def hashmap_expr(self):
-        res = ParseResult()
-        pairs = []
+    def hashmap_expr(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
+        pairs: list[tuple[Node, Node]] = []
         pos_start = self.current_tok.pos_start.copy()
 
         if self.current_tok.type != TT_LBRACE:
@@ -722,6 +802,7 @@ class Parser:
             key = res.register(self.expr())
             if res.error:
                 return res
+            assert key is not None
 
             if self.current_tok.type != TT_COLON:
                 return res.failure(
@@ -733,6 +814,7 @@ class Parser:
             value = res.register(self.expr())
             if res.error:
                 return res
+            assert value is not None
 
             pairs.append((key, value))
 
@@ -744,6 +826,7 @@ class Parser:
                 self.skip_newlines()
                 if res.error:
                     return res
+                assert key is not None
 
                 if self.current_tok.type != TT_COLON:
                     return res.failure(
@@ -757,6 +840,7 @@ class Parser:
                 self.skip_newlines()
                 if res.error:
                     return res
+                assert value is not None
 
                 pairs.append((key, value))
 
@@ -770,19 +854,20 @@ class Parser:
 
             return res.success(HashMapNode(pairs, pos_start, self.current_tok.pos_end.copy()))
 
-    def if_expr(self):
-        res = ParseResult()
+    def if_expr(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
         all_cases = res.register(self.if_expr_cases("if"))
         if res.error:
             return res
+        assert all_cases is not None
         cases, else_case = all_cases
         return res.success(IfNode(cases, else_case))
 
-    def if_expr_b(self):
+    def if_expr_b(self) -> ParseResult[tuple[list[Case], Optional[tuple[Node, bool]]]]:
         return self.if_expr_cases("elif")
 
-    def if_expr_c(self):
-        res = ParseResult()
+    def if_expr_c(self) -> ParseResult[Optional[tuple[Node, bool]]]:
+        res = ParseResult[Optional[tuple[Node, bool]]]()
         else_case = None
 
         if self.current_tok.matches(TT_KEYWORD, "else"):
@@ -794,6 +879,7 @@ class Parser:
                 statements = res.register(self.statements())
                 if res.error:
                     return res
+                assert statements is not None
                 else_case = (statements, True)
 
                 if self.current_tok.type != TT_RBRACE:
@@ -805,18 +891,21 @@ class Parser:
                 expr = res.register(self.statement())
                 if res.error:
                     return res
+                assert expr is not None
                 else_case = (expr, False)
 
         return res.success(else_case)
 
-    def if_expr_b_or_c(self):
-        res = ParseResult()
-        cases, else_case = [], None
+    def if_expr_b_or_c(self) -> ParseResult[tuple[list[Case], Optional[tuple[Node, bool]]]]:
+        res = ParseResult[tuple[list[Case], Optional[tuple[Node, bool]]]]()
+        cases: list[Case] = []
+        else_case = None
 
         if self.current_tok.matches(TT_KEYWORD, "elif"):
             all_cases = res.register(self.if_expr_b())
             if res.error:
                 return res
+            assert all_cases is not None
             cases, else_case = all_cases
         else:
             else_case = res.register(self.if_expr_c())
@@ -825,8 +914,8 @@ class Parser:
 
         return res.success((cases, else_case))
 
-    def if_expr_cases(self, case_keyword):
-        res = ParseResult()
+    def if_expr_cases(self, case_keyword: str) -> ParseResult[tuple[list[Case], Optional[tuple[Node, bool]]]]:
+        res = ParseResult[tuple[list[Case], Optional[tuple[Node, bool]]]]()
         cases = []
         else_case = None
 
@@ -840,6 +929,7 @@ class Parser:
         condition = res.register(self.expr())
         if res.error:
             return res
+        assert condition is not None
         self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
@@ -851,6 +941,7 @@ class Parser:
             statements = res.register(self.statements())
             if res.error:
                 return res
+            assert statements is not None
             cases.append((condition, statements, True))
 
             if self.current_tok.type == TT_RBRACE:
@@ -859,6 +950,7 @@ class Parser:
             all_cases = res.register(self.if_expr_b_or_c())
             if res.error:
                 return res
+            assert all_cases is not None
             new_cases, else_case = all_cases
             cases.extend(new_cases)
 
@@ -866,18 +958,20 @@ class Parser:
             expr = res.register(self.statement())
             if res.error:
                 return res
+            assert expr is not None
             cases.append((condition, expr, False))
 
             all_cases = res.register(self.if_expr_b_or_c())
             if res.error:
                 return res
+            assert all_cases is not None
             new_cases, else_case = all_cases
             cases.extend(new_cases)
 
         return res.success((cases, else_case))
 
-    def for_expr(self):
-        res = ParseResult()
+    def for_expr(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
         pos_start = self.current_tok.pos_start.copy()
 
         if not self.current_tok.matches(TT_KEYWORD, "for"):
@@ -887,7 +981,7 @@ class Parser:
 
         if self.current_tok.type != TT_IDENTIFIER:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected identifier")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
             )
 
         var_name = self.current_tok
@@ -897,7 +991,7 @@ class Parser:
 
         if self.current_tok.type != TT_EQ and not self.current_tok.matches(TT_KEYWORD, "in"):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected '=' or 'in'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '=' or 'in'")
             )
 
         elif self.current_tok.matches(TT_KEYWORD, "in"):
@@ -906,22 +1000,25 @@ class Parser:
             iterable_node = res.register(self.expr())
             if res.error:
                 return res
+            assert iterable_node is not None
         else:
             self.advance(res)
 
             start_value = res.register(self.expr())
             if res.error:
                 return res
+            assert start_value is not None
 
             if not self.current_tok.matches(TT_KEYWORD, "to"):
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'to'")
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'to'")
                 )
 
             self.advance(res)
             end_value = res.register(self.expr())
             if res.error:
                 return res
+            assert end_value is not None
 
             if self.current_tok.matches(TT_KEYWORD, "step"):
                 self.advance(res)
@@ -929,6 +1026,7 @@ class Parser:
                 step_value = res.register(self.expr())
                 if res.error:
                     return res
+                assert step_value is not None
             else:
                 step_value = None
 
@@ -945,6 +1043,7 @@ class Parser:
             body = res.register(self.statements())
             if res.error:
                 return res
+            assert body is not None
 
             if self.current_tok.type != TT_RBRACE:
                 return res.failure(
@@ -955,20 +1054,27 @@ class Parser:
             self.advance(res)
 
             if is_for_in:
+                assert iterable_node is not None
                 return res.success(ForInNode(var_name, iterable_node, body, pos_start, pos_end, True))
+            assert start_value is not None
+            assert end_value is not None
             return res.success(ForNode(var_name, start_value, end_value, step_value, body, True))
 
         body = res.register(self.statement())
         if res.error:
             return res
+        assert body is not None
         pos_end = self.current_tok.pos_end.copy()
 
         if is_for_in:
+            assert iterable_node is not None
             return res.success(ForInNode(var_name, iterable_node, body, pos_start, pos_end, False))
+        assert start_value is not None
+        assert end_value is not None
         return res.success(ForNode(var_name, start_value, end_value, step_value, body, False))
 
-    def while_expr(self):
-        res = ParseResult()
+    def while_expr(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
 
         if not self.current_tok.matches(TT_KEYWORD, "while"):
             assert False, "unreachable"
@@ -978,6 +1084,7 @@ class Parser:
         condition = res.register(self.expr())
         if res.error:
             return res
+        assert condition is not None
 
         self.skip_newlines()
 
@@ -992,6 +1099,7 @@ class Parser:
             body = res.register(self.statements())
             if res.error:
                 return res
+            assert body is not None
 
             # if not self.current_tok.matches(TT_KEYWORD, 'end'):
             if self.current_tok.type != TT_RBRACE:
@@ -1006,11 +1114,12 @@ class Parser:
         body = res.register(self.statement())
         if res.error:
             return res
+        assert body is not None
 
         return res.success(WhileNode(condition, body, False))
 
-    def class_node(self):
-        res = ParseResult()
+    def class_node(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
 
         pos_start = self.current_tok.pos_start
 
@@ -1021,7 +1130,7 @@ class Parser:
 
         if self.current_tok.type != TT_IDENTIFIER:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected identifier")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
             )
 
         class_name_tok = self.current_tok
@@ -1037,6 +1146,7 @@ class Parser:
         body = res.register(self.statements())
         if res.error:
             return res
+        assert body is not None
 
         if self.current_tok.type != TT_RBRACE:
             return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
@@ -1045,8 +1155,8 @@ class Parser:
 
         return res.success(ClassNode(class_name_tok, body, pos_start, self.current_tok.pos_end))
 
-    def func_def(self):
-        res = ParseResult()
+    def func_def(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
 
         static = False
         if self.current_tok.matches(TT_KEYWORD, "static"):
@@ -1055,9 +1165,7 @@ class Parser:
 
         if not self.current_tok.matches(TT_KEYWORD, "fun"):
             return res.failure(
-                InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end, f"Expected 'fun' or identifier"
-                )
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'fun' or identifier")
             )
 
         self.advance(res)
@@ -1068,20 +1176,20 @@ class Parser:
 
             if self.current_tok.type != TT_LPAREN:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected '('")
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '('")
                 )
         else:
             var_name_tok = None
             if self.current_tok.type != TT_LPAREN:
                 return res.failure(
                     InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, f"Expected identifier or '('"
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or '('"
                     )
                 )
 
         self.advance(res)
         arg_name_toks = []
-        defaults = []
+        defaults: list[Optional[Node]] = []
         hasOptionals = False
 
         if self.current_tok.type == TT_IDENTIFIER:
@@ -1096,6 +1204,7 @@ class Parser:
                 default = res.register(self.expr())
                 if res.error:
                     return res
+                assert default is not None
                 defaults.append(default)
                 hasOptionals = True
             elif hasOptionals:
@@ -1108,7 +1217,7 @@ class Parser:
 
                 if self.current_tok.type != TT_IDENTIFIER:
                     return res.failure(
-                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected identifier")
+                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
                     )
 
                 pos_start = self.current_tok.pos_start.copy()
@@ -1121,6 +1230,7 @@ class Parser:
                     default = res.register(self.expr())
                     if res.error:
                         return res
+                    assert default is not None
                     defaults.append(default)
                     hasOptionals = True
                 elif hasOptionals:
@@ -1130,15 +1240,13 @@ class Parser:
 
             if self.current_tok.type != TT_RPAREN:
                 return res.failure(
-                    InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, f"Expected ',', ')' or '='"
-                    )
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',', ')' or '='")
                 )
         else:
             if self.current_tok.type != TT_RPAREN:
                 return res.failure(
                     InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, f"Expected identifier or ')'"
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or ')'"
                     )
                 )
 
@@ -1151,6 +1259,7 @@ class Parser:
             body = res.register(self.expr())
             if res.error:
                 return res
+            assert body is not None
 
             return res.success(FuncDefNode(var_name_tok, arg_name_toks, defaults, body, True, static=static))
 
@@ -1165,6 +1274,7 @@ class Parser:
         body = res.register(self.statements())
         if res.error:
             return res
+        assert body is not None
 
         if self.current_tok.type != TT_RBRACE:
             return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
@@ -1173,13 +1283,14 @@ class Parser:
 
         return res.success(FuncDefNode(var_name_tok, arg_name_toks, defaults, body, False, static=static))
 
-    def switch_statement(self):
-        res = ParseResult()
+    def switch_statement(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
         pos_start = self.current_tok.pos_start.copy()
 
         subject = res.register(self.expr())
         if res.error:
             return res
+        assert subject is not None
 
         if self.current_tok.type != TT_LBRACE:
             return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
@@ -1193,6 +1304,7 @@ class Parser:
             expr = res.register(self.expr())
             if res.error:
                 return res
+            assert expr is not None
 
             if self.current_tok.type == TT_LBRACE:
                 single_statement = False
@@ -1213,6 +1325,7 @@ class Parser:
                 return res.failure(
                     InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
                 )
+            assert body is not None
 
             cases.append((expr, body))
 
@@ -1242,6 +1355,7 @@ class Parser:
                 return res.failure(
                     InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
                 )
+            assert body is not None
 
             default = body
 
@@ -1259,8 +1373,8 @@ class Parser:
 
         return res.success(SwitchNode(subject, cases, default, pos_start=pos_start, pos_end=self.current_tok.pos_end))
 
-    def try_statement(self):
-        res = ParseResult()
+    def try_statement(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
         pos_start = self.current_tok.pos_start.copy()
         self.skip_newlines()
 
@@ -1272,6 +1386,7 @@ class Parser:
         try_block = res.register(self.statements())
         if res.error:
             return res
+        assert try_block is not None
 
         if self.current_tok.type != TT_RBRACE:
             return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
@@ -1308,6 +1423,7 @@ class Parser:
             catch_block = res.register(self.statements())
             if res.error:
                 return res
+            assert catch_block is not None
 
             if self.current_tok.type != TT_RBRACE:
                 return res.failure(
@@ -1322,14 +1438,19 @@ class Parser:
 
     ###################################
 
-    def bin_op(self, func_a, ops, func_b=None):
-        if func_b == None:
+    ParseFunc: TypeAlias = Callable[[], ParseResult[Node]]
+
+    def bin_op(
+        self, func_a: ParseFunc, ops: Sequence[TokenType | tuple[TokenType, str]], func_b: Optional[ParseFunc] = None
+    ) -> ParseResult[Node]:
+        if func_b is None:
             func_b = func_a
 
-        res = ParseResult()
+        res = ParseResult[Node]()
         left = res.register(func_a())
         if res.error:
             return res
+        assert left is not None
 
         while self.current_tok.type in ops or (self.current_tok.type, self.current_tok.value) in ops:
             op_tok = self.current_tok
@@ -1337,18 +1458,27 @@ class Parser:
             right = res.register(func_b())
             if res.error:
                 return res
+            assert right is not None
             left = BinOpNode(left, op_tok, right)
 
         return res.success(left)
 
 
-class RTResult:
+class RTResult(Generic[T]):
     """Runtime result"""
 
-    def __init__(self):
+    value: Optional[T]
+    error: Optional[RTError]
+    func_return_value: Optional[Value]
+    loop_should_continue: bool
+    loop_should_break: bool
+    should_exit: bool
+    should_fallthrough: bool
+
+    def __init__(self) -> None:
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         self.value = None
         self.error = None
         self.func_return_value = None
@@ -1357,7 +1487,9 @@ class RTResult:
         self.should_exit = False
         self.should_fallthrough = False
 
-    def register(self, res):
+    U = TypeVar("U")
+
+    def register(self, res: RTResult[U]) -> Optional[U]:
         self.error = res.error
         self.func_return_value = res.func_return_value
         self.loop_should_continue = res.loop_should_continue
@@ -1366,48 +1498,48 @@ class RTResult:
         self.should_fallthrough = res.should_fallthrough
         return res.value
 
-    def success(self, value):
+    def success(self, value: T) -> RTResult[T]:
         should_fallthrough = self.should_fallthrough  # Save `should_fallthrough` because we don't want to lose it
         self.reset()
         self.should_fallthrough = should_fallthrough
         self.value = value
         return self
 
-    def success_return(self, value):
+    def success_return(self, value: Value) -> RTResult[T]:
         self.reset()
         self.func_return_value = value
         return self
 
-    def success_continue(self):
+    def success_continue(self) -> RTResult[T]:
         self.reset()
         self.loop_should_continue = True
         return self
 
-    def success_break(self):
+    def success_break(self) -> RTResult[T]:
         self.reset()
         self.loop_should_break = True
         return self
 
-    def success_exit(self, exit_value):
+    def success_exit(self, exit_value: T) -> RTResult[T]:
         self.reset()
         self.should_exit = True
         self.value = exit_value
         return self
 
-    def fallthrough(self):
+    def fallthrough(self) -> RTResult[T]:
         # No `self.reset()` because this is meant to be used in conjunction with other methods
-        # e.g. `res.success(Number.null).fallthrough()`
+        # e.g. `res.success(Number.null()).fallthrough()`
         self.should_fallthrough = True
         return self
 
-    def failure(self, error):
+    def failure(self, error: RTError) -> RTResult[T]:
         self.reset()
         self.error = error
         return self
 
-    def should_return(self):
+    def should_return(self) -> bool:
         # Note: this will allow you to continue and break outside the current function
-        return (
+        return bool(
             self.error
             or self.func_return_value
             or self.loop_should_continue
@@ -1415,7 +1547,7 @@ class RTResult:
             or self.should_exit
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"RTResult(value={self.value}, "
             f"error={self.error}, return={self.func_return_value}, "
@@ -1424,46 +1556,46 @@ class RTResult:
         )
 
 
-class Context:
-    def __init__(self, display_name, parent=None, parent_entry_pos=None):
-        self.display_name = display_name
-        self.parent = parent
-        self.parent_entry_pos = parent_entry_pos
-        self.symbol_table = None
-
-
 class SymbolTable:
-    def __init__(self, parent=None):
+    symbols: dict[str, Value]
+    consts: set[str]
+    statics: set[str]
+    parent: Optional[SymbolTable]
+
+    def __init__(self, parent: Optional[SymbolTable] = None) -> None:
         self.symbols = {}
         self.consts = set()
         self.statics = set()
         self.parent = parent
 
     @property
-    def is_global(self):
+    def is_global(self) -> bool:
         return self.parent is None
 
-    def get(self, name):
+    def get(self, name: str) -> Optional[Value]:
         value = self.symbols.get(name, None)
-        if value == None and self.parent:
+        if value is None and self.parent:
             return self.parent.get(name)
         return value
 
-    def set(self, name, value, qualifier=None):
+    def set(self, name: str, value: Value, qualifier: Optional[Token] = None) -> RTResult[None]:
+        class dummy:
+            TT_KW = TT_KEYWORD
+
         if name in self.consts:
-            return RTResult().failure(
+            return RTResult[None]().failure(
                 RTError(value.pos_start, value.pos_end, f"Cannot reassign to constant {name}", value.context)
             )
         match qualifier:
             case None:
                 self.symbols[name] = value
-            case Token(TT_KEYWORD, "nonlocal"):
+            case Token(dummy.TT_KW, "nonlocal"):
                 if name in self.symbols:
                     self.symbols[name] = value
                 elif self.parent:
                     self.parent.set(name, value, qualifier)
                 else:
-                    return RTResult().failure(
+                    return RTResult[None]().failure(
                         RTError(
                             value.pos_start,
                             value.pos_end,
@@ -1471,25 +1603,34 @@ class SymbolTable:
                             value.context,
                         )
                     )
-            case Token(TT_KEYWORD, "global"):
-                if self.is_global:
+            case Token(dummy.TT_KW, "global"):
+                if self.parent is None:
                     self.symbols[name] = value
                 else:
                     self.parent.set(name, value, qualifier)
-            case Token(TT_KEYWORD, "const"):
+            case Token(dummy.TT_KW, "const"):
                 self.symbols[name] = value
                 self.consts.add(name)
             case _:
                 assert False, "invalid qualifier"
-        return RTResult().success(None)
+        return RTResult[None]().success(None)
 
-    def set_static(self, name, value, qualifier=None):
-        res = RTResult()
-        value = res.register(self.set(name, value, qualifier))
+    def set_static(self, name: str, value: Value, qualifier: Optional[Token] = None) -> RTResult[None]:
+        res = RTResult[None]()
+        res.register(self.set(name, value, qualifier))
         if res.should_return():
             return res
         self.statics.add(name)
-        return res.success(value)
+        return res.success(None)
 
-    def remove(self, name):
-        del self.symbols[name]
+
+#    def remove(self, name):
+#        del self.symbols[name]
+
+
+@dataclass
+class Context:
+    display_name: str
+    parent: Optional[Context] = None
+    parent_entry_pos: Optional[Position] = None
+    symbol_table: SymbolTable = field(default_factory=SymbolTable)

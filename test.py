@@ -4,7 +4,7 @@ import os
 import subprocess
 import json
 
-from typing import NamedTuple
+from typing import NamedTuple, IO
 from difflib import unified_diff  # Rule 34 of Python: If it exists, it's in the standard library
 
 
@@ -32,7 +32,9 @@ def run_test(test: str) -> Output:
     return Output(proc.returncode, proc.stdout.decode("utf-8"), proc.stderr.decode("utf-8"))
 
 
-def run_tests(directory="tests") -> int:
+def run_tests(directory: str = "tests") -> int:
+    mypy = subprocess.Popen(["mypy", "."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(**os.environ, MYPY_FORCE_COLOR="1"))
+
     failed_tests = []
     for test in os.listdir(directory):
         json_file = f"{directory}/{test}.json"
@@ -40,7 +42,7 @@ def run_tests(directory="tests") -> int:
             continue
         if not os.path.isfile(json_file):
             print(f"WARNING: file {json_file!r} not found, skipping...")
-            print(f"NOTE: to create this file, run the `record` subcommand")
+            print("NOTE: to create this file, run the `record` subcommand")
             continue
 
         print(f"Running test {test!r}...", end="", flush=True)
@@ -58,11 +60,21 @@ def run_tests(directory="tests") -> int:
     print("TEST SUMMARY:")
     if len(failed_tests) == 0:
         print("All tests passed!")
-        return 0
     else:
         print(f"{len(failed_tests)} tests failed:")
         for test in failed_tests:
             print(f"    {test!r}")
+
+    print("Waiting on mypy...")
+    mypy.wait()
+    assert mypy.stdout is not None
+    assert mypy.stderr is not None
+    sys.stdout.buffer.write(mypy.stdout.read())
+    sys.stderr.buffer.write(mypy.stderr.read())
+
+    if mypy.returncode == 0 and len(failed_tests) == 0:
+        return 0
+    else:
         return 1
 
 
@@ -81,7 +93,7 @@ def record_tests(directory="tests") -> int:
     return 0
 
 
-def usage(program_name: str, stream: any) -> None:
+def usage(program_name: str, stream: IO[str]) -> None:
     print(
         f"""Usage: {program_name} <subcommand> [args]
 SUBCOMMANDS:

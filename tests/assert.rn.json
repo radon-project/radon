@@ -1,1 +1,1 @@
-{"code": 0, "stdout": "42\nAssertion failed: error message because condition was false\n", "stderr": ""}
+{"code": 0, "stdout": "42\nRuntimeError: Assertion failed: error message because condition was false\n", "stderr": ""}
