@@ -1,6 +1,7 @@
 from core.tokens import *
 from core.errors import *
 
+
 class Lexer:
     fn: str
     text: str

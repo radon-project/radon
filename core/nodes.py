@@ -12,10 +12,12 @@ if TYPE_CHECKING:
 @runtime_checkable
 class Node(Protocol):
     @property
-    def pos_start(self) -> Position: ...
+    def pos_start(self) -> Position:
+        ...
 
     @property
-    def pos_end(self) -> Position: ...
+    def pos_end(self) -> Position:
+        ...
 
 
 class NumberNode:

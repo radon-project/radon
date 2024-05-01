@@ -1,6 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 
+
 class BackgroundColor(Enum):
     """Background color"""
 
@@ -146,14 +147,14 @@ class Log:
         if bold:
             return f"{Style.BOLD.value}{value}"
         return value
-    
+
     @staticmethod
     def deep_purple(text: str, bold: bool = False) -> str:
         value = f"{ForegroundColor.PURPLE.value}{text}{ForegroundColor.TRANSPARENT.value}"
         if bold:
             return f"{Style.BOLD.value}{value}"
         return value
-    
+
     @staticmethod
     def light_purple(text: str, bold: bool = False) -> str:
         value = f"{ForegroundColor.LIGHTORANGE.value}{text}{ForegroundColor.TRANSPARENT.value}"

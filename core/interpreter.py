@@ -66,11 +66,15 @@ class Interpreter:
 
     def visit_NumberNode(self, node: NumberNode, context: Context) -> RTResult[Value]:
         assert isinstance(node.tok.value, int | float), "This could be a bug in the parser or the lexer"
-        return RTResult[Value]().success(Number(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end))
+        return RTResult[Value]().success(
+            Number(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end)
+        )
 
     def visit_StringNode(self, node: StringNode, context: Context) -> RTResult[Value]:
         assert isinstance(node.tok.value, str), "This could be a bug in the parser or the lexer"
-        return RTResult[Value]().success(String(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end))
+        return RTResult[Value]().success(
+            String(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end)
+        )
 
     def visit_ArrayNode(self, node: ArrayNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
@@ -160,7 +164,8 @@ class Interpreter:
                 RTError(
                     node.pos_start,
                     node.pos_end,
-                    f'{Log.light_error("Failed to finish executing script")} {Log.light_info(module_name)}\n' + error.as_string(),
+                    f'{Log.light_error("Failed to finish executing script")} {Log.light_info(module_name)}\n'
+                    + error.as_string(),
                     exec_ctx,
                 )
             )
@@ -293,7 +298,12 @@ class Interpreter:
             return res
         if not isinstance(start_value, Number):
             return res.failure(
-                RTError(node.start_value_node.pos_start, node.start_value_node.pos_end, "Start value must be a number", context)
+                RTError(
+                    node.start_value_node.pos_start,
+                    node.start_value_node.pos_end,
+                    "Start value must be a number",
+                    context,
+                )
             )
 
         end_value = res.register(self.visit(node.end_value_node, context))
@@ -301,7 +311,9 @@ class Interpreter:
             return res
         if not isinstance(end_value, Number):
             return res.failure(
-                RTError(node.end_value_node.pos_start, node.end_value_node.pos_end, "End value must be a number", context)
+                RTError(
+                    node.end_value_node.pos_start, node.end_value_node.pos_end, "End value must be a number", context
+                )
             )
 
         if node.step_value_node:
@@ -637,11 +649,7 @@ class Interpreter:
         if res.should_return():
             return res
 
-        cls = (
-            Class(class_name, ctx.symbol_table)
-            .set_context(context)
-            .set_pos(node.pos_start, node.pos_end)
-        )
+        cls = Class(class_name, ctx.symbol_table).set_context(context).set_pos(node.pos_start, node.pos_end)
         context.symbol_table.set(class_name, cls)
         return res.success(cls)
 

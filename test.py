@@ -33,7 +33,7 @@ def run_test(test: str) -> Output:
 
 
 def run_tests(directory: str = "tests") -> int:
-    mypy = subprocess.run(["mypy", "radon.py", "test.py"])
+    mypy = subprocess.run(["mypy", "."])
     if mypy.returncode != 0:
         print("ERROR: mypy failed", file=sys.stderr)
 

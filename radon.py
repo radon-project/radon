@@ -69,33 +69,30 @@ def main(argv: list[str]) -> None:
     parser.add_argument("-c", "--command", type=str, help="Command to execute as string")
     parser.add_argument("-v", "--version", help="Version info", action="store_true")
     args = parser.parse_args()
-    
+
     if args.source:
         source = pathlib.Path(args.source[0]).read_text()
-        (result, error, should_exit) = base_core.run(
-            args.source[0], source, hide_paths=args.hide_file_paths
-        )
-    
+        (result, error, should_exit) = base_core.run(args.source[0], source, hide_paths=args.hide_file_paths)
+
         if error:
             print(error.as_string())
             exit(1)
-    
+
         if should_exit:
             exit()
-    
-    
+
     elif args.command:
         (result, error, should_exit) = base_core.run("<stdin>", args.command)
-    
+
         if error:
             print(error.as_string())
-    
+
     elif args.version:
         print(base_core.__version__)
-    
+
     else:
         shell()
 
+
 if __name__ == "__main__":
     main(sys.argv[1:])
-

@@ -28,9 +28,11 @@ DIGITS = string.digits
 LETTERS = string.ascii_letters + "$_"
 VALID_IDENTIFIERS = LETTERS + DIGITS
 
+
 @dataclass
 class Position:
     """Cursor Position"""
+
     idx: int
     ln: int
     col: int
@@ -133,6 +135,7 @@ KEYWORDS = [
 
 TokenValue: TypeAlias = Optional[str | int | float]
 
+
 class Token:
     __match_args__ = "type", "value"
 
@@ -141,7 +144,9 @@ class Token:
     pos_start: Position
     pos_end: Position
 
-    def __init__(self, type_: TokenType, value: TokenValue = None, *, pos_start: Position, pos_end: Optional[Position] = None) -> None:
+    def __init__(
+        self, type_: TokenType, value: TokenValue = None, *, pos_start: Position, pos_end: Optional[Position] = None
+    ) -> None:
         self.type = type_
         self.value = value
 
@@ -155,4 +160,3 @@ class Token:
         if self.value is not None:
             return f"{self.type}:{self.value}"
         return f"{self.type}"
-

@@ -11,14 +11,17 @@ from typing import TypeVar, Optional, TYPE_CHECKING, Generator, TypeAlias, Itera
 
 if TYPE_CHECKING:
     from core.nodes import Node
+
     Self = TypeVar("Self", bound="Value")
 
 ResultTuple: TypeAlias = "tuple[None, RTError] | tuple[Value, None]"
+
 
 class Value:
     pos_start: Position
     pos_end: Position
     context: Context
+
     def __init__(self) -> None:
         self.set_pos()
         self.set_context()
@@ -151,6 +154,7 @@ class Iterator(Value):
 
 class Number(Value):
     value: int | float
+
     def __init__(self, value: int | float) -> None:
         super().__init__()
         self.value = value
@@ -286,6 +290,7 @@ class Number(Value):
 
 class Boolean(Value):
     value: bool
+
     def __init__(self, value: bool) -> None:
         super().__init__()
         self.value = value
@@ -438,7 +443,7 @@ class String(Value):
         if not isinstance(value, String):
             return None, self.illegal_operation(value)
         try:
-            self.value = self.value[:int(index.value)] + value.value + self.value[int(index.value + 1):]
+            self.value = self.value[: int(index.value)] + value.value + self.value[int(index.value + 1) :]
         except IndexError:
             return None, RTError(
                 index.pos_start,
@@ -871,8 +876,10 @@ def deradonify(value: Value) -> object:
         case _:
             assert False, f"no deradonification procedure for type {type(value)}"
 
+
 class PyObj(Value):
     """Thin wrapper around a Python object"""
+
     value: object
 
     def __init__(self, value: object) -> None:
@@ -940,7 +947,9 @@ class BaseFunction(Value):
         new_context.symbol_table = SymbolTable(self.symbol_table)
         return new_context
 
-    def check_args(self, arg_names: list[str], args: list[Value], kwargs: dict[str, Value], defaults: list[Optional[Value]]) -> RTResult[None]:
+    def check_args(
+        self, arg_names: list[str], args: list[Value], kwargs: dict[str, Value], defaults: list[Optional[Value]]
+    ) -> RTResult[None]:
         res = RTResult[None]()
 
         args_count = len(args) + len(kwargs)
@@ -1003,13 +1012,15 @@ class BaseFunction(Value):
 class BaseInstance(Value, ABC):
     parent_class: BaseClass
     symbol_table: SymbolTable
+
     def __init__(self, parent_class, symbol_table):
         super().__init__()
         self.parent_class = parent_class
         self.symbol_table = SymbolTable(symbol_table)
 
     @abstractmethod
-    def operator(self, operator: str, *args: Value) -> ResultTuple: ...
+    def operator(self, operator: str, *args: Value) -> ResultTuple:
+        ...
 
     def added_to(self, other: Value) -> ResultTuple:
         return self.operator("__add__", other)
@@ -1115,7 +1126,8 @@ class BaseClass(Value, ABC):
         self.symbol_table = symbol_table
 
     @abstractmethod
-    def get(self, name: str) -> Optional[Value]: ...
+    def get(self, name: str) -> Optional[Value]:
+        ...
 
     def dived_by(self, other: Value) -> ResultTuple:
         if not isinstance(other, String):
@@ -1128,10 +1140,12 @@ class BaseClass(Value, ABC):
         return value, None
 
     @abstractmethod
-    def create(self, args: list[Value]) -> RTResult[BaseInstance]: ...
+    def create(self, args: list[Value]) -> RTResult[BaseInstance]:
+        ...
 
     @abstractmethod
-    def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]: ...
+    def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]:
+        ...
 
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         res = RTResult[Value]()
@@ -1203,7 +1217,15 @@ class Function(BaseFunction):
     defaults: list[Optional[Value]]
     should_auto_return: bool
 
-    def __init__(self, name: Optional[str], symbol_table: Optional[SymbolTable], body_node: Node, arg_names: list[str], defaults: list[Optional[Value]], should_auto_return: bool) -> None:
+    def __init__(
+        self,
+        name: Optional[str],
+        symbol_table: Optional[SymbolTable],
+        body_node: Node,
+        arg_names: list[str],
+        defaults: list[Optional[Value]],
+        should_auto_return: bool,
+    ) -> None:
         super().__init__(name, symbol_table)
         self.body_node = body_node
         self.arg_names = arg_names
@@ -1256,4 +1278,3 @@ class Module(Value):
 
     def __repr__(self) -> str:
         return f"<module {self.name} @ {self.file_path!r}>"
-

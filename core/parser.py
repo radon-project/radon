@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
+
 class ParseResult(Generic[T]):
     """Parser Result"""
 
@@ -36,6 +37,7 @@ class ParseResult(Generic[T]):
         self.advance_count += 1
 
     U = TypeVar("U")
+
     def register(self, res: ParseResult[U]) -> Optional[U]:
         self.last_registered_advance_count = res.advance_count
         self.advance_count += res.advance_count
@@ -362,7 +364,12 @@ class Parser:
             self.advance(res)
             return res.success(
                 IncNode(
-                    var_name_tok, extra_names, qualifier, is_pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
+                    var_name_tok,
+                    extra_names,
+                    qualifier,
+                    is_pre=False,
+                    pos_start=pos_start,
+                    pos_end=op_tok.pos_end.copy(),
                 )
             )
 
@@ -370,7 +377,12 @@ class Parser:
             self.advance(res)
             return res.success(
                 DecNode(
-                    var_name_tok, extra_names, qualifier, is_pre=False, pos_start=pos_start, pos_end=op_tok.pos_end.copy()
+                    var_name_tok,
+                    extra_names,
+                    qualifier,
+                    is_pre=False,
+                    pos_start=pos_start,
+                    pos_end=op_tok.pos_end.copy(),
                 )
             )
 
@@ -698,7 +710,7 @@ class Parser:
                 node = IndexSetNode(node, index[0], value, tok.pos_start, self.current_tok.pos_end)
             elif is_slice:
                 assert node is not None
-                node = SliceGetNode(tok.pos_start, self.current_tok.pos_end, node, *index) # type: ignore
+                node = SliceGetNode(tok.pos_start, self.current_tok.pos_end, node, *index)  # type: ignore
             else:
                 assert node is not None
                 assert index[0] is not None
@@ -1153,9 +1165,7 @@ class Parser:
 
         if not self.current_tok.matches(TT_KEYWORD, "fun"):
             return res.failure(
-                InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'fun' or identifier"
-                )
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'fun' or identifier")
             )
 
         self.advance(res)
@@ -1230,9 +1240,7 @@ class Parser:
 
             if self.current_tok.type != TT_RPAREN:
                 return res.failure(
-                    InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',', ')' or '='"
-                    )
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',', ')' or '='")
                 )
         else:
             if self.current_tok.type != TT_RPAREN:
@@ -1431,7 +1439,10 @@ class Parser:
     ###################################
 
     ParseFunc: TypeAlias = Callable[[], ParseResult[Node]]
-    def bin_op(self, func_a: ParseFunc, ops: Sequence[TokenType | tuple[TokenType, str]], func_b: Optional[ParseFunc] = None) -> ParseResult[Node]:
+
+    def bin_op(
+        self, func_a: ParseFunc, ops: Sequence[TokenType | tuple[TokenType, str]], func_b: Optional[ParseFunc] = None
+    ) -> ParseResult[Node]:
         if func_b is None:
             func_b = func_a
 
@@ -1455,6 +1466,7 @@ class Parser:
 
 class RTResult(Generic[T]):
     """Runtime result"""
+
     value: Optional[T]
     error: Optional[RTError]
     func_return_value: Optional[Value]
@@ -1476,6 +1488,7 @@ class RTResult(Generic[T]):
         self.should_fallthrough = False
 
     U = TypeVar("U")
+
     def register(self, res: RTResult[U]) -> Optional[U]:
         self.error = res.error
         self.func_return_value = res.func_return_value
@@ -1568,6 +1581,7 @@ class SymbolTable:
     def set(self, name: str, value: Value, qualifier: Optional[Token] = None) -> RTResult[None]:
         class dummy:
             TT_KW = TT_KEYWORD
+
         if name in self.consts:
             return RTResult[None]().failure(
                 RTError(value.pos_start, value.pos_end, f"Cannot reassign to constant {name}", value.context)
@@ -1609,8 +1623,10 @@ class SymbolTable:
         self.statics.add(name)
         return res.success(None)
 
+
 #    def remove(self, name):
 #        del self.symbols[name]
+
 
 @dataclass
 class Context:
@@ -1618,4 +1634,3 @@ class Context:
     parent: Optional[Context] = None
     parent_entry_pos: Optional[Position] = None
     symbol_table: SymbolTable = field(default_factory=SymbolTable)
-

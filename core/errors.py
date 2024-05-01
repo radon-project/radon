@@ -46,9 +46,11 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
 
     return result.replace("\t", "")
 
+
 @dataclass
 class Error:
     """Base Error class"""
+
     pos_start: Position
     pos_end: Position
     error_name: str
@@ -103,6 +105,7 @@ class IndexError(Error):
 
 class RTError(Error):
     """Runtime Error class"""
+
     context: Context
 
     def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Context) -> None:
@@ -123,9 +126,12 @@ class RTError(Error):
         ctx = self.context
 
         while ctx:
-            result = f"  File {Log.light_info(pos.fn)}, line {Log.light_info(str(pos.ln + 1))}, in {Log.light_info(ctx.display_name)}\n" + result
-            pos = ctx.parent_entry_pos # type: ignore
-            ctx = ctx.parent # type: ignore
+            result = (
+                f"  File {Log.light_info(pos.fn)}, line {Log.light_info(str(pos.ln + 1))}, in {Log.light_info(ctx.display_name)}\n"
+                + result
+            )
+            pos = ctx.parent_entry_pos  # type: ignore
+            ctx = ctx.parent  # type: ignore
 
         return Log.light_purple("Radiation (most recent call last):\n") + result
 
@@ -140,7 +146,9 @@ class RTError(Error):
 class TryError(RTError):
     prev_error: RTError
 
-    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Context, prev_error: RTError) -> None:
+    def __init__(
+        self, pos_start: Position, pos_end: Position, details: str, context: Context, prev_error: RTError
+    ) -> None:
         super().__init__(pos_start, pos_end, details, context)
         self.prev_error = prev_error
 
@@ -158,4 +166,3 @@ class VError(RTError):
     def __init__(self, pos_start, pos_end, details, context):
         super().__init__(pos_start, pos_end, "ValueError", details)
         self.context = context
-

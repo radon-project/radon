@@ -456,9 +456,11 @@ def run(fn, text, context=None, entry_pos=None, return_result=False, hide_paths=
         return result
     return result.value, result.error, result.should_exit
 
+
 # Setting all functions to global symbol table
 def create_global_symbol_table():
     import core.builtin_classes as bic
+
     ret = SymbolTable()
     ret.set("null", Number.null())
     ret.set("false", Boolean.false())
