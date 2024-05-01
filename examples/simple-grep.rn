@@ -10,7 +10,7 @@ fun main() {
     args = parser.parse(argv[:])
 
     if args["--help"] {
-        print(parser.usage())
+        print(parser.usage(argv[0]))
         exit()
     }
 
