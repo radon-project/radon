@@ -1,0 +1,11 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  everything:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install mypy ruff
+      - run: python3 test.py full
+
+

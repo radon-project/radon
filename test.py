@@ -33,7 +33,9 @@ def run_test(test: str) -> Output:
 
 
 def run_tests(directory: str = "tests") -> int:
-    mypy = subprocess.Popen(["mypy", "."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(**os.environ, MYPY_FORCE_COLOR="1"))
+    mypy = subprocess.Popen(
+        ["mypy", "."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(**os.environ, MYPY_FORCE_COLOR="1")
+    )
 
     failed_tests = []
     for test in os.listdir(directory):
@@ -65,7 +67,9 @@ def run_tests(directory: str = "tests") -> int:
         for test in failed_tests:
             print(f"    {test!r}")
 
-    print("Waiting on mypy...")
+    print("--------------")
+    print("    mypy .    ")
+    print("--------------")
     mypy.wait()
     assert mypy.stdout is not None
     assert mypy.stderr is not None
@@ -101,6 +105,7 @@ SUBCOMMANDS:
     run            - Run tests
     record         - Record output of tests
     diff <test.rn> - Show diff between expected and actual output
+    full           - Same as `{program_name} run` + `make lint`
 """,
         file=stream,
     )
@@ -122,6 +127,42 @@ def main(argv: list[str]) -> int:
             return run_tests()
         case "record":
             return record_tests()
+        case "full":
+            env = dict(**os.environ, FORCE_COLOR="1")
+            ruff_format = subprocess.Popen(
+                ["ruff", "format", "--check", "."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+            )
+            ruff_check = subprocess.Popen(
+                ["ruff", "check", "."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+            )
+
+            test_returncode = run_tests()
+
+            format_ret = ruff_format.wait()
+            check_ret = ruff_check.wait()
+
+            print("---------------------")
+            print("ruff format --check .")
+            print("---------------------")
+            assert ruff_format.stdout is not None and ruff_format.stderr is not None
+            sys.stdout.buffer.write(ruff_format.stdout.read())
+            sys.stderr.buffer.write(ruff_format.stderr.read())
+            print("---------------------")
+            print("     ruff check .    ")
+            print("---------------------")
+            assert ruff_check.stdout is not None and ruff_check.stderr is not None
+            sys.stdout.buffer.write(ruff_check.stdout.read())
+            sys.stderr.buffer.write(ruff_check.stderr.read())
+
+            if test_returncode == 0 and format_ret == 0 and check_ret == 0:
+                print("Full test succeeded with no errors!")
+                return 0
+            else:
+                if format_ret != 0:
+                    print("ERROR: ruff format failed", file=sys.stderr)
+                if check_ret != 0:
+                    print("ERROR: ruff check failed", file=sys.stderr)
+                return 1
         case "diff":
             if len(argv) < 1:
                 usage(program_name, sys.stderr)
