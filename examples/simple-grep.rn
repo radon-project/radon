@@ -6,7 +6,7 @@ fun main() {
     parser.add_pos_opt("query", "String to query", required=true)
     parser.add_pos_opt("file", "File to query string in", required=true)
     parser.add_flag("--line-numbers", "-n", "Show line numbers")
-    parser.add_named("--max-lines", "Maximum amount of lines to show")
+    parser.add_named("--max-lines", "Maximum amount of lines to show", conversor=int)
     args = parser.parse(argv[:])
 
     if args["--help"] {
@@ -28,7 +28,7 @@ fun main() {
     }
 
     if not is_null(args["--max-lines"]) {
-        nonlocal matched_lines = matched_lines[:int(args["--max-lines"])]
+        nonlocal matched_lines = matched_lines[:args["--max-lines"]]
     }
 
     for line in matched_lines {

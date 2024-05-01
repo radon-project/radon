@@ -25,11 +25,14 @@ class Argparser {
         this.named = []
     }
 
-    fun add_pos_opt(name, desc, default_=null, required=false) {
+    fun add_pos_opt(name, desc, default_=null, required=false, conversor=null) {
         if required {
             assert is_null(default_), "Required positional arguments cannot have a default value"
         }
-        arr_append(this.pos_opts, {"name": name, "desc": desc, "default": default_, "required": required})
+        if is_null(conversor) {
+            nonlocal conversor = fun(x) -> x
+        }
+        arr_append(this.pos_opts, {"name": name, "desc": desc, "default": default_, "required": required, "conversor": conversor})
         return this
     }
 
@@ -41,10 +44,22 @@ class Argparser {
         return this
     }
 
-    fun add_named(name, desc, default_=null) {
+    fun add_named(name, desc, default_=null, conversor=null) {
         assert str_starts_with(name, "--"), "Named arguments must start with '--'"
-        arr_append(this.named, {"name": name, "desc": desc, "default": default_})
+        if is_null(conversor) {
+            nonlocal conversor = fun(x) -> x
+        }
+        arr_append(this.named, {"name": name, "desc": desc, "default": default_, "conversor": conversor})
         return this
+    }
+
+    fun get_named_conversor(name) {
+        for named in this.named {
+            if named["name"] == name {
+                return named["conversor"]
+            }
+        }
+        return null
     }
 
     fun usage(program_name) {
@@ -124,7 +139,12 @@ class Argparser {
                                 this.report_error(program_name, "missing value for flag: '"+arg+"'")
                             }
                             value = arr_pop(args, 0)
-                            parsed[arg] = value
+                            conversor = this.get_named_conversor(arg)
+                            try {
+                                parsed[arg] = conversor(value)
+                            } catch as e {
+                                this.report_error(program_name, "invalid value for flag: "+arg+"': " + str(e))
+                            }
                         }
                     }
                 } else {
@@ -142,7 +162,12 @@ class Argparser {
                     this.report_error(program_name, "unexpected positional argument: '" + arg + "'")
                 }
                 arg_name = pos_opts[pos_opts_idx]["name"]
-                parsed[arg_name] = arg
+                conversor = pos_opts[pos_opts_idx]["conversor"]
+                try {
+                    parsed[arg_name] = conversor(arg)
+                } catch as e {
+                    this.report_error(program_name, "invalid value for argument: '" + arg_name + "': " + str(e))
+                }
                 required_opts[arg_name] = false
                 nonlocal pos_opts_idx++
             }
