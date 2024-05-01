@@ -525,7 +525,7 @@ class Interpreter:
             element = res.register(it_res)
             if res.should_return() and not res.loop_should_continue and not res.loop_should_break:
                 return res
-            
+
             if res.loop_should_break:
                 break
 
