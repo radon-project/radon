@@ -751,7 +751,6 @@ class Parser:
 
         if self.current_tok.type == TT_RSQUARE:
             self.advance(res)
-            self.skip_newlines()
         else:
             elt = res.register(self.expr())
             self.skip_newlines()

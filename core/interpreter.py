@@ -523,8 +523,15 @@ class Interpreter:
 
         for it_res in it:
             element = res.register(it_res)
-            if res.should_return():
+            if res.should_return() and not res.loop_should_continue and not res.loop_should_break:
                 return res
+
+            if res.loop_should_break:
+                break
+
+            if res.loop_should_continue:
+                continue
+
             assert element is not None
 
             context.symbol_table.set(var_name, element)

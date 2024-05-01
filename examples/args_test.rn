@@ -1,21 +1,8 @@
 import Argparser
 
-parser = Argparser("Utility Tool", "A simple utility tool.")
+parser = Argparser.Argparser()
+parser.add_flag("--version", "-v", "Show version")
+parser.add_named("--output", "Output file")
+parser.add_pos_opt("filename", "File")
+print(parser.parse())
 
-# Callback function
-fun version() -> "1.0.0"
-fun author() -> "Md. Almas Ali"
-
-# Add commands
-parser.add_command("-v", "Version information", 0, version)
-parser.add_command("-a", "About author", 0, author)
-
-# Get args lists
-# print(parser.get_args())
-
-# Get help text
-# print(parser.get_help())
-
-# print(parser.get_commands())
-
-parser.parse()

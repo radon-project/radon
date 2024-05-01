@@ -449,6 +449,11 @@ class String(Value):
             )
         return self, None
 
+    def contains(self, other: Value) -> ResultTuple:
+        if not isinstance(other, String):
+            return None, self.illegal_operation(other)
+        return Boolean(other.value in self.value), None
+
     def is_true(self) -> bool:
         return len(self.value) > 0
 

@@ -82,7 +82,7 @@ class Lexer:
                 self.advance()
             elif self.current_char == "!":
                 token, error = self.make_not_equals()
-                if error is None:
+                if error is not None:
                     return [], error
                 assert isinstance(token, Token)
                 tokens.append(token)

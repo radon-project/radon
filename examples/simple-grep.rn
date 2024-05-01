@@ -1,0 +1,44 @@
+import Argparser
+
+fun main() {
+    parser = Argparser.Argparser()
+    parser.add_flag("--help", "-h", "Show this help text and exit")
+    parser.add_pos_opt("query", "String to query", required=true)
+    parser.add_pos_opt("file", "File to query string in", required=true)
+    parser.add_flag("--line-numbers", "-n", "Show line numbers")
+    parser.add_named("--max-lines", "Maximum amount of lines to show", conversor=int)
+    args = parser.parse(argv[:])
+
+    if args["--help"] {
+        print(parser.usage(argv[0]))
+        exit()
+    }
+
+    f = File(args["file"], "r")
+    lines = (String(f.read())).split("\n")
+    f.close()
+
+    matched_lines = []
+    i = 0
+    for line in lines {
+        if args["query"] in line {
+            arr_append(matched_lines, [i, line])
+        }
+        nonlocal i++
+    }
+
+    if not is_null(args["--max-lines"]) {
+        nonlocal matched_lines = matched_lines[:args["--max-lines"]]
+    }
+
+    for line in matched_lines {
+        s = line[1]
+        if args["--line-numbers"] {
+            nonlocal s = args["file"] + ":" + line[0] + ": " + s
+        }
+        print(s)
+    }
+}
+
+main()
+
