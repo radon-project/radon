@@ -14,7 +14,7 @@ class RequestsObject(BuiltInObject):
     @operator("__constructor__")
     @check([], [])
     def constructor(self):
-        return RTResult().success(None)
+        return RTResult().success(Null.null())
 
     @args(["url", "headers"], [None, HashMap({})])
     @method

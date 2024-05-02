@@ -1,20 +1,26 @@
+from __future__ import annotations
+
 from core.errors import *
 from core.datatypes import *
 from core.parser import RTResult
 from core.builtin_funcs import BuiltInFunction
 
+from typing import Callable, Any
+
 
 class BuiltInClass(BaseClass):
-    def __init__(self, name, instance_class):
+    instance_class: BuiltInObjectMeta
+
+    def __init__(self, name: str, instance_class: BuiltInObjectMeta) -> None:
         super().__init__(name, instance_class.__symbol_table__)
         self.instance_class = instance_class
 
-    def create(self, args):
+    def create(self, args: list[Value]) -> RTResult[BaseInstance]:
         inst = BuiltInInstance(self)
-        return RTResult().success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
+        return RTResult[BaseInstance]().success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
 
-    def init(self, inst, args, kwargs):
-        res = RTResult()
+    def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]:
+        res = RTResult[None]()
         if len(kwargs) > 0:
             return res.failure(
                 RTError(
@@ -24,43 +30,50 @@ class BuiltInClass(BaseClass):
                     list(kwargs.values())[0].context,
                 )
             )
-        _, error = inst.operator("__constructor__", args)
+        _, error = inst.operator("__constructor__", *args)
         if error:
             return res.failure(error)
         return res.success(None)
 
-    def get(self, name):
-        return None, self.illegal_operation(name)
+    def get(self, name: str) -> Optional[Value]:
+        return self.symbol_table.get(name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<built-in class {self.name}>"
 
 
 class BuiltInInstance(BaseInstance):
-    def __init__(self, parent_class):
+    instance_class: BuiltInObjectMeta
+
+    def __init__(self, parent_class: BuiltInClass) -> None:
         super().__init__(parent_class, parent_class.instance_class.__symbol_table__)
         self.instance_class = parent_class.instance_class
         self.symbol_table.set("this", self)
 
-    def operator(self, operator, *args):
+    def operator(self, operator: str, *args: Value) -> ResultTuple:
         try:
             op = self.instance_class.__operators__[operator]
         except KeyError:
             return None, self.illegal_operation(*args)
-        res = RTResult()
-        value = res.register(op(self, *args))
+        res = RTResult[Value]()
+        value = res.register(op(self, list(args)))
         if res.should_return():
+            assert res.error is not None
             return None, res.error
+        assert value is not None
         return value, None
 
 
 class BuiltInObjectMeta(type):
-    def __new__(cls, class_name, bases, attrs):
+    __symbol_table__: SymbolTable
+    __operators__: dict[str, Callable[[BuiltInInstance, list[Value]], RTResult[Value]]]
+
+    def __new__(cls, class_name: str, bases: tuple[type, ...], attrs: dict[str, Any]) -> BuiltInObjectMeta:
         if class_name == "BuiltInObject":
             return type.__new__(cls, class_name, bases, attrs)
 
         operators = {}
-        symbols = {}
+        symbols: dict[str, Value] = {}
         for name, value in attrs.items():
             if hasattr(value, "__operator__"):
                 operators[value.__operator__] = value
@@ -81,21 +94,26 @@ class BuiltInObject(metaclass=BuiltInObjectMeta):
 
 
 # Decorators for methods and operators
-def operator(dunder):
-    def _deco(f):
-        f.__operator__ = dunder
+C = TypeVar("C", bound=Callable)
+
+
+def operator(dunder: str) -> Callable[[C], C]:
+    def _deco(f: C) -> C:
+        f.__operator__ = dunder  # type: ignore
         return f
 
     return _deco
 
 
-def method(f):
-    f.__is_method__ = True
+def method(f: C) -> C:
+    f.__is_method__ = True  # type: ignore
     return f
 
 
 # Decorator to check argument types
-def check(types, defaults=None):
+def check(
+    types: list[type[Value]], defaults: Optional[list[Optional[Value]]] = None
+) -> Any:  # return type == "idk figure it out"
     if defaults is None:
         defaults = [None] * len(types)
 

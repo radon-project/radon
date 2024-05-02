@@ -19,7 +19,7 @@ class FileObject(BuiltInObject):
             return res.failure(
                 RTError(path.pos_start, path.pos_end, f"Could not open file {path.value}: {e}", path.context)
             )
-        return res.success(None)
+        return res.success(Null.null())
 
     @args(["count"], [Number(-1)])
     @method
