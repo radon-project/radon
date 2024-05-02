@@ -16,7 +16,7 @@ class RequestsObject(BuiltInObject):
     def constructor(self):
         return RTResult().success(None)
 
-    @args(["url", "headers"], [String, HashMap({})])
+    @args(["url", "headers"], [None, HashMap({})])
     @method
     def get(ctx):
         res = RTResult()
@@ -30,7 +30,7 @@ class RequestsObject(BuiltInObject):
         except Exception as e:
             return res.failure(RTError(url.pos_start, url.pos_end, f"Error sending GET request: {str(e)}", ctx))
 
-    @args(["url", "data", "headers"], [String, HashMap({}), HashMap({})])
+    @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
     def post(ctx):
         res = RTResult()
@@ -47,7 +47,7 @@ class RequestsObject(BuiltInObject):
         except Exception as e:
             return res.failure(RTError(url.pos_start, url.pos_end, f"Error sending POST request: {str(e)}", ctx))
 
-    @args(["url", "data", "headers"], [String, HashMap({}), HashMap({})])
+    @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
     def put(ctx):
         res = RTResult()
@@ -64,7 +64,7 @@ class RequestsObject(BuiltInObject):
         except Exception as e:
             return res.failure(RTError(url.pos_start, url.pos_end, f"Error sending PUT request: {str(e)}", ctx))
 
-    @args(["url", "headers"], [String, HashMap({})])
+    @args(["url", "headers"], [None, HashMap({})])
     @method
     def delete(ctx):
         res = RTResult()
@@ -78,7 +78,7 @@ class RequestsObject(BuiltInObject):
         except Exception as e:
             return res.failure(RTError(url.pos_start, url.pos_end, f"Error sending DELETE request: {str(e)}", ctx))
 
-    @args(["url", "data", "headers"], [String, HashMap({}), HashMap({})])
+    @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
     def patch(ctx):
         res = RTResult()
