@@ -1022,6 +1022,9 @@ class BaseInstance(Value, ABC):
     @abstractmethod
     def operator(self, operator: str, *args: Value) -> ResultTuple: ...
 
+    @abstractmethod
+    def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]: ...
+
     def added_to(self, other: Value) -> ResultTuple:
         return self.operator("__add__", other)
 
@@ -1094,6 +1097,13 @@ class BaseInstance(Value, ABC):
 class Instance(BaseInstance):
     def __init__(self, parent_class: Class) -> None:
         super().__init__(parent_class, None)
+
+    def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]:
+        method = method.copy()
+        if method.symbol_table is None:
+            method.symbol_table = SymbolTable()
+        method.symbol_table.set("this", self)
+        return RTResult[BaseFunction]().success(method)
 
     def operator(self, operator: str, *args: Value) -> ResultTuple:
         res = RTResult[Value]()

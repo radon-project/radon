@@ -4,13 +4,17 @@ from core.parser import RTResult
 from core.builtin_funcs import args
 from core.builtin_classes.base_classes import BuiltInObject, operator, check, method
 
+from typing import IO
+
 
 class FileObject(BuiltInObject):
+    file: IO[str]
+
     @operator("__constructor__")
     @check([String, String], [None, String("r")])
-    def constructor(self, path, mode):
+    def constructor(self, path: String, mode: String) -> RTResult[Value]:
         allowed_modes = [None, "r", "w", "a", "r+", "w+", "a+"]  # Allowed modes for opening files
-        res = RTResult()
+        res = RTResult[Value]()
         if mode.value not in allowed_modes:
             return res.failure(RTError(mode.pos_start, mode.pos_end, f"Invalid mode '{mode.value}'", mode.context))
         try:
@@ -23,10 +27,10 @@ class FileObject(BuiltInObject):
 
     @args(["count"], [Number(-1)])
     @method
-    def read(ctx):
-        res = RTResult()
-        self = ctx.symbol_table.get("this")
+    def read(self, ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         count = ctx.symbol_table.get("count")
+        assert count is not None
         if not isinstance(count, Number):
             return res.failure(RTError(count.pos_start, count.pos_end, "Count must be a number", count.context))
 
@@ -34,7 +38,7 @@ class FileObject(BuiltInObject):
             if count.value == -1:
                 value = self.file.read()
             else:
-                value = self.file.read(count.value)
+                value = self.file.read(int(count.value))
             return res.success(String(value))
         except OSError as e:
             return res.failure(
@@ -44,7 +48,7 @@ class FileObject(BuiltInObject):
     @args([])
     @method
     def readline(ctx):
-        res = RTResult()
+        res = RTResult[Value]()
         self = ctx.symbol_table.get("this")
         try:
             value = self.file.readline()
@@ -54,21 +58,21 @@ class FileObject(BuiltInObject):
 
     @args([])
     @method
-    def readlines(ctx):
-        res = RTResult()
-        self = ctx.symbol_table.get("this")
+    def readlines(self, ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         try:
             value = self.file.readlines()
             return res.success(Array([String(line) for line in value]))
         except OSError as e:
-            return res.failure(RTError(None, None, f"Could not read from file: {e.strerror}", None))
+            pos = Position(-1, -1, -1, "<idk>", "<idk>")
+            return res.failure(RTError(pos, pos, f"Could not read from file: {e.strerror}", ctx))
 
     @args(["data"])
     @method
-    def write(ctx):
-        res = RTResult()
-        self = ctx.symbol_table.get("this")
+    def write(self, ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         data = ctx.symbol_table.get("data")
+        assert data is not None
         if not isinstance(data, String):
             return res.failure(RTError(data.pos_start, data.pos_end, "Data must be a string", data.context))
 
@@ -82,15 +86,13 @@ class FileObject(BuiltInObject):
 
     @args([])
     @method
-    def close(ctx):
-        res = RTResult()
-        self = ctx.symbol_table.get("this")
+    def close(self, _ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         self.file.close()
         return res.success(Null.null())
 
     @args([])
     @method
-    def is_closed(ctx):
-        res = RTResult()
-        self = ctx.symbol_table.get("this")
+    def is_closed(self, _ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         return res.success(Boolean(self.file.closed))

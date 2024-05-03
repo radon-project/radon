@@ -811,10 +811,13 @@ class Interpreter:
                 RTError(node.pos_start, node.pos_end, f"Attribute '{attr_name}' does not exist", context)
             )
 
-        value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
-        if isinstance(value, BaseFunction):
-            if value.symbol_table is None:
-                value.symbol_table = SymbolTable(None)
-            value.symbol_table.set("this", orig_value)
+        if isinstance(orig_value, BaseInstance) and isinstance(value, BaseFunction):
+            value = res.register(orig_value.bind_method(value))
+            if res.should_return():
+                return res
+        else:
+            value = value.copy()
+        assert value is not None
+        value.set_pos(node.pos_start, node.pos_end).set_context(context)
 
         return res.success(value)

@@ -3,7 +3,7 @@ from __future__ import annotations
 from core.errors import *
 from core.datatypes import *
 from core.parser import RTResult
-from core.builtin_funcs import BuiltInFunction
+from core.builtin_funcs import BuiltInFunction, args
 
 from typing import Callable, Any
 
@@ -16,7 +16,7 @@ class BuiltInClass(BaseClass):
         self.instance_class = instance_class
 
     def create(self, args: list[Value]) -> RTResult[BaseInstance]:
-        inst = BuiltInInstance(self)
+        inst = BuiltInInstance(self, self.instance_class(self))
         return RTResult[BaseInstance]().success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
 
     def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]:
@@ -43,20 +43,31 @@ class BuiltInClass(BaseClass):
 
 
 class BuiltInInstance(BaseInstance):
-    instance_class: BuiltInObjectMeta
+    obj: BuiltInObject
 
-    def __init__(self, parent_class: BuiltInClass) -> None:
+    def __init__(self, parent_class: BuiltInClass, obj: BuiltInObject) -> None:
         super().__init__(parent_class, parent_class.instance_class.__symbol_table__)
-        self.instance_class = parent_class.instance_class
+        self.obj = obj
         self.symbol_table.set("this", self)
+
+    def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]:
+        assert isinstance(method, BuiltInFunction)
+        assert method.func is not None
+
+        @args(method.func.arg_names, method.func.defaults)
+        def new_func(ctx: Context) -> RTResult[Value]:
+            assert method.func is not None
+            return method.func(self.obj, ctx)
+
+        return RTResult[BaseFunction]().success(BuiltInFunction(method.name, new_func))
 
     def operator(self, operator: str, *args: Value) -> ResultTuple:
         try:
-            op = self.instance_class.__operators__[operator]
+            op = type(self.obj).__operators__[operator]
         except KeyError:
             return None, self.illegal_operation(*args)
         res = RTResult[Value]()
-        value = res.register(op(self, list(args)))
+        value = res.register(op(self.obj, list(args)))
         if res.should_return():
             assert res.error is not None
             return None, res.error
@@ -66,7 +77,7 @@ class BuiltInInstance(BaseInstance):
 
 class BuiltInObjectMeta(type):
     __symbol_table__: SymbolTable
-    __operators__: dict[str, Callable[[BuiltInInstance, list[Value]], RTResult[Value]]]
+    __operators__: dict[str, Callable[[BuiltInObject, list[Value]], RTResult[Value]]]
 
     def __new__(cls, class_name: str, bases: tuple[type, ...], attrs: dict[str, Any]) -> BuiltInObjectMeta:
         if class_name == "BuiltInObject":
@@ -90,7 +101,10 @@ class BuiltInObjectMeta(type):
 
 
 class BuiltInObject(metaclass=BuiltInObjectMeta):
-    pass
+    parent_class: BuiltInClass
+
+    def __init__(self, parent_class: BuiltInClass) -> None:
+        self.parent_class = parent_class
 
 
 # Decorators for methods and operators
@@ -128,20 +142,20 @@ def check(
             if len(args) > len(types):
                 return res.failure(
                     RTError(
-                        self.pos_start,
-                        self.pos_end,
+                        self.parent_class.pos_start,
+                        self.parent_class.pos_end,
                         f"{len(args) - len(types)} too many args passed into {full_func_name}",
-                        self.context,
+                        self.parent_class.context,
                     )
                 )
 
             if len(args) < len(types) - len(list(filter(lambda default: default is not None, defaults))):
                 return res.failure(
                     RTError(
-                        self.pos_start,
-                        self.pos_end,
+                        self.parent_class.pos_start,
+                        self.parent_class.pos_end,
                         f"{(len(types) - len(list(filter(lambda default: default is not None, defaults)))) - len(args)} too few args passed into {full_func_name}",
-                        self.context,
+                        self.parent_class.context,
                     )
                 )
 
@@ -153,10 +167,10 @@ def check(
                 if not isinstance(arg, typ):
                     return res.failure(
                         RTError(
-                            self.pos_start,
-                            self.pos_end,
+                            self.parent_class.pos_start,
+                            self.parent_class.pos_end,
                             f"Expected {typ.__name__} for argument {i} (0-based) of {full_func_name}, got {arg.__class__.__name__} instead",
-                            self.context,
+                            self.parent_class.context,
                         )
                     )
                 real_args.append(arg)

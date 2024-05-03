@@ -13,17 +13,23 @@ import urllib.parse
 class RequestsObject(BuiltInObject):
     @operator("__constructor__")
     @check([], [])
-    def constructor(self):
-        return RTResult().success(Null.null())
+    def constructor(self) -> RTResult[Value]:
+        return RTResult[Value]().success(Null.null())
 
     @args(["url", "headers"], [None, HashMap({})])
     @method
-    def get(ctx):
-        res = RTResult()
+    def get(self, ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
+        assert url is not None
+        if not isinstance(url, String):
+            return res.failure(RTError(url.pos_start, url.pos_end, "Expected String", ctx))
         headers = ctx.symbol_table.get("headers")
+        assert headers is not None
+        if not isinstance(headers, HashMap):
+            return res.failure(RTError(headers.pos_start, headers.pos_end, "Expected HashMap", ctx))
         try:
-            req = urllib.request.Request(url.value, headers=deradonify(headers))
+            req = urllib.request.Request(url.value, headers=deradonify(headers))  # type: ignore
             with urllib.request.urlopen(req) as response:
                 response_data = response.read().decode("utf-8")
             return res.success(radonify(response_data, url.pos_start, url.pos_end, url.context))
@@ -32,14 +38,25 @@ class RequestsObject(BuiltInObject):
 
     @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
-    def post(ctx):
-        res = RTResult()
+    def post(self, ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
+        assert url is not None
+        if not isinstance(url, String):
+            return res.failure(RTError(url.pos_start, url.pos_end, "Expected String", ctx))
         data = ctx.symbol_table.get("data")
+        assert data is not None
         headers = ctx.symbol_table.get("headers")
+        assert headers is not None
+        if not isinstance(data, HashMap):
+            return res.failure(RTError(data.pos_start, data.pos_end, "Expected HashMap", ctx))
+        if not isinstance(headers, HashMap):
+            return res.failure(RTError(headers.pos_start, headers.pos_end, "Expected HashMap", ctx))
         try:
             req = urllib.request.Request(
-                url.value, data=json.dumps(deradonify(data)).encode("utf-8"), headers=deradonify(headers)
+                url.value,
+                data=json.dumps(deradonify(data)).encode("utf-8"),
+                headers=deradonify(headers),  # type: ignore
             )
             with urllib.request.urlopen(req) as response:
                 response_data = response.read().decode("utf-8")
@@ -49,14 +66,24 @@ class RequestsObject(BuiltInObject):
 
     @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
-    def put(ctx):
-        res = RTResult()
+    def put(self, ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
+        assert url is not None
+        if not isinstance(url, String):
+            return res.failure(RTError(url.pos_start, url.pos_end, "Expected String", ctx))
         data = ctx.symbol_table.get("data")
+        assert data is not None
         headers = ctx.symbol_table.get("headers")
+        assert headers is not None
+        if not isinstance(headers, HashMap):
+            return res.failure(RTError(headers.pos_start, headers.pos_end, "Expected HashMap", ctx))
         try:
             req = urllib.request.Request(
-                url.value, data=json.dumps(deradonify(data)).encode("utf-8"), headers=deradonify(headers), method="PUT"
+                url.value,
+                data=json.dumps(deradonify(data)).encode("utf-8"),
+                headers=deradonify(headers),  # type: ignore
+                method="PUT",
             )
             with urllib.request.urlopen(req) as response:
                 response_data = response.read().decode("utf-8")
@@ -66,12 +93,18 @@ class RequestsObject(BuiltInObject):
 
     @args(["url", "headers"], [None, HashMap({})])
     @method
-    def delete(ctx):
-        res = RTResult()
+    def delete(self, ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
+        assert url is not None
+        if not isinstance(url, String):
+            return res.failure(RTError(url.pos_start, url.pos_end, "Expected String", ctx))
         headers = ctx.symbol_table.get("headers")
+        assert headers is not None
+        if not isinstance(headers, HashMap):
+            return res.failure(RTError(headers.pos_start, headers.pos_end, "Expected HashMap", ctx))
         try:
-            req = urllib.request.Request(url.value, headers=deradonify(headers), method="DELETE")
+            req = urllib.request.Request(url.value, headers=deradonify(headers), method="DELETE")  # type: ignore
             with urllib.request.urlopen(req) as response:
                 response_data = response.read().decode("utf-8")
             return res.success(radonify(response_data, url.pos_start, url.pos_end, url.context))
@@ -80,16 +113,23 @@ class RequestsObject(BuiltInObject):
 
     @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
-    def patch(ctx):
-        res = RTResult()
+    def patch(self, ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
+        assert url is not None
+        if not isinstance(url, String):
+            return res.failure(RTError(url.pos_start, url.pos_end, "Expected String", ctx))
         data = ctx.symbol_table.get("data")
+        assert data is not None
         headers = ctx.symbol_table.get("headers")
+        assert headers is not None
+        if not isinstance(headers, HashMap):
+            return res.failure(RTError(headers.pos_start, headers.pos_end, "Expected HashMap", ctx))
         try:
             req = urllib.request.Request(
                 url.value,
                 data=json.dumps(deradonify(data)).encode("utf-8"),
-                headers=deradonify(headers),
+                headers=deradonify(headers),  # type: ignore
                 method="PATCH",
             )
             with urllib.request.urlopen(req) as response:
