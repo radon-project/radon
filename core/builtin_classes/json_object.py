@@ -11,14 +11,15 @@ import json
 class JSONObject(BuiltInObject):
     @operator("__constructor__")
     @check([], [])
-    def constructor(self):
-        return RTResult().success(None)
+    def constructor(self) -> RTResult[Value]:
+        return RTResult[Value]().success(Null.null())
 
     @args(["radon_object"])
     @method
-    def dumps(ctx):
-        res = RTResult()
+    def dumps(self, ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         radon_object = ctx.symbol_table.get("radon_object")
+        assert radon_object is not None
         try:
             return res.success(String(json.dumps(deradonify(radon_object))))
         except Exception as e:
@@ -28,9 +29,12 @@ class JSONObject(BuiltInObject):
 
     @args(["radon_string"])
     @method
-    def loads(ctx):
-        res = RTResult()
+    def loads(self, ctx: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
         radon_string = ctx.symbol_table.get("radon_string")
+        assert radon_string is not None
+        if not isinstance(radon_string, String):
+            return res.failure(RTError(radon_string.pos_start, radon_string.pos_end, "Cannot loads a non-string", ctx))
         try:
             return res.success(
                 radonify(
