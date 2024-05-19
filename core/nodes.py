@@ -115,7 +115,7 @@ class ImportNode:
 
 class RaiseNode:
     errtype: Token
-    message: Token
+    message: Node
     pos_start: Position
     pos_end: Position
 

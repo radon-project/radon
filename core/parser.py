@@ -163,8 +163,12 @@ class Parser:
             self.advance(res)
             typ = self.current_tok
             self.advance(res)
-            err = self.current_tok
+            err = res.register(self.expr())
             self.advance(res)
+
+            if typ.type != TT_IDENTIFIER:
+                return res.failure(InvalidSyntaxError(typ.pos_start,typ.pos_end,"Invalid Error Type"))
+            
             return res.success(RaiseNode(typ,err))
 
         if self.current_tok.matches(TT_KEYWORD, "return"):

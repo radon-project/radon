@@ -122,10 +122,8 @@ class Interpreter:
 
     def visit_RaiseNode(self, node: RaiseNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        if not (node.errtype.value in ["RTError","Error","TypeError"]):
-            return res.failure(RTError(node.pos_start, node.pos_end,f"No such error type, {node.errtype.value}", node.message.value))
-        else:
-            return res.failure(Error(node.pos_start, node.pos_end, node.errtype.value, node.message.value))
+        val = res.register(self.visit(node.message, context))
+        return res.failure(Error(node.pos_start, node.pos_end, node.errtype.value, val))
 
     def visit_ImportNode(self, node: ImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
