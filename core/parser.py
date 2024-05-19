@@ -157,6 +157,16 @@ class Parser:
         res = ParseResult[Node]()
         pos_start = self.current_tok.pos_start.copy()
 
+        if self.current_tok.matches(TT_KEYWORD, "raise"):
+            # syntax
+            # raise <ErrorType> "Error Message"
+            self.advance(res)
+            typ = self.current_tok
+            self.advance(res)
+            err = self.current_tok
+            self.advance(res)
+            return res.success(RaiseNode(typ,err))
+
         if self.current_tok.matches(TT_KEYWORD, "return"):
             if not self.in_func:
                 return res.failure(
