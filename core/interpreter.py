@@ -123,7 +123,7 @@ class Interpreter:
     def visit_RaiseNode(self, node: RaiseNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         val = res.register(self.visit(node.message, context))
-        return res.failure(Error(node.pos_start, node.pos_end, node.errtype.value, val))
+        return res.failure(Error(node.pos_start, node.pos_end, node.errtype, val))
 
     def visit_ImportNode(self, node: ImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
