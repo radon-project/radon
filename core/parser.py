@@ -1541,7 +1541,7 @@ class RTResult(Generic[T]):
         self.should_fallthrough = True
         return self
 
-    def failure(self, error: RTError) -> RTResult[T]:
+    def failure(self, error: Error) -> RTResult[T]:
         self.reset()
         self.error = error
         return self
