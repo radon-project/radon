@@ -153,7 +153,7 @@ class Parser:
 
         return res.success(ArrayNode(list_statements, pos_start, self.current_tok.pos_end.copy()))
 
-    def statement(self) -> ParseResult[Node | None]:
+    def statement(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
         pos_start = self.current_tok.pos_start.copy()
 
@@ -1477,7 +1477,7 @@ class RTResult(Generic[T]):
     """Runtime result"""
 
     value: Optional[T]
-    error: Optional[RTError | Error]
+    error: Optional[RTError]
     func_return_value: Optional[Value]
     loop_should_continue: bool
     loop_should_break: bool
