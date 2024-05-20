@@ -119,7 +119,7 @@ class RaiseNode:
     pos_start: Position
     pos_end: Position
 
-    def __init__(self, errtype:Token, message: Token) -> None:
+    def __init__(self, errtype:Token, message: Node) -> None:
         self.message = message
         self.errtype = errtype
 

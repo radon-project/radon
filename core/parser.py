@@ -159,12 +159,14 @@ class Parser:
 
         if self.current_tok.matches(TT_KEYWORD, "raise"):
             # syntax
-            # raise "value"
-            # or
             # raise FunctionCall()
-            self.advance(res) # advance through `raise`
+
+            funcname = self.advance(res)
+            if funcname.type != TT_IDENTIFIER:
+                return res.failure(InvalidSyntaxError(funcname.pos_start,funcname.pos_end,f"Expected Error Function Call, got {funcname.type}"))
+            print(f"Current Token: {self.current_tok.type}: {self.current_tok.value}")
             err = res.register(self.statement())
-            return res.success(RaiseNode("RTError",err))
+            return res.success(RaiseNode(funcname,err))
 
         if self.current_tok.matches(TT_KEYWORD, "return"):
             if not self.in_func:
