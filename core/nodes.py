@@ -115,16 +115,20 @@ class ImportNode:
 
 class RaiseNode:
     errtype: Token
-    message: (Node | None)
+    message: Optional[Node]
     pos_start: Position
     pos_end: Position
 
-    def __init__(self, errtype:Token, message: (Node | None)) -> None:
+    def __init__(self, errtype:Token, message: Optional[Node]) -> None:
         self.message = message
         self.errtype = errtype
 
-        self.pos_start = self.message.pos_start
-        self.pos_end = self.message.pos_end
+        if self.message:
+            self.pos_start = self.errtype.pos_start
+            self.pos_end = self.message.pos_end
+        else:
+            self.pos_start = self.errtype.pos_start
+            self.pos_end = self.errtype.pos_end
 
 
 class BinOpNode:
