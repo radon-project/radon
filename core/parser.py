@@ -51,7 +51,7 @@ class ParseResult(Generic[T]):
             return None
         return self.register(res)
 
-    def success(self, node: T) -> ParseResult[T]:
+    def success(self, node: T) -> Optional[ParseResult[T]]:
         self.node = node
         return self
 
