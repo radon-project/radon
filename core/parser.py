@@ -164,7 +164,6 @@ class Parser:
             funcname = self.advance(res)
             if funcname.type != TT_IDENTIFIER:
                 return res.failure(InvalidSyntaxError(funcname.pos_start,funcname.pos_end,f"Expected Error Function Call, got {funcname.type}"))
-            print(f"Current Token: {self.current_tok.type}: {self.current_tok.value}")
             err = res.register(self.statement())
             return res.success(RaiseNode(funcname,err))
 
