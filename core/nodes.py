@@ -115,11 +115,11 @@ class ImportNode:
 
 class RaiseNode:
     errtype: Token
-    message: (Node | None)
+    message: Node
     pos_start: Position
     pos_end: Position
 
-    def __init__(self, errtype:Token, message: (Node | None)) -> None:
+    def __init__(self, errtype:Token, message: Node) -> None:
         self.message = message
         self.errtype = errtype
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from core.parser import RTResult, Context, SymbolTable
 from core.tokens import Position
-from core.errors import RTError
+from core.errors import RTError, Error
 
 import inspect
 from abc import ABC, abstractmethod
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
     Self = TypeVar("Self", bound="Value")
 
-ResultTuple: TypeAlias = "tuple[None, RTError] | tuple[Value, None]"
+ResultTuple: TypeAlias = "tuple[None, Error] | tuple[Value, None]"
 
 
 class Value:
