@@ -1,0 +1,12 @@
+fun ArgError(arg)
+{
+    return "Argument `"+arg+"` not found"
+}
+print("test1")
+print("test2")
+
+raise ArgError("arg1")
+raise ArgError("arg2")
+
+print("test3")
+print("test4")
