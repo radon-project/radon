@@ -60,7 +60,10 @@ class Error:
         """Return error as string"""
         result = Log.light_purple("Radiation (most recent call last):\n")
         result += f"  File {Log.light_info(self.pos_start.fn)}, line {Log.light_info(str(self.pos_start.ln + 1))}\n"
-        result += f"{Log.deep_error(self.error_name, bold=True)}: {Log.light_error(self.details)}"
+        if self.details.startswith("<function"):
+            result += f"{Log.deep_error(self.error_name, bold=True)}"
+        else:
+            result += f"{Log.deep_error(self.error_name, bold=True)}: {Log.light_error(self.details)}"
         result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
 
@@ -69,7 +72,10 @@ class Error:
         return self
 
     def __repr__(self) -> str:
-        return f"{self.error_name}: {self.details}"
+        # return f"{self.error_name}: {self.details}"
+        if not self.details.startswith("<function"):
+            return f"{self.error_name}: {self.details}"
+        return self.error_name
 
     def copy(self):
         return __class__(self.pos_start, self.pos_end, self.error_name, self.details)
