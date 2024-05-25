@@ -12,10 +12,12 @@ if TYPE_CHECKING:
 @runtime_checkable
 class Node(Protocol):
     @property
-    def pos_start(self) -> Position: ...
+    def pos_start(self) -> Position:
+        ...
 
     @property
-    def pos_end(self) -> Position: ...
+    def pos_end(self) -> Position:
+        ...
 
 
 class NumberNode:
@@ -113,13 +115,14 @@ class ImportNode:
         self.pos_start = self.module.pos_start
         self.pos_end = self.module.pos_end
 
+
 class RaiseNode:
     errtype: Token
     message: Optional[Node]
     pos_start: Position
     pos_end: Position
 
-    def __init__(self, errtype:Token, message: Optional[Node]) -> None:
+    def __init__(self, errtype: Token, message: Optional[Node]) -> None:
         self.message = message
         self.errtype = errtype
 
