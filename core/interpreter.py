@@ -120,6 +120,19 @@ class Interpreter:
             pos_end=node.pos_end,
         )
 
+    def visit_RaiseNode(self, node: RaiseNode, context: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
+
+        if node.message is not None:
+            val = res.register(self.visit(node.message, context))
+        else:
+            val = None
+
+        if res.should_return():
+            return res
+
+        return res.failure(Error(node.pos_start, node.pos_end, str(node.errtype.value), str(val)))
+
     def visit_ImportNode(self, node: ImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         exec_ctx = context

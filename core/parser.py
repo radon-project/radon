@@ -38,7 +38,7 @@ class ParseResult(Generic[T]):
 
     U = TypeVar("U")
 
-    def register(self, res: ParseResult[U]) -> Optional[U]:
+    def register(self, res):
         self.last_registered_advance_count = res.advance_count
         self.advance_count += res.advance_count
         if res.error:
@@ -153,9 +153,23 @@ class Parser:
 
         return res.success(ArrayNode(list_statements, pos_start, self.current_tok.pos_end.copy()))
 
-    def statement(self) -> ParseResult[Node]:
+    def statement(self) -> ParseResult[Optional[Node]] | ParseResult[Node]:
         res = ParseResult[Node]()
         pos_start = self.current_tok.pos_start.copy()
+
+        if self.current_tok.matches(TT_KEYWORD, "raise"):
+            # syntax
+            # raise FunctionCall()
+
+            funcname = self.advance(res)
+            if funcname.type != TT_IDENTIFIER:
+                return res.failure(
+                    InvalidSyntaxError(
+                        funcname.pos_start, funcname.pos_end, f"Expected Error Function Call, got {funcname.type}"
+                    )
+                )
+            err = res.register(self.statement())
+            return res.success(RaiseNode(funcname, err))
 
         if self.current_tok.matches(TT_KEYWORD, "return"):
             if not self.in_func:
@@ -1467,7 +1481,7 @@ class RTResult(Generic[T]):
     """Runtime result"""
 
     value: Optional[T]
-    error: Optional[RTError]
+    error: Optional[RTError | Error]
     func_return_value: Optional[Value]
     loop_should_continue: bool
     loop_should_break: bool
@@ -1531,7 +1545,7 @@ class RTResult(Generic[T]):
         self.should_fallthrough = True
         return self
 
-    def failure(self, error: RTError) -> RTResult[T]:
+    def failure(self, error: Error) -> RTResult[T]:
         self.reset()
         self.error = error
         return self
