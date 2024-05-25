@@ -1021,12 +1021,10 @@ class BaseInstance(Value, ABC):
         self.symbol_table = SymbolTable(symbol_table)
 
     @abstractmethod
-    def operator(self, operator: str, *args: Value) -> ResultTuple:
-        ...
+    def operator(self, operator: str, *args: Value) -> ResultTuple: ...
 
     @abstractmethod
-    def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]:
-        ...
+    def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]: ...
 
     def added_to(self, other: Value) -> ResultTuple:
         return self.operator("__add__", other)
@@ -1139,8 +1137,7 @@ class BaseClass(Value, ABC):
         self.symbol_table = symbol_table
 
     @abstractmethod
-    def get(self, name: str) -> Optional[Value]:
-        ...
+    def get(self, name: str) -> Optional[Value]: ...
 
     def dived_by(self, other: Value) -> ResultTuple:
         if not isinstance(other, String):
@@ -1153,12 +1150,10 @@ class BaseClass(Value, ABC):
         return value, None
 
     @abstractmethod
-    def create(self, args: list[Value]) -> RTResult[BaseInstance]:
-        ...
+    def create(self, args: list[Value]) -> RTResult[BaseInstance]: ...
 
     @abstractmethod
-    def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]:
-        ...
+    def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]: ...
 
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         res = RTResult[Value]()
