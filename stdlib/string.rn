@@ -50,6 +50,6 @@ class String {
     }
 
     # Return the length of the string
-    fun len() -> return str_len(this.value)
+    fun len() -> str_len(this.value)
     fun to_string() -> this.value
 }

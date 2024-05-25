@@ -12,14 +12,14 @@ BASE_DIR = pathlib.Path(__file__).parent.parent
 CURRENT_DIR: Optional[str] = None
 
 STDLIBS = [
-    "Argparser",
-    "Array",
-    "Colorlib",
-    "Math",
-    "System",
-    "String",
-    "Universe",  # ester egg
-    "Winlib",
+    "argparser",
+    "array",
+    "colorlib",
+    "math",
+    "system",
+    "string",
+    "universe",  # ester egg
+    "winlib",
 ]
 
 
