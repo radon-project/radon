@@ -162,7 +162,7 @@ class Parser:
             # raise FunctionCall()
 
             self.advance(res)
-            call = res.register(self.call())
+            call = res.register(self.expr())
             if res.error is not None:
                 return res
             assert call is not None
