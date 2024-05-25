@@ -121,6 +121,13 @@ class RaiseNode:
     pos_end: Position
 
 
+@dataclass
+class UnitRaiseNode:
+    func: Node
+    pos_start: Position
+    pos_end: Position
+
+
 class BinOpNode:
     left_node: Node
     op_tok: Token

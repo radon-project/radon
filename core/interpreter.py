@@ -169,6 +169,28 @@ class Interpreter:
 
         return res.failure(Error(call_node.pos_start, call_node.pos_end, errtype, msg))
 
+    def visit_UnitRaiseNode(self, node: UnitRaiseNode, context: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
+
+        func = res.register(self.visit(node.func, context))
+        if res.should_return():
+            return res
+        assert func is not None
+        func = func.copy().set_pos(node.pos_start, node.pos_end)
+
+        if isinstance(func, BaseFunction):
+            errtype = func.name
+        else:
+            errtype = repr(func)
+
+        msg_val = res.register(func.execute([], {}))
+        if res.should_return():
+            return res
+        assert msg_val is not None
+        msg = str(msg_val)
+
+        return res.failure(Error(node.pos_start, node.pos_end, errtype, msg))
+
     def visit_ImportNode(self, node: ImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         exec_ctx = context

@@ -168,9 +168,7 @@ class Parser:
             assert call is not None
 
             if not isinstance(call, CallNode):
-                return res.failure(
-                    InvalidSyntaxError(call.pos_start, call.pos_end, "Raise statement argument must be a function call")
-                )
+                return res.success(UnitRaiseNode(call, call.pos_start, call.pos_end))
             return res.success(RaiseNode(call, call.pos_start, call.pos_end))
 
         if self.current_tok.matches(TT_KEYWORD, "return"):

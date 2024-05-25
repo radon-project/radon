@@ -1,0 +1,5 @@
+
+import raise2_lib
+
+raise raise2_lib.SomeError
+

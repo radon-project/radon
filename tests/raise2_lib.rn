@@ -1,5 +1,5 @@
 
-fun SomeError(msg) {
+fun SomeError(msg = "default massage") {
     return "The massage: " + msg
 }
 
