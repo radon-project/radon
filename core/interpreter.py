@@ -165,7 +165,7 @@ class Interpreter:
         if res.should_return():
             return res
         assert msg_val is not None
-        msg = str(msg_val)
+        msg = None if isinstance(msg_val, Null) else str(msg_val)
 
         return res.failure(Error(call_node.pos_start, call_node.pos_end, errtype, msg))
 
@@ -187,7 +187,7 @@ class Interpreter:
         if res.should_return():
             return res
         assert msg_val is not None
-        msg = str(msg_val)
+        msg = None if isinstance(msg_val, Null) else str(msg_val)
 
         return res.failure(Error(node.pos_start, node.pos_end, errtype, msg))
 
