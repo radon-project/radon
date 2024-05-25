@@ -1,5 +1,5 @@
 <div align="center">
-<img src="radon.png" height=250>
+<img src="logo.png" height=250>
 
 <h1>The Radon Programming Language</h1>
 <p>A general-purpose programming language, focused on simplicity, safety and stability.</p>
@@ -81,8 +81,8 @@ radon
 │   ├── python_api.rn
 │   ├── simple.rn
 │   └── syntax.rn
+├── logo.png
 ├── Makefile
-├── radon.png
 ├── radon.py
 ├── README.md
 ├── stdlib
