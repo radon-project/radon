@@ -131,7 +131,7 @@ KEYWORDS = [
     "case",
     "default",
     "fallthrough",
-    "raise"
+    "raise",
 ]
 
 TokenValue: TypeAlias = Optional[str | int | float]

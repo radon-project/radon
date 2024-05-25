@@ -14,13 +14,16 @@ P = ParamSpec("P")
 
 
 class RadonCompatibleFunction(Protocol, Generic[P]):
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> RTResult[Value]: ...
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> RTResult[Value]:
+        ...
 
     @property
-    def arg_names(self) -> list[str]: ...
+    def arg_names(self) -> list[str]:
+        ...
 
     @property
-    def defaults(self) -> list[Optional[Value]]: ...
+    def defaults(self) -> list[Optional[Value]]:
+        ...
 
 
 # Decorator for built-in functions
