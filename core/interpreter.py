@@ -144,12 +144,9 @@ class Interpreter:
             if module_name not in STDLIBS:
                 file_extension = module_name.split("/")[-1].split(".")[-1]
                 if file_extension != "rn":
-                    return res.failure(
-                        RTError(node.pos_start, node.pos_end, "A Radon script must have a .rn extension", exec_ctx)
-                    )
+                    module_name += ".rn"
                 module_file = module_name.split("/")[-1]
                 module_path = os.path.dirname(os.path.realpath(module_name))
-                print(module_file, module_path)
 
                 global CURRENT_DIR
                 # if CURRENT_DIR is None:

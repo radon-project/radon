@@ -2,6 +2,7 @@
 # By: Md. Almas Ali
 
 import sys
+import os
 from typing import IO
 
 try:
@@ -100,7 +101,9 @@ def main(argv: list[str]) -> None:
     pos = Position(0, 0, 0, "<argv>", "<argv>")
     base_core.global_symbol_table.set("argv", base_core.radonify(argv, pos, pos, Context("<global>")))
     if source_file is not None:
-        with open(source_file, "r") as f:
+        head, tail = os.path.split(source_file)
+        os.chdir(head)
+        with open(tail, "r") as f:
             source = f.read()
         (result, error, should_exit) = base_core.run(source_file, source)
 
