@@ -38,7 +38,7 @@ class ParseResult(Generic[T]):
 
     U = TypeVar("U")
 
-    def register(self, res: ParseResult[U]) -> Optional[U]:
+    def register(self, res):
         self.last_registered_advance_count = res.advance_count
         self.advance_count += res.advance_count
         if res.error:
@@ -153,7 +153,7 @@ class Parser:
 
         return res.success(ArrayNode(list_statements, pos_start, self.current_tok.pos_end.copy()))
 
-    def statement(self) -> ParseResult[Optional[Node]]:
+    def statement(self) -> ParseResult[Optional[Node]] | ParseResult[Node]:
         res = ParseResult[Node]()
         pos_start = self.current_tok.pos_start.copy()
 
