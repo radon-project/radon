@@ -161,15 +161,17 @@ class Parser:
             # syntax
             # raise FunctionCall()
 
-            funcname = self.advance(res)
-            if funcname.type != TT_IDENTIFIER:
+            self.advance(res)
+            call = res.register(self.call())
+            if res.error is not None:
+                return res
+            assert call is not None
+
+            if not isinstance(call, CallNode):
                 return res.failure(
-                    InvalidSyntaxError(
-                        funcname.pos_start, funcname.pos_end, f"Expected Error Function Call, got {funcname.type}"
-                    )
+                    InvalidSyntaxError(call.pos_start, call.pos_end, "Raise statement argument must be a function call")
                 )
-            err = res.register(self.statement())
-            return res.success(RaiseNode(funcname, err))
+            return res.success(RaiseNode(call, call.pos_start, call.pos_end))
 
         if self.current_tok.matches(TT_KEYWORD, "return"):
             if not self.in_func:

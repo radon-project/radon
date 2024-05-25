@@ -44,6 +44,32 @@ class Interpreter:
             return res
         return res.success(value)
 
+    def call_value(self, value_to_call: Value, node: CallNode, context: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
+
+        args = []
+        for arg_node in node.arg_nodes:
+            arg = res.register(self.visit(arg_node, context))
+            if res.should_return():
+                return res
+            assert arg is not None
+            args.append(arg)
+
+        kwargs = {}
+        for kw, kwarg_node in node.kwarg_nodes.items():
+            kwarg = res.register(self.visit(kwarg_node, context))
+            if res.should_return():
+                return res
+            assert kwarg is not None
+            kwargs[kw] = kwarg
+
+        return_value = res.register(value_to_call.execute(args, kwargs))
+        if res.should_return():
+            return res
+        assert return_value is not None
+        return_value = return_value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
+        return res.success(return_value)
+
     def visit(self, node: Node, context: Context) -> RTResult[Value]:
         method_name = f"visit_{type(node).__name__}"
         method = getattr(self, method_name, self.no_visit_method)
@@ -123,15 +149,25 @@ class Interpreter:
     def visit_RaiseNode(self, node: RaiseNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
-        if node.message is not None:
-            val = res.register(self.visit(node.message, context))
-        else:
-            val = None
-
+        call_node = node.call
+        value_to_call = res.register(self.visit(call_node.node_to_call, context))
         if res.should_return():
             return res
+        assert value_to_call is not None
+        value_to_call = value_to_call.copy().set_pos(call_node.pos_start, call_node.pos_end)
 
-        return res.failure(Error(node.pos_start, node.pos_end, str(node.errtype.value), str(val)))
+        if isinstance(value_to_call, BaseFunction):
+            errtype = value_to_call.name
+        else:
+            errtype = repr(value_to_call)
+
+        msg_val = res.register(self.call_value(value_to_call, call_node, context))
+        if res.should_return():
+            return res
+        assert msg_val is not None
+        msg = str(msg_val)
+
+        return res.failure(Error(call_node.pos_start, call_node.pos_end, errtype, msg))
 
     def visit_ImportNode(self, node: ImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
@@ -452,28 +488,7 @@ class Interpreter:
         assert value_to_call is not None
         value_to_call = value_to_call.copy().set_pos(node.pos_start, node.pos_end)
 
-        args = []
-        for arg_node in node.arg_nodes:
-            arg = res.register(self.visit(arg_node, context))
-            if res.should_return():
-                return res
-            assert arg is not None
-            args.append(arg)
-
-        kwargs = {}
-        for kw, kwarg_node in node.kwarg_nodes.items():
-            kwarg = res.register(self.visit(kwarg_node, context))
-            if res.should_return():
-                return res
-            assert kwarg is not None
-            kwargs[kw] = kwarg
-
-        return_value = res.register(value_to_call.execute(args, kwargs))
-        if res.should_return():
-            return res
-        assert return_value is not None
-        return_value = return_value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
-        return res.success(return_value)
+        return self.call_value(value_to_call, node, context)
 
     def visit_ReturnNode(self, node: ReturnNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()

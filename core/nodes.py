@@ -114,22 +114,11 @@ class ImportNode:
         self.pos_end = self.module.pos_end
 
 
+@dataclass
 class RaiseNode:
-    errtype: Token
-    message: Optional[Node]
+    call: CallNode
     pos_start: Position
     pos_end: Position
-
-    def __init__(self, errtype: Token, message: Optional[Node]) -> None:
-        self.message = message
-        self.errtype = errtype
-
-        if self.message:
-            self.pos_start = self.errtype.pos_start
-            self.pos_end = self.message.pos_end
-        else:
-            self.pos_start = self.errtype.pos_start
-            self.pos_end = self.errtype.pos_end
 
 
 class BinOpNode:
