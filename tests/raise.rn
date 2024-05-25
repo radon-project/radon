@@ -1,5 +1,4 @@
-fun ArgError(arg)
-{
+fun ArgError(arg) {
     return "Argument `"+arg+"` not found"
 }
 print("test1")
