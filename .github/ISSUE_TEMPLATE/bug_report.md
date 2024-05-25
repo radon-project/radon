@@ -1,48 +1,33 @@
 ---
-name: Bug Report
-about: Create a bug report for Radon.
+name: Bug report
+about: Create a report to help us improve
+title: "[BUG]: Your unexpected behavior with Radon!"
 labels: bug
 assignees: ''
+
 ---
-<!--
-Thank you for filing a bug report! 🐛 Please provide a short summary of the bug,
-along with any information you feel relevant to replicating the bug.
--->
 
-I tried this code:
+**Describe the bug**
+A clear and concise description of what the bug is.
 
-```radon
-<code>
-```
+**To Reproduce**
+Steps to reproduce the behavior:
+1. Go to '...'
+2. Click on '....'
+3. Scroll down to '....'
+4. See error
 
-I expected to see this happen: *explanation*
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
-Instead, this happened: *explanation*
+**Screenshots or Code snippets**
+If applicable, add screenshots or code snippets to help explain your problem.
 
-### Meta
-<!--
-If you're using from source or a binary, please provide the following information.
--->
+**Desktop (please complete the following information):**
+ - OS [e.g. Windows, Mac OS, Linux]:
+ - Radon version [v0.0.1a2]:
+ - Binary config [x86, x64, x32]:
+ - Python version [If running from source]: 
 
-`radon --version`:
-```
-<version>
-```
-<!--
-Put an x to check the box [ ] to [x]
--->
-- [ ] Source
-- [ ] Binary
-
-<!--
-Paste your exceptions from terminal.
--->
-<details><summary>Backtrace</summary>
-<p>
-
-```
-<backtrace>
-```
-
-</p>
-</details>
+**Additional context**
+Add any other context about the problem here.
