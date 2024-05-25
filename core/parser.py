@@ -53,7 +53,7 @@ class ParseResult(Generic[T]):
 
     def success(self, node: T) -> ParseResult[T]:
         self.node = node
-        return ParseResult(self)
+        return self
 
     def failure(self, error: InvalidSyntaxError) -> ParseResult[T]:
         if not self.error or self.last_registered_advance_count == 0:
