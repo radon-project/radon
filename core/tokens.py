@@ -16,6 +16,7 @@ STDLIBS = [
     "array",
     "colorlib",
     "math",
+    "radiation",
     "system",
     "string",
     "universe",  # ester egg

@@ -1,0 +1,17 @@
+fun ValueError(message = null) -> message
+fun TypeError(message = null) -> message
+fun IOError(message = null) -> message
+fun MemoryError(message = null) -> message
+fun KeyError(message = null) -> message
+fun IndexError(message = null) -> message
+fun NotImplementedError(message = null) -> message
+fun AssertionError(message = null) -> message
+fun SyntaxError(message = null) -> message
+fun KeyboardInterrupt(message = null) -> message
+fun StopIteration(message = null) -> message
+fun DeprecationWarning(message = null) -> message
+fun ReferenceError(message = null) -> message
+fun BufferError(message = null) -> message
+fun ArithmeticError(message = null) -> message
+fun LogicalError(message = null) -> message
+fun RuntimeError(message = null) -> message
