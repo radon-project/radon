@@ -101,17 +101,13 @@ class VarAssignNode:
         )
 
 
+@dataclass
 class ImportNode:
     module: Token
+    name: Optional[Token]
 
     pos_start: Position
     pos_end: Position
-
-    def __init__(self, module: Token) -> None:
-        self.module = module
-
-        self.pos_start = self.module.pos_start
-        self.pos_end = self.module.pos_end
 
 
 @dataclass

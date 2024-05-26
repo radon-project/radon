@@ -1,0 +1,5 @@
+import array as a
+
+arr = a.Array(["A", "r", "r", "a", "y"])
+arr.map(print)
+

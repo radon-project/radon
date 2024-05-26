@@ -221,7 +221,6 @@ class Interpreter:
             return RTResult[Value]().failure(
                 RTError(node.pos_start, node.pos_end, f'Failed to load script "{module_name}"\n' + str(e), exec_ctx)
             )
-
         symbol_table = create_global_symbol_table()
         new_ctx = Context(module_name, context, node.pos_start)
         new_ctx.symbol_table = symbol_table
@@ -242,15 +241,13 @@ class Interpreter:
             return RTResult[Value]().success_exit(Null.null())
         assert isinstance(node.module.value, str), "this could be a bug in the parser"
         module = Module(node.module.value, module_name, symbol_table)
+
+        name = node.name.value if node.name is not None else node.module.value
+        assert isinstance(name, str)
+
         res = RTResult[Value]()
         res.register(
-            self.assign(
-                var_name=node.module.value,
-                value=module,
-                context=context,
-                pos_start=node.pos_start,
-                pos_end=node.pos_end,
-            )
+            self.assign(var_name=name, value=module, context=context, pos_start=node.pos_start, pos_end=node.pos_end)
         )
         if res.should_return():
             return res
