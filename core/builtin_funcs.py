@@ -7,6 +7,7 @@ from core.parser import Parser
 from core.lexer import *
 
 import os
+from sys import stdout
 
 from typing import Optional, Callable, Protocol, cast, Generic, ParamSpec
 
@@ -454,6 +455,34 @@ class BuiltInFunction(BaseFunction):
             return RTResult[Value]().success(Boolean(True))
         else:
             return RTResult[Value]().success(Boolean(False))
+    
+    # Shell functions
+    @args([])
+    def execute_license(self,exec_ctx:Context) -> RTResult[Value]:
+        try:
+            with open("LICENSE","r") as file:
+                text = file.read()
+        except IOError:
+            return RTResult[Value]().failure(RTError(self.pos_start,self.pos_end,"Failed to read LICENSE",exec_ctx))
+        lines = text.split('\n')
+        total_lines = len(lines)
+        current_line = 0
+        try:
+            while current_line < total_lines:
+                stdout.write("\033[H\033[J")
+                stdout.flush()
+                for i in range(30):
+                    if current_line >= total_lines:
+                        break
+                    print(lines[current_line])
+                    current_line += 1
+                if current_line < total_lines:
+                    input("--- More ---")
+        except KeyboardInterrupt:
+            stdout.write("\033[H\033[J")
+            stdout.flush()
+            return RTResult[Value]().success(Null.null())
+        return RTResult[Value]().success(Null.null())
 
 
 def run(
@@ -545,6 +574,8 @@ def create_global_symbol_table() -> SymbolTable:
     ret.set("require", BuiltInFunction("require"))
     ret.set("exit", BuiltInFunction("exit"))
     ret.set("time_now", BuiltInFunction("time_now"))
+    # Shell functions
+    ret.set("license",BuiltInFunction("license"))
     # Built-in classes
     ret.set("File", bic.BuiltInClass("File", bic.FileObject))
     ret.set("String", bic.BuiltInClass("String", bic.StringObject))
