@@ -21,6 +21,7 @@ import core as base_core
 from core.parser import Context
 from core.lexer import Position
 
+documentation_link = "https://radon-project.github.io/docs/"
 
 def start_text() -> None:
     print(
@@ -31,7 +32,7 @@ def start_text() -> None:
     print(f"\033[1;32mType \033[1;31mexit()\033[1;32m to quit the shell.\033[0m")
 
 
-documentation_link = "https://radon-project.github.io/docs/"
+
 
 
 def shell() -> None:
