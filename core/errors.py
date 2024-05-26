@@ -70,6 +70,10 @@ class Error:
         """Says it's gonna set the position, but actually does NOTHING"""
         return self
 
+    def set_context(self, context=None):
+        """Says it's gonna set the context, but actually does NOTHING"""
+        return self
+
     def __repr__(self) -> str:
         if self.details is not None:
             return f"{self.error_name}: {self.details}"
