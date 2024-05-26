@@ -1,0 +1,5 @@
+
+fun SomeError(msg = "default massage") {
+    return "The massage: " + msg
+}
+

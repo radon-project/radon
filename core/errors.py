@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from dataclasses import dataclass
 from core.colortools import Log
 
@@ -54,16 +54,15 @@ class Error:
     pos_start: Position
     pos_end: Position
     error_name: str
-    details: str
+    details: Optional[str]
 
     def as_string(self) -> str:
         """Return error as string"""
         result = Log.light_purple("Radiation (most recent call last):\n")
         result += f"  File {Log.light_info(self.pos_start.fn)}, line {Log.light_info(str(self.pos_start.ln + 1))}\n"
-        if self.details.startswith("<function"):
-            result += f"{Log.deep_error(self.error_name, bold=True)}"
-        else:
-            result += f"{Log.deep_error(self.error_name, bold=True)}: {Log.light_error(self.details)}"
+        result += f"{Log.deep_error(self.error_name, bold=True)}"
+        if self.details is not None:
+            result += f": {Log.light_error(self.details)}"
         result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
 
@@ -72,8 +71,7 @@ class Error:
         return self
 
     def __repr__(self) -> str:
-        # return f"{self.error_name}: {self.details}"
-        if not self.details.startswith("<function"):
+        if self.details is not None:
             return f"{self.error_name}: {self.details}"
         return self.error_name
 
@@ -107,14 +105,16 @@ class RTError(Error):
 
     context: Context
 
-    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Context) -> None:
+    def __init__(self, pos_start: Position, pos_end: Position, details: Optional[str], context: Context) -> None:
         super().__init__(pos_start, pos_end, "RuntimeError", details)
         self.context = context
 
     def as_string(self) -> str:
         """Return error as string"""
         result = self.generate_radiation()
-        result += f"{Log.deep_error(self.error_name, bold=True)}: {Log.light_error(self.details)}"
+        result += f"{Log.deep_error(self.error_name, bold=True)}"
+        if self.details is not None:
+            result += f": {Log.light_error(self.details)}"
         result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
 
