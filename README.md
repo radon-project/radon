@@ -142,21 +142,25 @@ var a = 10
 var b = 20
 print(a + b) # 30
 
-var c = "Hello"
-var d = "World"
+c = "Hello"
+d = "World"
 print(c + " " + d) # Hello World
 
 # Conditional statement
-if a > b {
+if a > b
+{
     print("a is greater than b")
-} elif a < b {
+}
+elif a < b {
     print("a is less than b")
-} else {
+}
+else
+{
     print("a is equal to b")
 }
 
 # For loop
-var x = 9 # Multiplication table of 9
+ x = 9 # Multiplication table of 9
 
 for i = 1 to 11 {
     print(str(x) + " X " + str(i) + " = " + str(x * i))
@@ -176,7 +180,7 @@ fun add(a, b) {
 print(add(10, 20)) # 30
 
 # Anonymous function
-var sub = fun (a, b) {
+sub = fun (a, b) {
     return a - b
 }
 
@@ -189,7 +193,7 @@ print(mul(10, 20)) # 200
 # Class definition
 class Person {
     # Constructor
-    fun Person(name, age) {
+    fun __constructor__(name, age) {
         var this.name = name
         var this.age = age
     }
@@ -204,13 +208,13 @@ class Person {
 }
 
 # Use a class
-var person = Person("Almas", 21)
-var details = "Name is : " + person.get_name() + ", Age : " + str(person.get_age())
+person = Person("Almas", 21)
+details = "Name is : " + person.get_name() + ", Age : " + str(person.get_age())
 print(details)
 
-# Include statement
-include Math # to include math library
-include "examples/simple.rn" # to use a path
+# Import statement
+import Math # to include math library
+import "examples/simple.rn" # to use a path
 
 # builtin functions
 
@@ -221,9 +225,6 @@ exit()
 
 # same as include statement
 require()
-
-# Command line arguments
-sys_args()
 
 # API methods
 pyapi(string)
