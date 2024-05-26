@@ -1,0 +1,7 @@
+import radiation
+
+if 2 != 3 {
+    raise radiation.ValueError("2 != 3")
+}
+
+print(sdf)
