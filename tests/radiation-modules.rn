@@ -1,0 +1,16 @@
+import radiation
+
+errors = radiation.errors
+
+# print(radiation.errors[0])
+
+# print(errors[0]("ValueError: " + "This is a test error message"))
+
+assert arr_len(errors) == 17, "Error length is not 17"
+
+try {
+    raise errors[1]("This is error message!")
+}
+catch as err {
+    print(err)
+}

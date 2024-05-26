@@ -31,7 +31,7 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
         col_start = pos_start.col if i == 0 else 0
         col_end = pos_end.col if i == line_count - 1 else len(line) - 1
 
-        col_start_color = col_start + 1
+        col_start_color = col_start  # + 1
         col_end_color = col_end + 1
 
         # Append to result
@@ -68,6 +68,10 @@ class Error:
 
     def set_pos(self, pos_start=None, pos_end=None):
         """Says it's gonna set the position, but actually does NOTHING"""
+        return self
+
+    def set_context(self, context=None):
+        """Says it's gonna set the context, but actually does NOTHING"""
         return self
 
     def __repr__(self) -> str:
