@@ -62,9 +62,10 @@ def shell() -> None:
 def usage(program_name: str, stream: IO[str]) -> None:
     print(
         f"Usage: {program_name} [--source | -s] [--command | -c] [source_file] [--version | -v] [--help | -h]",
-        file=stream)
+        file=stream,
+    )
     print(
-        '''
+        """
 Options and arguments:
     --source | -s    Run a source file
     --command | -c   Run a command
@@ -80,7 +81,7 @@ Example:
     radon --help
 
 The Radon Programming Language.
-        '''
+        """
     )
 
 
