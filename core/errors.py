@@ -31,7 +31,7 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
         col_start = pos_start.col if i == 0 else 0
         col_end = pos_end.col if i == line_count - 1 else len(line) - 1
 
-        col_start_color = col_start + 1
+        col_start_color = col_start #+ 1
         col_end_color = col_end + 1
 
         # Append to result
