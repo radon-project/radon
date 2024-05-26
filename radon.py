@@ -62,7 +62,25 @@ def shell() -> None:
 def usage(program_name: str, stream: IO[str]) -> None:
     print(
         f"Usage: {program_name} [--source | -s] [--command | -c] [source_file] [--version | -v] [--help | -h]",
-        file=stream,
+        file=stream)
+    print(
+        '''
+Options and arguments:
+    --source | -s    Run a source file
+    --command | -c   Run a command
+    --version | -v   Print the version
+    --help | -h      Print this help message
+
+    If no arguments are provided, the program will run in shell mode.
+
+Example:
+    radon --source source_file.rn
+    radon --command 'print("Hello, World!")'
+    radon --version
+    radon --help
+
+The Radon Programming Language.
+        '''
     )
 
 
