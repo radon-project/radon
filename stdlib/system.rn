@@ -1,20 +1,8 @@
 class System {
     fun __constructor__() {
-        fun get_name(os_name) {
-            if os_name == "nt" {
-                return "Windows"
-            } else if os_name == "posix" {
-                return "POSIX"
-            } else if os_name == "java" {
-                return "JVM"
-            } else {
-                return "unknown"
-            }
-        }
         ns = {}
-        pyapi("import os; import sys; os_name = os.name; platform = sys.platform", ns)
-        os_name = ns["os_name"];
-        this.name = get_name(os_name)
+        pyapi("import platform; import sys; os_name = platform.system(); platform = sys.platform", ns)
+        this.name = ns["os_name"]
         this.platform = ns["platform"]
         this.version = "1.0"
     }
