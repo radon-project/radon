@@ -490,7 +490,7 @@ class BuiltInFunction(BaseFunction):
 
     @args([])
     def execute_credits(self, exec_ctx: Context) -> RTResult[Value]:
-        print("Project by Md. Almas Ali")
+        print("Project by Md. Almas Ali (github.com/Almas-Ali)")
         print("Contributors:\n\tangelcaru (github.com/angelcaru)\n\tVardan2009 (github.com/Vardan2009)")
         return RTResult[Value]().success(Null.null())
 
