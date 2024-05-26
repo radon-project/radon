@@ -1,3 +1,5 @@
+# All radiation built-in errors are defined here.
+
 fun ValueError(message = null) -> message
 fun TypeError(message = null) -> message
 fun IOError(message = null) -> message
@@ -15,3 +17,24 @@ fun BufferError(message = null) -> message
 fun ArithmeticError(message = null) -> message
 fun LogicalError(message = null) -> message
 fun RuntimeError(message = null) -> message
+
+# List of all errors
+errors = [
+    ValueError,
+    TypeError,
+    IOError,
+    MemoryError,
+    KeyError,
+    IndexError,
+    NotImplementedError,
+    AssertionError,
+    SyntaxError,
+    KeyboardInterrupt,
+    StopIteration,
+    DeprecationWarning,
+    ReferenceError,
+    BufferError,
+    ArithmeticError,
+    LogicalError,
+    RuntimeError
+]
