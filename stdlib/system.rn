@@ -11,9 +11,11 @@ class System {
                 return "unknown"
             }
         }
-        os_name = pyapi("import os; output = os.name")
+        ns = {}
+        pyapi("import os; import sys; os_name = os.name; platform = sys.platform", ns)
+        os_name = ns["os_name"];
         this.name = get_name(os_name)
-        this.platform = pyapi("import sys; output = sys.platform")
+        this.platform = ns["platform"]
         this.version = "1.0"
     }
     fun getInfo() {
