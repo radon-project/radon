@@ -483,6 +483,12 @@ class BuiltInFunction(BaseFunction):
             stdout.flush()
             return RTResult[Value]().success(Null.null())
         return RTResult[Value]().success(Null.null())
+    
+    @args([])
+    def execute_credits(self,exec_ctx:Context) -> RTResult[Value]:
+        print("Project by Md. Almas Ali")
+        print("Contributors:\n\tangelcaru (github.com/angelcaru)\n\tVardan2009 (github.com/Vardan2009)")
+        return RTResult[Value]().success(Null.null())
 
 
 def run(
@@ -576,6 +582,7 @@ def create_global_symbol_table() -> SymbolTable:
     ret.set("time_now", BuiltInFunction("time_now"))
     # Shell functions
     ret.set("license",BuiltInFunction("license"))
+    ret.set("credits",BuiltInFunction("credits"))
     # Built-in classes
     ret.set("File", bic.BuiltInClass("File", bic.FileObject))
     ret.set("String", bic.BuiltInClass("String", bic.StringObject))
