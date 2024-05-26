@@ -467,17 +467,21 @@ class BuiltInFunction(BaseFunction):
         lines = text.split("\n")
         total_lines = len(lines)
         current_line = 0
+        for _ in range(20):
+            if current_line >= total_lines:
+                break
+            print(lines[current_line])
+            current_line += 1
         try:
             while current_line < total_lines:
-                stdout.write("\033[H\033[J")
-                stdout.flush()
-                for i in range(30):
-                    if current_line >= total_lines:
-                        break
-                    print(lines[current_line])
-                    current_line += 1
+                if current_line >= total_lines:
+                    break
+                print(lines[current_line])
+                current_line += 1
                 if current_line < total_lines:
-                    input("--- More ---")
+                    input(f"--- More --- (Line {current_line} of {total_lines})")
+                    stdout.write("\033[F\033[K")  # go up one line and erase that line
+                    stdout.flush()  # flush output stream
         except KeyboardInterrupt:
             stdout.write("\033[H\033[J")
             stdout.flush()
