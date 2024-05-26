@@ -112,7 +112,9 @@ class RTError(Error):
     def as_string(self) -> str:
         """Return error as string"""
         result = self.generate_radiation()
-        result += super().as_string()
+        result += f"{Log.deep_error(self.error_name, bold=True)}"
+        if self.details is not None:
+            result += f": {Log.light_error(self.details)}"
         result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
 
