@@ -250,7 +250,21 @@ class Parser:
             module = self.current_tok
             self.advance(res)
 
-            return res.success(ImportNode(module))
+            if self.current_tok.matches(TT_KEYWORD, "as"):
+                self.advance(res)
+                if self.current_tok.type != TT_IDENTIFIER:
+                    return res.failure(
+                        InvalidSyntaxError(
+                            self.current_tok.pos_start,
+                            self.current_tok.pos_end,
+                            "Expected string or identifier as imported module",
+                        )
+                    )
+                name = self.current_tok
+                self.advance(res)
+                return res.success(ImportNode(module, name, module.pos_start, name.pos_end))
+
+            return res.success(ImportNode(module, None, module.pos_start, module.pos_end))
 
         expr = res.register(self.expr())
         if res.error:
