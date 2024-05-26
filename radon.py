@@ -23,6 +23,7 @@ from core.lexer import Position
 
 documentation_link = "https://radon-project.github.io/docs/"
 
+
 def start_text() -> None:
     print(
         f"\033[1;34mRadon {base_core.__version__} on {platform.machine()} {platform.system()} ({sys.platform})\033[0m"
@@ -30,9 +31,6 @@ def start_text() -> None:
     print(f"\033[1;33mDocumentation:\033[0m {documentation_link}")
     print("\033[1;32mType \033[1;31mlicense()\033[1;32m for more info\033[0m")
     print("\033[1;32mType \033[1;31mexit()\033[1;32m to quit the shell.\033[0m")
-
-
-
 
 
 def shell() -> None:
