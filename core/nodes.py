@@ -314,6 +314,12 @@ class FallthroughNode:
 
 
 @dataclass
+class FalloutNode:
+    pos_start: Position
+    pos_end: Position
+
+
+@dataclass
 class TryNode:
     try_block: Node
     exc_iden: Token

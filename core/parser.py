@@ -171,6 +171,18 @@ class Parser:
                 return res.success(UnitRaiseNode(call, call.pos_start, call.pos_end))
             return res.success(RaiseNode(call, call.pos_start, call.pos_end))
 
+        if self.current_tok.matches(TT_KEYWORD, "fallout"):
+            if not self.in_case:
+                return res.failure(
+                    InvalidSyntaxError(
+                        self.current_tok.pos_start,
+                        self.current_tok.pos_end,
+                        "Fallout statement must be inside a switch-case statement",
+                    )
+                )
+            self.advance(res)
+            return res.success(FalloutNode(pos_start, self.current_tok.pos_start.copy()))
+
         if self.current_tok.matches(TT_KEYWORD, "return"):
             if not self.in_func:
                 return res.failure(
@@ -1501,6 +1513,7 @@ class RTResult(Generic[T]):
     loop_should_break: bool
     should_exit: bool
     should_fallthrough: bool
+    should_fallout: bool
 
     def __init__(self) -> None:
         self.reset()
@@ -1513,6 +1526,7 @@ class RTResult(Generic[T]):
         self.loop_should_break = False
         self.should_exit = False
         self.should_fallthrough = False
+        self.should_fallout = False
 
     U = TypeVar("U")
 
@@ -1523,6 +1537,7 @@ class RTResult(Generic[T]):
         self.loop_should_break = res.loop_should_break
         self.should_exit = res.should_exit
         self.should_fallthrough = res.should_fallthrough
+        self.should_fallout = res.should_fallout
         return res.value
 
     def success(self, value: T) -> RTResult[T]:
@@ -1557,6 +1572,10 @@ class RTResult(Generic[T]):
         # No `self.reset()` because this is meant to be used in conjunction with other methods
         # e.g. `res.success(Null.null()).fallthrough()`
         self.should_fallthrough = True
+        return self
+
+    def fallout(self) -> RTResult[T]:
+        self.should_fallout = True
         return self
 
     def failure(self, error: Error) -> RTResult[T]:
