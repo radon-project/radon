@@ -133,6 +133,7 @@ KEYWORDS = [
     "default",
     "fallthrough",
     "raise",
+    "fallout",
 ]
 
 TokenValue: TypeAlias = Optional[str | int | float]

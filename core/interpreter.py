@@ -797,6 +797,7 @@ class Interpreter:
         assert subject is not None
 
         should_continue = False
+        fallout = False
         for expr, body in node.cases:
             if not should_continue:
                 value = res.register(self.visit(expr, context))
@@ -814,6 +815,14 @@ class Interpreter:
                 if res.should_return():
                     return res
 
+                if res.should_fallout:
+                    should_continue = True
+                    fallout = True
+                    continue
+
+                if fallout:
+                    continue
+
                 if res.should_fallthrough:
                     should_continue = True
                     continue
@@ -829,6 +838,9 @@ class Interpreter:
 
     def visit_FallthroughNode(self, node: FallthroughNode, context: Context) -> RTResult[Value]:
         return RTResult[Value]().success(Null.null()).fallthrough()
+
+    def visit_FalloutNode(self, node: FalloutNode, context: Context) -> RTResult[Value]:
+        return RTResult[Value]().success(Null.null()).fallout()
 
     def visit_AttrAccessNode(self, node: AttrAccessNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()

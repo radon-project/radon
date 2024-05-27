@@ -1,0 +1,10 @@
+switch 44 {
+    case 42 -> print("42")
+    case 43 -> print("43")
+    case 44 -> fallout
+    case 45 -> print("45")
+    case 46 -> print("46")
+    case 47 -> print("47")
+    case 48 -> print("48")
+    default -> print("default")
+}
