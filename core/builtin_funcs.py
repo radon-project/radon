@@ -112,7 +112,7 @@ class BuiltInFunction(BaseFunction):
                 return RTResult[Value]().success(Number(ret))
             raise TypeError()
         except TypeError:
-            return RTResult[Value]().failure(Error(self.pos_start, self.pos_end, "TypeError", "Object has no len()"))
+            return RTResult[Value]().failure(Error(self.pos_start, self.pos_end, "TypeError", f"Object of type \"{val.__class__.__name__}\" has no len()"))
 
     @args(["value"])
     def execute_input(self, exec_ctx: Context) -> RTResult[Value]:
