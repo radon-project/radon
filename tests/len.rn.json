@@ -1,0 +1,1 @@
+{"code": 0, "stdout": "10\n4\n3\n2\n1\n0\nTypeError: Object of type \"Number\" has no len()\n", "stderr": ""}
