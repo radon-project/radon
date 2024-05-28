@@ -110,7 +110,7 @@ class BuiltInFunction(BaseFunction):
                 else:
                     raise TypeError()
                 return RTResult[Value]().success(Number(ret))
-            return TypeError()
+            raise TypeError()
         except TypeError:
             return RTResult[Value]().failure(Error(self.pos_start, self.pos_end, "TypeError", "Object has no len()"))
 
