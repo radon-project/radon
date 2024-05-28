@@ -134,8 +134,8 @@ class Iterator(Value):
         super().__init__()
         self.it = generator
 
-    def __len__(self):
-        return len(self.it)
+    def __len__(self) -> int:
+        return len(list(self.it))
 
     def iter(self) -> Iterator:
         return self
@@ -336,6 +336,9 @@ class Boolean(Value):
 
     def is_true(self) -> bool:
         return self.value
+
+    def __len__(self) -> int:
+        return 1 if self.value else 0
 
     def __str__(self) -> str:
         return "true" if self.value else "false"
@@ -628,7 +631,7 @@ class Array(Value):
         return self, None
 
     def contains(self, value: Value) -> ResultTuple:
-        ret = Boolean.false()
+        ret: Boolean = Boolean.false()
         for val in self.elements:
             cmp, err = val.get_comparison_eq(value)
             if err is not None:
@@ -643,21 +646,21 @@ class Array(Value):
         return len(self.elements) > 0
 
     def copy(self) -> Array:
-        copy = Array(self.elements)
+        copy: Array = Array(self.elements)
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__repr__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'[{", ".join(repr(x) for x in self.elements)}]'
 
     def __iter__(self):
         return iter(self.elements)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> Value:
         return self.elements[index]
 
     def __len__(self):
@@ -757,6 +760,9 @@ class HashMap(Value):
                 return Boolean.true(), None
 
         return Boolean.false(), None
+
+    def __len__(self) -> int:
+        return len(self.values)
 
     def copy(self) -> HashMap:
         copy = HashMap(self.values)
