@@ -20,15 +20,9 @@ test(5)
 test(4)
 
 print("---------------")
-try {
-    switch 69 {
-        case 1 {
-            print("unreachable")
-        }
-    }
-    print("unreachable")
-} catch as e {
-    print(e)
+switch 69 {
+    case 1 -> print("unreachable")
+    default -> print("no cases matched")
 }
 print("---------------")
 

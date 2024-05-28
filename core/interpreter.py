@@ -834,7 +834,8 @@ class Interpreter:
             if res.should_return():
                 return res
             return res.success(Null.null())
-        return res.failure(RTError(node.pos_start, node.subject_node.pos_end, "No cases matched", context))
+
+        return res.success(Null.null())
 
     def visit_FallthroughNode(self, node: FallthroughNode, context: Context) -> RTResult[Value]:
         return RTResult[Value]().success(Null.null()).fallthrough()
