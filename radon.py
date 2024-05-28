@@ -133,7 +133,8 @@ def main(argv: list[str]) -> None:
     base_core.global_symbol_table.set("argv", base_core.radonify(argv, pos, pos, Context("<global>")))
     if source_file is not None:
         head, tail = os.path.split(source_file)
-        os.chdir(head)
+        if head != "":
+            os.chdir(head)
         with open(tail, "r") as f:
             source = f.read()
         (result, error, should_exit) = base_core.run(source_file, source)

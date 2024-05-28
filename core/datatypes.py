@@ -1270,7 +1270,12 @@ class Function(BaseFunction):
         if res.should_return() and res.func_return_value is None:
             return res
 
-        ret_value = (value if self.should_auto_return else None) or res.func_return_value or Null.null()
+        if self.should_auto_return:
+            ret_value = value
+        else:
+            ret_value = res.func_return_value
+        if ret_value is None:
+            ret_value = Null.null()
         return res.success(ret_value)
 
     def copy(self) -> Function:
