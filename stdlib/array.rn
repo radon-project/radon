@@ -6,7 +6,7 @@ class Array {
     fun map(func) {
         new_elements = []
 
-        for i = 0 to this.len() {
+        for i = 0 to this.__len__() {
             arr_append(new_elements, func(arr_get(this.list, i)))
         }
 
