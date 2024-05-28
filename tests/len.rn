@@ -10,3 +10,12 @@ class Test
 print(len(Test())) # 10
 print(len("test")) # 4
 print(len([1,2,3])) # 3
+print(len({"some": 123, "this": "ok"}))
+print(len(true))
+print(len(false))
+
+try {
+    print(len(234))
+} catch as err {
+    print(err) # TypeError
+}
