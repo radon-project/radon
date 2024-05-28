@@ -1586,8 +1586,8 @@ class RTResult(Generic[T]):
     def should_return(self) -> bool:
         # Note: this will allow you to continue and break outside the current function
         return bool(
-            self.error
-            or self.func_return_value
+            self.error is not None
+            or self.func_return_value is not None
             or self.loop_should_continue
             or self.loop_should_break
             or self.should_exit
