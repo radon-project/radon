@@ -22,7 +22,7 @@ class Array {
         return (this.list)[start:end]
     }
     
-    fun len() -> arr_len(this.list)
+    fun __len__() -> arr_len(this.list)
     fun is_empty() -> this.list == []
     fun to_string() -> str(this.list)
     fun is_array() -> true

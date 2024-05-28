@@ -97,6 +97,15 @@ class BuiltInFunction(BaseFunction):
     @args(["value"])
     def execute_print_ret(self, exec_ctx: Context) -> RTResult[Value]:
         return RTResult[Value]().success(String(str(exec_ctx.symbol_table.get("value"))))
+    
+    @args(["value"])
+    def execute_len(self,exec_ctx: Context) -> RTResult[Value]:
+        val = exec_ctx.symbol_table.get("value")
+        try:
+            ret = int(len(val))
+            return RTResult[Value]().success(Number(ret))
+        except TypeError:
+            return RTResult[Value]().failure(Error(self.pos_start,self.pos_end,"TypeError","Object has no len()"))
 
     @args(["value"])
     def execute_input(self, exec_ctx: Context) -> RTResult[Value]:
@@ -552,6 +561,7 @@ def create_global_symbol_table() -> SymbolTable:
     ret.set("cls", BuiltInFunction("clear"))
     ret.set("require", BuiltInFunction("require"))
     ret.set("exit", BuiltInFunction("exit"))
+    ret.set("len",BuiltInFunction("len"))
     # Datatype validator methods
     ret.set("is_num", BuiltInFunction("is_num"))
     ret.set("is_int", BuiltInFunction("is_int"))

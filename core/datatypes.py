@@ -133,6 +133,8 @@ class Iterator(Value):
     def __init__(self, generator: Generator[RTResult[Value], None, None]) -> None:
         super().__init__()
         self.it = generator
+    
+    def __len__(self): return len(self.it)
 
     def iter(self) -> Iterator:
         return self
@@ -1098,6 +1100,12 @@ class BaseInstance(Value, ABC):
 class Instance(BaseInstance):
     def __init__(self, parent_class: Class) -> None:
         super().__init__(parent_class, None)
+
+    def __len__(self):
+        try:
+            return self.operator("__len__")[0].value
+        except AttributeError:
+            return Null.null()
 
     def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]:
         method = method.copy()
