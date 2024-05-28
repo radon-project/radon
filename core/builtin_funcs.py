@@ -102,9 +102,11 @@ class BuiltInFunction(BaseFunction):
     def execute_len(self, exec_ctx: Context) -> RTResult[Value]:
         val = exec_ctx.symbol_table.get("value")
         try:
-            if val is not None and not val.__class__ is Value:
+            if val is not None and val.__class__ is not Value:
                 if hasattr(val, "__len__"):
                     ret = int(val.__len__())
+                elif hasattr(val, "__exec__len"):
+                    ret = int(val.__exec__len())
                 else:
                     raise TypeError()
                 return RTResult[Value]().success(Number(ret))

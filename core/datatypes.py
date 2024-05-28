@@ -1102,7 +1102,7 @@ class Instance(BaseInstance):
     def __init__(self, parent_class: Class) -> None:
         super().__init__(parent_class, None)
 
-    def __len__(self):
+    def __exec__len(self):
         try:
             return self.operator("__len__")[0].value
         except AttributeError:
