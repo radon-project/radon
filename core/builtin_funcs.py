@@ -105,12 +105,11 @@ class BuiltInFunction(BaseFunction):
             if val is not None and val.__class__ is not Value:
                 if hasattr(val, "__len__"):
                     ret = int(val.__len__())
-                elif hasattr(val, "__exec__len"):
-                    ret = int(val.__exec__len())
+                elif hasattr(val, "__exec_len__"):
+                    ret = int(val.__exec_len__())
                 else:
                     raise TypeError()
                 return RTResult[Value]().success(Number(ret))
-            raise TypeError()
         except TypeError:
             return RTResult[Value]().failure(Error(self.pos_start, self.pos_end, "TypeError", "Object has no len()"))
 

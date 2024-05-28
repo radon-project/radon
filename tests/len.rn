@@ -1,0 +1,12 @@
+class Test
+{
+    fun __constructor__(){};
+    fun __len__()
+    {
+        return 10
+    }
+}
+
+print(len(Test())) # 10
+print(len("test")) # 4
+print(len([1,2,3])) # 3
