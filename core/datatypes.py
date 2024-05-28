@@ -133,8 +133,9 @@ class Iterator(Value):
     def __init__(self, generator: Generator[RTResult[Value], None, None]) -> None:
         super().__init__()
         self.it = generator
-    
-    def __len__(self): return len(self.it)
+
+    def __len__(self):
+        return len(self.it)
 
     def iter(self) -> Iterator:
         return self
