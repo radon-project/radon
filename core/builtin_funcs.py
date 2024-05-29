@@ -122,6 +122,14 @@ class BuiltInFunction(BaseFunction):
     def execute_input(self, exec_ctx: Context) -> RTResult[Value]:
         text = input(str(exec_ctx.symbol_table.get("value")))
         return RTResult[Value]().success(String(text))
+    
+    @args(["obj"])
+    def execute_help(self, exec_ctx: Context) -> RTResult[Value]:
+        obj = exec_ctx.symbol_table.get("obj")
+        if obj is None:
+            return RTResult[Value]().failure(Error(self.pos_start, self.pos_end, "TypeError", 'Argument is null'))
+        print(obj.__help_repr__())
+        return RTResult[Value]().success(obj)
 
     @args([])
     def execute_input_int(self, exec_ctx: Context) -> RTResult[Value]:
@@ -608,6 +616,7 @@ def create_global_symbol_table() -> SymbolTable:
     # Shell functions
     ret.set("license", BuiltInFunction("license"))
     ret.set("credits", BuiltInFunction("credits"))
+    ret.set("help", BuiltInFunction("help"))
     # Built-in classes
     ret.set("File", bic.BuiltInClass("File", bic.FileObject))
     ret.set("String", bic.BuiltInClass("String", bic.StringObject))
