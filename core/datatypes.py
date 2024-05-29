@@ -110,6 +110,12 @@ class Value:
 
     def is_true(self) -> bool:
         return False
+    
+    # Help text for help() in radon
+    def __help_repr__(self) -> str:
+        return """
+This data type help is not implemented yet
+"""
 
     def illegal_operation(self, *others: Value) -> RTError:
         if len(others) == 0:
@@ -148,6 +154,13 @@ class Iterator(Value):
 
     def __str__(self) -> str:
         return "<iterator>"
+
+    def __help_repr__(self) -> str:
+        return """
+Iterator
+
+An Iterator is an object that enables traversal over a collection, one element at a time.
+"""
 
     def __repr__(self) -> str:
         return str(self)
@@ -279,6 +292,22 @@ class Number(Value):
 
     def __str__(self) -> str:
         return str(self.value)
+    
+    def __help_repr__(self) -> str:
+        return """
+Number
+
+A Number represents a numeric value. It can be an integer, float, or other numeric type.
+
+Operations:
+    +, -, *, /    -> Basic arithmetic operations.
+    //, %         -> Integer division and modulus.
+    ^            -> Exponentiation.
+    math.factorial() -> Gets the factorial of a number (standard math library)
+    str()    -> Converts the number to its string representation.
+
+Example: 25
+"""
 
     def __repr__(self) -> str:
         return str(self.value)
@@ -345,6 +374,19 @@ class Boolean(Value):
 
     def __repr__(self) -> str:
         return "true" if self.value else "false"
+    
+    def __help_repr__(self) -> str:
+        return """
+Boolean
+
+A Boolean represents a truth value: True or False.
+
+Operations:
+    and, or, not   -> Logical operations.
+    ==, !=         -> Equality and inequality checks.
+
+Example: true
+"""
 
     @classmethod
     def true(cls) -> Boolean:
@@ -480,6 +522,22 @@ class String(Value):
 
     def __repr__(self) -> str:
         return f'"{self.value}"'
+    
+    def __help_repr__(self) -> str:
+        return """
+String
+
+A String is a sequence of characters.
+
+Methods:
+    len(str)       -> Returns the length of the string.
+
+String standard library methods:
+    find(str)   -> Find a character in a string and return its index (-1 if not found)
+    to_int()    -> Magic method to convert string to int if possible
+
+Example: "Hello World!"
+"""
 
     def __iter__(self) -> PyIterator[str]:
         return iter(self.value)
@@ -656,6 +714,29 @@ class Array(Value):
 
     def __repr__(self) -> str:
         return f'[{", ".join(repr(x) for x in self.elements)}]'
+    
+    def __help_repr__(self) -> str:
+        return """
+Array
+
+An Array is an ordered collection of elements.
+
+Methods:
+    len(arr)       -> Returns the number of elements in the array.
+
+Array standard library methods:
+    map(func)      -> Map an array with a function
+    append(item)   -> Append an element from the right
+    pop(index)     -> Removes and returns the last element of the array.
+    extend(arr)    -> Extend by another array
+    find(element)  -> Get the index of an element in the array (-1 if not found)
+
+    is_empty()     -> Returns boolean indicating if the array is empty or not
+    to_string()    -> Convert to string
+    is_array()     -> returns true
+
+Example: [1,2,3,true,"Hello World!"]
+"""
 
     def __iter__(self):
         return iter(self.elements)
@@ -772,6 +853,15 @@ class HashMap(Value):
 
     def __str__(self) -> str:
         return self.__repr__()
+    
+    def __help_repr__(self) -> str:
+        return """
+HashMap
+
+A HashMap is a collection of key-value pairs.
+
+Example: {"key":"value"}
+"""
 
     def __repr__(self) -> str:
         __val = ", ".join([f"{repr(k)}: {repr(v)}" for k, v in self.values.items()])
