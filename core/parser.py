@@ -1300,7 +1300,9 @@ class Parser:
                 return res
             assert body is not None
 
-            return res.success(FuncDefNode(var_name_tok, arg_name_toks, defaults, body, True, static=static))
+            return res.success(
+                FuncDefNode(var_name_tok, arg_name_toks, defaults, body, True, static=static, desc="[No Description]")
+            )
 
         self.skip_newlines()
         if self.current_tok.type != TT_LBRACE:
@@ -1312,7 +1314,6 @@ class Parser:
         self.skip_newlines()
 
         desc: str = "[No Description]"
-
         if self.current_tok.type == TT_STRING:
             # Set description
             desc = str(self.current_tok.value)
