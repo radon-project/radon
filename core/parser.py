@@ -1309,6 +1309,14 @@ class Parser:
             )
 
         self.advance(res)
+        self.skip_newlines()
+
+        desc: str = "[No Description]"
+
+        if self.current_tok.type == TT_STRING:
+            # Set description
+            desc = str(self.current_tok.value)
+            self.advance(res)
 
         body = res.register(self.statements())
         if res.error:
@@ -1320,7 +1328,7 @@ class Parser:
 
         self.advance(res)
 
-        return res.success(FuncDefNode(var_name_tok, arg_name_toks, defaults, body, False, static=static))
+        return res.success(FuncDefNode(var_name_tok, arg_name_toks, defaults, body, False, static=static, desc=desc))
 
     def switch_statement(self) -> ParseResult[Node]:
         res = ParseResult[Node]()

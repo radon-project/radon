@@ -236,6 +236,7 @@ class FuncDefNode:
     body_node: Node
     should_auto_return: bool
     static: bool
+    desc: str
 
     pos_start: Position
     pos_end: Position
@@ -248,6 +249,7 @@ class FuncDefNode:
         body_node: Node,
         should_auto_return: bool,
         static: bool = False,
+        desc: str = "",
     ) -> None:
         self.var_name_tok = var_name_tok
         self.arg_name_toks = arg_name_toks
@@ -255,6 +257,7 @@ class FuncDefNode:
         self.body_node = body_node
         self.should_auto_return = should_auto_return
         self.static = static
+        self.desc = desc
 
         if self.var_name_tok:
             self.pos_start = self.var_name_tok.pos_start

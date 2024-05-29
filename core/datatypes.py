@@ -1037,6 +1037,8 @@ class PyAPI(Value):
 class BaseFunction(Value):
     name: str
     symbol_table: Optional[SymbolTable]
+    desc: str
+    arg_names: list[str]
 
     def __init__(self, name: Optional[str], symbol_table: Optional[SymbolTable]) -> None:
         super().__init__()
@@ -1111,6 +1113,7 @@ class BaseFunction(Value):
 
 
 class BaseInstance(Value, ABC):
+    methods: list[BaseFunction] = []
     parent_class: BaseClass
     symbol_table: SymbolTable
 
@@ -1205,7 +1208,13 @@ class Instance(BaseInstance):
             return Null.null()
 
     def __help_repr__(self) -> str:
-        result = str(self.operator("__help_repr__")[0])
+        result: str = f"Help on object {self.parent_class.name}:\n\nclass {self.parent_class.name}\n"
+        for k in self.symbol_table.symbols:
+            f = self.symbol_table.symbols[k]
+            if isinstance(f, BaseFunction):
+                result += f"| fun {k}({','.join([f.__repr__() for a in f.arg_names])})\n|\t {f.desc}\n|\n"
+            elif isinstance(f, Value) and k != "this":
+                result += f"| {k} = {f!r}\n"
         return result
 
     def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]:
@@ -1213,6 +1222,7 @@ class Instance(BaseInstance):
         if method.symbol_table is None:
             method.symbol_table = SymbolTable()
         method.symbol_table.set("this", self)
+        self.methods.append(method)
         return RTResult[BaseFunction]().success(method)
 
     def operator(self, operator: str, *args: Value) -> ResultTuple:
@@ -1288,6 +1298,16 @@ class Class(BaseClass):
             return None
         return method
 
+    def __help_repr__(self) -> str:
+        result: str = f"Help on object {self.name}:\n\nclass {self.name}\n"
+        for k in self.symbol_table.symbols:
+            f = self.symbol_table.symbols[k]
+            if isinstance(f, BaseFunction):
+                result += f"| fun {k}({','.join([f.__repr__() for a in f.arg_names])})\n|\t {f.desc}\n|\n"
+            elif isinstance(f, Value) and k != "this":
+                result += f"| {k} = {f!r}\n"
+        return result
+
     def create(self, args: list[Value]) -> RTResult[BaseInstance]:
         res = RTResult[BaseInstance]()
 
@@ -1342,12 +1362,14 @@ class Function(BaseFunction):
         arg_names: list[str],
         defaults: list[Optional[Value]],
         should_auto_return: bool,
+        desc: str,
     ) -> None:
         super().__init__(name, symbol_table)
         self.body_node = body_node
         self.arg_names = arg_names
         self.defaults = defaults
         self.should_auto_return = should_auto_return
+        self.desc = desc
 
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         from core.interpreter import Interpreter  # Lazy import
@@ -1374,7 +1396,13 @@ class Function(BaseFunction):
 
     def copy(self) -> Function:
         copy = Function(
-            self.name, self.symbol_table, self.body_node, self.arg_names, self.defaults, self.should_auto_return
+            self.name,
+            self.symbol_table,
+            self.body_node,
+            self.arg_names,
+            self.defaults,
+            self.should_auto_return,
+            self.desc,
         )
         copy.set_context(self.context)
         copy.set_pos(self.pos_start, self.pos_end)
