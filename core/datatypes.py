@@ -1207,13 +1207,13 @@ class Instance(BaseInstance):
             return Null.null()
 
     def __help_repr__(self) -> str:
-        result: str = f"Help on object {self.parent_class.name}:\n\nclass {self.parent_class.name}\n"
+        result: str = f"Help on object {self.parent_class.name}:\n\nclass {self.parent_class.name}\n|\n"
         for k in self.symbol_table.symbols:
             f = self.symbol_table.symbols[k]
             if isinstance(f, Function):
                 result += f.__help_repr_method__()
             elif isinstance(f, Value) and k != "this":
-                result += f"| {k} = {f!r}\n"
+                result += f"| {k} = {f!r}\n|\n"
         return result
 
     def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]:
@@ -1297,13 +1297,13 @@ class Class(BaseClass):
         return method
 
     def __help_repr__(self) -> str:
-        result: str = f"Help on object {self.name}:\n\nclass {self.name}\n"
+        result: str = f"Help on object {self.name}:\n\nclass {self.name}\n|\n"
         for k in self.symbol_table.symbols:
             f = self.symbol_table.symbols[k]
             if isinstance(f, Function):
                 result += f.__help_repr_method__()
             elif isinstance(f, Value) and k != "this":
-                result += f"| {k} = {f!r}\n"
+                result += f"| {k} = {f!r}\n|\n"
         return result
 
     def create(self, args: list[Value]) -> RTResult[BaseInstance]:
@@ -1353,7 +1353,7 @@ class Function(BaseFunction):
     should_auto_return: bool
 
     def __help_repr__(self) -> str:
-        return f"Help on function {self.name}\n{self.__help_repr_method__()}"
+        return f"Help on function {self.name}:\n\n{self.__help_repr_method__()}"
 
     def __help_repr_method__(self) -> str:
         arg_strs: list[str] = []
@@ -1362,7 +1362,7 @@ class Function(BaseFunction):
                 arg_strs.append(f"{self.arg_names[i]} = {self.defaults[i].__repr__()}")
             else:
                 arg_strs.append(self.arg_names[i])
-        return f"| fun {self.name}({', '.join(arg_strs)})\n|\t{self.desc}\n"
+        return f"| fun {self.name}({', '.join(arg_strs)})\n|\t{self.desc}\n|\n"
 
     def __init__(
         self,
