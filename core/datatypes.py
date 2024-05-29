@@ -1210,8 +1210,8 @@ class Instance(BaseInstance):
         result: str = f"Help on object {self.parent_class.name}:\n\nclass {self.parent_class.name}\n"
         for k in self.symbol_table.symbols:
             f = self.symbol_table.symbols[k]
-            if isinstance(f, BaseFunction):
-                result += f"| fun {k}({', '.join([a.__str__() for a in f.arg_names])})\n|\t {f.desc}\n|\n"
+            if isinstance(f, Function):
+                result += f.__help_repr_method__()
             elif isinstance(f, Value) and k != "this":
                 result += f"| {k} = {f!r}\n"
         return result
@@ -1300,8 +1300,8 @@ class Class(BaseClass):
         result: str = f"Help on object {self.name}:\n\nclass {self.name}\n"
         for k in self.symbol_table.symbols:
             f = self.symbol_table.symbols[k]
-            if isinstance(f, BaseFunction):
-                result += f"| fun {k}({', '.join([a.__str__() for a in f.arg_names])})\n|\t {f.desc}\n|\n"
+            if isinstance(f, Function):
+                result += f.__help_repr_method__()
             elif isinstance(f, Value) and k != "this":
                 result += f"| {k} = {f!r}\n"
         return result
@@ -1353,13 +1353,16 @@ class Function(BaseFunction):
     should_auto_return: bool
 
     def __help_repr__(self) -> str:
+        return f"Help on function {self.name}\n{self.__help_repr_method__()}"
+
+    def __help_repr_method__(self) -> str:
         arg_strs: list[str] = []
         for i in range(len(self.arg_names)):
             if self.defaults[i] is not None:
-                arg_strs.append(f"{self.arg_names[i]} = {self.defaults[i]}")
+                arg_strs.append(f"{self.arg_names[i]} = {self.defaults[i].__repr__()}")
             else:
                 arg_strs.append(self.arg_names[i])
-        return f"Help on function {self.name}\n| fun {self.name}({', '.join(arg_strs)})\n|\t{self.desc}\n"
+        return f"| fun {self.name}({', '.join(arg_strs)})\n|\t{self.desc}\n"
 
     def __init__(
         self,

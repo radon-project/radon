@@ -129,7 +129,7 @@ class BuiltInFunction(BaseFunction):
         if obj is None:
             return RTResult[Value]().failure(Error(self.pos_start, self.pos_end, "TypeError", "Argument is null"))
         print(obj.__help_repr__())
-        return RTResult[Value]().success(obj)
+        return RTResult[Value]().success(Null.null())
 
     @args([])
     def execute_input_int(self, exec_ctx: Context) -> RTResult[Value]:
