@@ -478,7 +478,7 @@ class Parser:
         return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
 
     def term(self) -> ParseResult[Node]:
-        return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_MOD))
+        return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_MOD, TT_IDIV))
 
     def factor(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
