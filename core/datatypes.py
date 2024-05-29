@@ -110,7 +110,7 @@ class Value:
 
     def is_true(self) -> bool:
         return False
-    
+
     # Help text for help() in radon
     def __help_repr__(self) -> str:
         return """
@@ -292,7 +292,7 @@ class Number(Value):
 
     def __str__(self) -> str:
         return str(self.value)
-    
+
     def __help_repr__(self) -> str:
         return """
 Number
@@ -374,7 +374,7 @@ class Boolean(Value):
 
     def __repr__(self) -> str:
         return "true" if self.value else "false"
-    
+
     def __help_repr__(self) -> str:
         return """
 Boolean
@@ -522,7 +522,7 @@ class String(Value):
 
     def __repr__(self) -> str:
         return f'"{self.value}"'
-    
+
     def __help_repr__(self) -> str:
         return """
 String
@@ -714,7 +714,7 @@ class Array(Value):
 
     def __repr__(self) -> str:
         return f'[{", ".join(repr(x) for x in self.elements)}]'
-    
+
     def __help_repr__(self) -> str:
         return """
 Array
@@ -853,7 +853,7 @@ class HashMap(Value):
 
     def __str__(self) -> str:
         return self.__repr__()
-    
+
     def __help_repr__(self) -> str:
         return """
 HashMap
