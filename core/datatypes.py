@@ -1113,7 +1113,6 @@ class BaseFunction(Value):
 
 
 class BaseInstance(Value, ABC):
-    methods: list[BaseFunction] = []
     parent_class: BaseClass
     symbol_table: SymbolTable
 
@@ -1222,7 +1221,6 @@ class Instance(BaseInstance):
         if method.symbol_table is None:
             method.symbol_table = SymbolTable()
         method.symbol_table.set("this", self)
-        self.methods.append(method)
         return RTResult[BaseFunction]().success(method)
 
     def operator(self, operator: str, *args: Value) -> ResultTuple:
