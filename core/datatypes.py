@@ -1230,6 +1230,11 @@ class Instance(BaseInstance):
     def __repr__(self) -> str:
         # TODO: make this overloadable as well
         return f"<instance of class {self.parent_class.name}>"
+    
+    def __help_repr__(self) -> str:
+        try:
+            return self.operator("__help_repr__")[0].value
+        except AttributeError: return f"No custom help for class `{self.parent_class.name}`"
 
 
 class BaseClass(Value, ABC):
