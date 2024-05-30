@@ -469,6 +469,7 @@ class Interpreter:
         res = RTResult[Value]()
 
         func_name = node.var_name_tok.value if node.var_name_tok else None
+        func_desc = node.desc
         assert func_name is None or isinstance(func_name, str)
         body_node = node.body_node
         arg_names = [str(arg_name.value) for arg_name in node.arg_name_toks]
@@ -483,7 +484,9 @@ class Interpreter:
             defaults.append(default_value)
 
         func_value = (
-            Function(func_name, context.symbol_table, body_node, arg_names, defaults, node.should_auto_return)
+            Function(
+                func_name, context.symbol_table, body_node, arg_names, defaults, node.should_auto_return, func_desc
+            )
             .set_context(context)
             .set_pos(node.pos_start, node.pos_end)
         )
