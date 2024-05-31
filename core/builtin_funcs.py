@@ -45,6 +45,7 @@ class BuiltInFunction(BaseFunction):
     def __init__(self, name: str, func: Optional[RadonCompatibleFunction] = None):
         super().__init__(name, None)
         self.func = func
+        self.va_name = None
 
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         res = RTResult[Value]()

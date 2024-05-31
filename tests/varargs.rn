@@ -1,0 +1,20 @@
+
+fun f(...args) {
+    print(args)
+}
+
+fun g(a, ...args) {
+    print(a)
+    print(args)
+}
+
+f()
+f(1, 2, 3)
+f("hello", "world", "!")
+f("a", "b", "c")
+
+g(1)
+g(1, 2, 3)
+g("hello", "world", "!")
+g("a", "b", "c")
+

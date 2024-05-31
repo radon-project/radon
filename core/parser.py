@@ -1197,6 +1197,8 @@ class Parser:
     def func_def(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
 
+        node_pos_start = self.current_tok.pos_start
+
         static = False
         if self.current_tok.matches(TT_KEYWORD, "static"):
             self.advance(res)
@@ -1229,30 +1231,46 @@ class Parser:
         self.advance(res)
         arg_name_toks = []
         defaults: list[Optional[Node]] = []
-        hasOptionals = False
+        has_optionals = False
+        is_va = False
+        va_name: Optional[str] = None
+
+        if self.current_tok.type == TT_SPREAD:
+            is_va = True
+            self.advance(res)
 
         if self.current_tok.type == TT_IDENTIFIER:
             pos_start = self.current_tok.pos_start.copy()
             pos_end = self.current_tok.pos_end.copy()
 
-            arg_name_toks.append(self.current_tok)
+            arg_name_tok = self.current_tok
+            assert isinstance(arg_name_tok.value, str)
             self.advance(res)
+            if not is_va:
+                arg_name_toks.append(arg_name_tok)
 
-            if self.current_tok.type == TT_EQ:
+            if is_va:
+                va_name = arg_name_tok.value
+                is_va = False
+            elif self.current_tok.type == TT_EQ:
                 self.advance(res)
                 default = res.register(self.expr())
                 if res.error:
                     return res
                 assert default is not None
                 defaults.append(default)
-                hasOptionals = True
-            elif hasOptionals:
+                has_optionals = True
+            elif has_optionals:
                 return res.failure(InvalidSyntaxError(pos_start, pos_end, "Expected optional parameter."))
             else:
                 defaults.append(None)
 
             while self.current_tok.type == TT_COMMA:
                 self.advance(res)
+
+                if self.current_tok.type == TT_SPREAD:
+                    is_va = True
+                    self.advance(res)
 
                 if self.current_tok.type != TT_IDENTIFIER:
                     return res.failure(
@@ -1261,18 +1279,25 @@ class Parser:
 
                 pos_start = self.current_tok.pos_start.copy()
                 pos_end = self.current_tok.pos_end.copy()
-                arg_name_toks.append(self.current_tok)
+
+                arg_name_tok = self.current_tok
+                assert isinstance(arg_name_tok.value, str)
+                if not is_va:
+                    arg_name_toks.append(arg_name_tok)
                 self.advance(res)
 
-                if self.current_tok.type == TT_EQ:
+                if is_va:
+                    va_name = arg_name_tok.value
+                    is_va = False
+                elif self.current_tok.type == TT_EQ:
                     self.advance(res)
                     default = res.register(self.expr())
                     if res.error:
                         return res
                     assert default is not None
                     defaults.append(default)
-                    hasOptionals = True
-                elif hasOptionals:
+                    has_optionals = True
+                elif has_optionals:
                     return res.failure(InvalidSyntaxError(pos_start, pos_end, "Expected optional parameter."))
                 else:
                     defaults.append(None)
@@ -1301,7 +1326,18 @@ class Parser:
             assert body is not None
 
             return res.success(
-                FuncDefNode(var_name_tok, arg_name_toks, defaults, body, True, static=static, desc="[No Description]")
+                FuncDefNode(
+                    var_name_tok,
+                    arg_name_toks,
+                    defaults,
+                    body,
+                    True,
+                    static=static,
+                    desc="[No Description]",
+                    va_name=va_name,
+                    pos_start=node_pos_start,
+                    pos_end=self.current_tok.pos_end,
+                )
             )
 
         self.skip_newlines()
@@ -1329,7 +1365,20 @@ class Parser:
 
         self.advance(res)
 
-        return res.success(FuncDefNode(var_name_tok, arg_name_toks, defaults, body, False, static=static, desc=desc))
+        return res.success(
+            FuncDefNode(
+                var_name_tok,
+                arg_name_toks,
+                defaults,
+                body,
+                False,
+                static=static,
+                desc=desc,
+                va_name=va_name,
+                pos_start=node_pos_start,
+                pos_end=self.current_tok.pos_end,
+            )
+        )
 
     def switch_statement(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
