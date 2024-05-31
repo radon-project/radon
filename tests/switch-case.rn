@@ -35,7 +35,7 @@ for x in [1, 2, 3, 4] {
 }
 
 print("---------------")
-i = 0
+var i = 0
 for x in [1, 2, 3, 2, 5] {
     print(str(i) + " " + str(x))
     switch x {
@@ -50,6 +50,6 @@ for x in [1, 2, 3, 2, 5] {
         case 3 { print("three or second two") }
         default { print("default") }
     }
-    nonlocal i++
+    i++
 }
 

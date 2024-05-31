@@ -1,17 +1,17 @@
 
 fun make_var() {
-    val = null
+    var val = null
     return fun(new_val=null) {
         if is_null(new_val) {
             return val
         } else {
-            nonlocal val = new_val
+            val = new_val
         }
     }
 }
 
-v1 = make_var()
-v2 = make_var()
+const v1 = make_var()
+const v2 = make_var()
 
 print(v1())
 print(v2())

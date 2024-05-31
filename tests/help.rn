@@ -1,6 +1,6 @@
 class Test
 {
-    property1 = "Hello, World!"
+    const property1 = "Hello, World!"
 
     fun __constructor__()
     {

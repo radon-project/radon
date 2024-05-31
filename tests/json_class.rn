@@ -1,5 +1,5 @@
 # Fake json data from https://jsonplaceholder.typicode.com/users
-radon_object = [
+const radon_object = [
   {
     "id": 1,
     "name": "Leanne Graham",
@@ -232,12 +232,12 @@ radon_object = [
   }
 ]
 
-json = Json()
+const json = Json()
 
-json_string = json.dumps(radon_object)
+const json_string = json.dumps(radon_object)
 assert type(json_string) == type("example string") # Need to fix empty string type
 
-radon_object_loaded = json.loads(json_string)
+const radon_object_loaded = json.loads(json_string)
 assert type(radon_object_loaded) == type([1]) # Need to fix empty array type
 
 # assert radon_object == radon_object_loaded

@@ -1,6 +1,6 @@
 import radiation
 
-errors = radiation.errors
+const errors = radiation.errors
 
 # print(radiation.errors[0])
 

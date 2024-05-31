@@ -20,18 +20,18 @@ class Foo {
         return Foo(this.x + other.x)
     }
 
-    static fun i_am_static() {
+    fun i_am_static() {
         print("i am static")
     }
-    static const c = "i am static const"
+    const c = "i am static const"
 }
 
-a = Foo(34)
-b = Foo(35)
+var a = Foo(34)
+var b = Foo(35)
 a.dump()
 b.dump()
 
-c = a + b
+var c = a + b
 c.dump()
 
 print(c.get_x())
@@ -43,3 +43,4 @@ Foo.i_am_static()
 print(Foo.c)
 
 print("END")
+

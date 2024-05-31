@@ -1,8 +1,8 @@
 
-_i = 0
-FULLNAME_INVALID = _i++
-FULLNAME_FLAG = _i++
-FULLNAME_NAMED = _i++
+var _i = 0
+const FULLNAME_INVALID = _i++
+const FULLNAME_FLAG = _i++
+const FULLNAME_NAMED = _i++
 _i = 0
 
 fun str_starts_with(s, prefix) {
@@ -30,7 +30,7 @@ class Argparser {
             assert is_null(default_), "Required positional arguments cannot have a default value"
         }
         if is_null(conversor) {
-            nonlocal conversor = fun(x) -> x
+            conversor = fun(x) -> x
         }
         arr_append(this.pos_opts, {"name": name, "desc": desc, "default": default_, "required": required, "conversor": conversor})
         return this
@@ -47,7 +47,7 @@ class Argparser {
     fun add_named(name, desc, default_=null, conversor=null) {
         assert str_starts_with(name, "--"), "Named arguments must start with '--'"
         if is_null(conversor) {
-            nonlocal conversor = fun(x) -> x
+            conversor = fun(x) -> x
         }
         arr_append(this.named, {"name": name, "desc": desc, "default": default_, "conversor": conversor})
         return this
@@ -63,17 +63,17 @@ class Argparser {
     }
 
     fun usage(program_name) {
-        ret = "Usage: "+program_name+" <flags> <options>\n"
+        var ret = "Usage: "+program_name+" <flags> <options>\n"
         ret += "OPTIONS:\n"
         for opt in this.pos_opts {
-            nonlocal ret += "    " + opt["name"] + ": " + opt["desc"] + "\n"
+            ret += "    " + opt["name"] + ": " + opt["desc"] + "\n"
         }
         ret += "FLAGS:\n"
         for flag in this.flags {
-            nonlocal ret += "    " + flag["fullname"] + ", " + flag["shortname"] + ": " + flag["desc"] + "\n"
+            ret += "    " + flag["fullname"] + ", " + flag["shortname"] + ": " + flag["desc"] + "\n"
         }
         for named in this.named {
-            nonlocal ret += "    " + named["name"] + " <value>: " + named["desc"] + "\n"
+            ret += "    " + named["name"] + " <value>: " + named["desc"] + "\n"
         }
         return ret
     }
@@ -109,14 +109,14 @@ class Argparser {
 
     fun parse(args=null) {
         if is_null(args) {
-            nonlocal args = argv[:]
+            args = argv[:]
         }
-        pos_opts = this.pos_opts
-        flags = this.flags
+        var pos_opts = this.pos_opts
+        var flags = this.flags
 
-        program_name = arr_pop(args, 0)
-        parsed = {}
-        required_opts = {}
+        var program_name = arr_pop(args, 0)
+        var parsed = {}
+        var required_opts = {}
         for pos_opt in pos_opts {
             parsed[pos_opt["name"]] = pos_opt["default"]
             if pos_opt["required"] {
@@ -129,9 +129,9 @@ class Argparser {
         for named in this.named {
             parsed[named["name"]] = named["default"]
         }
-        pos_opts_idx = 0
+        var pos_opts_idx = 0
         while arr_len(args) > 0 {
-            arg = arr_pop(args, 0)
+            var arg = arr_pop(args, 0)
             if str_starts_with(arg, "-") {
                 if str_starts_with(arg, "--") {
                     switch this.fullname_type(arg) {
@@ -141,8 +141,8 @@ class Argparser {
                             if arr_len(args) == 0 {
                                 this.report_error(program_name, "missing value for flag: '"+arg+"'")
                             }
-                            value = arr_pop(args, 0)
-                            conversor = this.get_named_conversor(arg)
+                            const value = arr_pop(args, 0)
+                            const conversor = this.get_named_conversor(arg)
                             try {
                                 parsed[arg] = conversor(value)
                             } catch as e {
@@ -152,7 +152,7 @@ class Argparser {
                     }
                 } else {
                     for letter in arg[1:] {
-                        flag = this.flag_by_shortname(letter)
+                        const flag = this.flag_by_shortname(letter)
                         if is_null(flag) {
                             this.report_error(program_name, "unknown flag: '-"+letter+"'")
                         } else {
@@ -164,15 +164,15 @@ class Argparser {
                 if pos_opts_idx >= arr_len(pos_opts) {
                     this.report_error(program_name, "unexpected positional argument: '" + arg + "'")
                 }
-                arg_name = pos_opts[pos_opts_idx]["name"]
-                conversor = pos_opts[pos_opts_idx]["conversor"]
+                const arg_name = pos_opts[pos_opts_idx]["name"]
+                const conversor = pos_opts[pos_opts_idx]["conversor"]
                 try {
                     parsed[arg_name] = conversor(arg)
                 } catch as e {
                     this.report_error(program_name, "invalid value for argument: '" + arg_name + "': " + str(e))
                 }
                 required_opts[arg_name] = false
-                nonlocal pos_opts_idx++
+                pos_opts_idx++
             }
         }
         for required in required_opts {

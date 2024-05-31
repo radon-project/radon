@@ -1,6 +1,6 @@
 class System {
     fun __constructor__() {
-        ns = {}
+        const ns = {}
         pyapi("import platform; import sys; os_name = platform.system(); platform = sys.platform", ns)
         this.name = ns["os_name"]
         this.platform = ns["platform"]

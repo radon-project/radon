@@ -1,5 +1,5 @@
 
-ns = {}
+const ns = {}
 
 ns["cb"] = fun(x, y) -> (x + y) * 101
 
@@ -12,10 +12,10 @@ def my_func(x, y):
 print(f'Return value (from Radon function in Python): {cb(34, 35)}')
 ", ns)
 
-func = ns["my_func"]
+const func = ns["my_func"]
 
 print("func is: " + print_ret(func))
 
-ret = func("hello", "world")
+const ret = func("hello", "world")
 print("Return value (from Python function in Radon): " + str(ret))
 

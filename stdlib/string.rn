@@ -17,12 +17,12 @@ class String {
 
     # TODO: Need to fix
     fun join(separator = " ") {
-        result = ""
+        var result = ""
 
         for i = 0 to str_len(this.value) {
-            result = result + str_get(this.value)
+            result += str_get(this.value)
             if i < str_len(this.value) - 1 {
-                result = result + separator
+                result += separator
             }
         }
         return result
@@ -30,7 +30,7 @@ class String {
 
     # Find a character in a string and return its index
     fun find(data) {
-        result = 0
+        var result = 0
 
         for i = 0 to str_len(this.value) {
             if this.value == data {

@@ -19,7 +19,7 @@ fun higher_order(f, l) {
     return nested
 }
 
-g = higher_order(f, [4, 7, 2, 4, 3])
+const g = higher_order(f, [4, 7, 2, 4, 3])
 print(g(50))
 
 print("END")

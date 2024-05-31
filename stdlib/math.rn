@@ -1,12 +1,12 @@
 # The Math class provides all types of math functionalites for radon language.
 
-static const PI = 3.14159265358979323846
+const PI = 3.14159265358979323846
 
-static fun sqrt(number) -> number ^ 0.5
-static fun pow(base, power) -> base ^ power
-static fun mod(a, b) -> a % b
+fun sqrt(number) -> number ^ 0.5
+fun pow(base, power) -> base ^ power
+fun mod(a, b) -> a % b
 
-static fun factorial(number) {
+fun factorial(number) {
     if number == 0 {
         return 1
     } 
@@ -14,8 +14,9 @@ static fun factorial(number) {
 }
 
 # Same as mod, but implemented in pure radon.
-static fun modulas(a, b) {
-    frac = a / b
+fun modulas(a, b) {
+    const frac = a / b
+    var floor = 0
     if frac > 0 {
         floor = int(frac) 
     } else {
@@ -24,46 +25,46 @@ static fun modulas(a, b) {
     return a - b * floor
 }
 # Same as modulas, but actually spelled correctly
-modulus = modulas
+const modulus = modulas
 
 # Same as pow, but implemented in pure radon.
-static fun power(n, p) {
-    result = n
+fun power(n, p) {
+    var result = n
     for i=1 to p {
-        result = result * n
+        result *= n
     }
     return result
 }
 
 # Sine implementation in radon.
-static fun sin(n) {
-    n = n % (2 * this.PI)
+fun sin(n) {
+    var n = n % (2 * this.PI)
     
     if n < 0 {
         n = 2 * this.PI - n
     }
 
-    sign = 1
+    var sign = 1
     if n > this.PI {
         n = n - this.PI
         sign = -1
     }
 
-    result = n
-    coefficient = 3
+    var result = n
+    var coefficient = 3
 
     for i=0 to 10 {
         pow_val = n ^ coefficient
         frac = factorial(coefficient)
         
         if i % 2 == 0{
-            result = result - (pow_val / frac)
+            result -= pow_val / frac
         } else {
 
-            result = result + (pow_val / frac)
+            result += pow_val / frac
         }
         
-        coefficient = coefficient + 2
+        coefficient += 2
     }
     return sign * result
 }
