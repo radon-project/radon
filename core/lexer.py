@@ -277,7 +277,7 @@ class Lexer:
         pos_start = self.pos.copy()
         self.advance()
 
-        if self.text[self.pos.idx:].startswith(".."):
+        if self.text[self.pos.idx :].startswith(".."):
             self.advance()
             self.advance()
             tok_type = TT_SPREAD

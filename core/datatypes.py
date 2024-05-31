@@ -1381,7 +1381,7 @@ class Function(BaseFunction):
         defaults: list[Optional[Value]],
         should_auto_return: bool,
         desc: str,
-        va_name: Optional[str]
+        va_name: Optional[str],
     ) -> None:
         super().__init__(name, symbol_table)
         self.body_node = body_node

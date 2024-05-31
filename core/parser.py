@@ -1326,7 +1326,18 @@ class Parser:
             assert body is not None
 
             return res.success(
-                FuncDefNode(var_name_tok, arg_name_toks, defaults, body, True, static=static, desc="[No Description]", va_name=va_name, pos_start=node_pos_start, pos_end=self.current_tok.pos_end)
+                FuncDefNode(
+                    var_name_tok,
+                    arg_name_toks,
+                    defaults,
+                    body,
+                    True,
+                    static=static,
+                    desc="[No Description]",
+                    va_name=va_name,
+                    pos_start=node_pos_start,
+                    pos_end=self.current_tok.pos_end,
+                )
             )
 
         self.skip_newlines()
@@ -1354,7 +1365,20 @@ class Parser:
 
         self.advance(res)
 
-        return res.success(FuncDefNode(var_name_tok, arg_name_toks, defaults, body, False, static=static, desc=desc, va_name=va_name, pos_start=node_pos_start, pos_end=self.current_tok.pos_end))
+        return res.success(
+            FuncDefNode(
+                var_name_tok,
+                arg_name_toks,
+                defaults,
+                body,
+                False,
+                static=static,
+                desc=desc,
+                va_name=va_name,
+                pos_start=node_pos_start,
+                pos_end=self.current_tok.pos_end,
+            )
+        )
 
     def switch_statement(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
