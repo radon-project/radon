@@ -1,0 +1,9 @@
+
+fun f(...args) {
+    print(args)
+}
+
+f(1, 2, 3)
+f("hello", "world", "!")
+f("a", "b", "c")
+
