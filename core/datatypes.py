@@ -1038,6 +1038,7 @@ class BaseFunction(Value):
     symbol_table: Optional[SymbolTable]
     desc: str
     arg_names: list[str]
+    va_name: Optional[str]
 
     def __init__(self, name: Optional[str], symbol_table: Optional[SymbolTable]) -> None:
         super().__init__()
@@ -1055,7 +1056,7 @@ class BaseFunction(Value):
         res = RTResult[None]()
 
         args_count = len(args) + len(kwargs)
-        if args_count > len(arg_names):
+        if self.va_name is None and args_count > len(arg_names):
             return res.failure(
                 RTError(
                     self.pos_start,
@@ -1097,6 +1098,14 @@ class BaseFunction(Value):
             arg_value = defaults[i] if i >= len(args) else args[i]
             arg_value.set_context(exec_ctx)
             exec_ctx.symbol_table.set(arg_name, arg_value)
+
+        if self.va_name is not None:
+            va_list = []
+            for i in range(len(arg_names), len(args)):
+                arg = args[i]
+                arg.set_context(exec_ctx)
+                va_list.append(arg)
+            exec_ctx.symbol_table.set(self.va_name, Array(va_list))
 
         for kw, kwarg in kwargs.items():
             kwarg.set_context(exec_ctx)
@@ -1372,6 +1381,7 @@ class Function(BaseFunction):
         defaults: list[Optional[Value]],
         should_auto_return: bool,
         desc: str,
+        va_name: Optional[str]
     ) -> None:
         super().__init__(name, symbol_table)
         self.body_node = body_node
@@ -1379,6 +1389,7 @@ class Function(BaseFunction):
         self.defaults = defaults
         self.should_auto_return = should_auto_return
         self.desc = desc
+        self.va_name = va_name
 
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         from core.interpreter import Interpreter  # Lazy import
@@ -1412,6 +1423,7 @@ class Function(BaseFunction):
             self.defaults,
             self.should_auto_return,
             self.desc,
+            self.va_name,
         )
         copy.set_context(self.context)
         copy.set_pos(self.pos_start, self.pos_end)
