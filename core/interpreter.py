@@ -206,7 +206,13 @@ class Interpreter:
         assert msg_val is not None
         msg = None if isinstance(msg_val, Null) else str(msg_val)
 
-        return res.failure(Error(node.pos_start, node.pos_end, errtype, msg))
+        start_pos = node.pos_start.copy()
+        start_pos.col += 1
+
+        end_pos = node.pos_end.copy()
+        end_pos.col += 1
+
+        return res.failure(Error(start_pos, end_pos, errtype, msg))
 
     def visit_ImportNode(self, node: ImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
