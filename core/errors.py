@@ -55,6 +55,7 @@ class Error:
     pos_end: Position
     error_name: str
     details: Optional[str]
+    context: Optional[Context] = None
 
     def as_string(self) -> str:
         """Return error as string"""
