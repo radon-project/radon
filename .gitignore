@@ -1,7 +1,7 @@
 __pycache__
 .venv
 .vscode
-hello.txt # Used by a test
+hello.txt
 .ruff_cache
 .mypy_cache
 radon.html

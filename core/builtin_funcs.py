@@ -535,6 +535,7 @@ def run(
     entry_pos: Optional[Position] = None,
     return_result: bool = False,
     hide_paths: bool = False,
+    import_cwd: Optional[str] = None,
 ):
     from core.interpreter import Interpreter  # Lazy import
 
@@ -557,7 +558,7 @@ def run(
     interpreter = Interpreter()
     # context = Context('<program>')
     # context.symbol_table = global_symbol_table
-    context = Context("<program>", context, entry_pos)
+    context = Context("<program>", context, entry_pos, import_cwd=import_cwd)
     if context.parent is None:
         context.symbol_table = global_symbol_table
     else:

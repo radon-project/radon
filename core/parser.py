@@ -1754,3 +1754,10 @@ class Context:
     parent: Optional[Context] = None
     parent_entry_pos: Optional[Position] = None
     symbol_table: SymbolTable = field(default_factory=SymbolTable)
+    import_cwd: Optional[str] = "."
+
+    def get_import_cwd(self) -> str:
+        if self.import_cwd is not None:
+            return self.import_cwd
+        assert self.parent is not None, "Root context must always have import_cwd"
+        return self.parent.get_import_cwd()
