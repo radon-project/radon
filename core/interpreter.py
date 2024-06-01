@@ -52,7 +52,9 @@ class Interpreter:
                 return res
             return res.success(value)
 
-        res.register(context.symbol_table.set_var(var_name, value, qualifier))
+        qualifier_str = None if qualifier is None else qualifier.value
+        assert qualifier_str is None or isinstance(qualifier_str, str)
+        res.register(context.symbol_table.set_var(var_name, value, qualifier_str))
         if res.should_return():
             return res
         return res.success(value)
@@ -524,7 +526,7 @@ class Interpreter:
             assert context.symbol_table is not None
             assert isinstance(func_name, str), "this could be a bug in the parser"
             if node.static:
-                context.symbol_table.set_static(func_name, func_value)
+                context.symbol_table.set_static(func_name, func_value, "var")
             else:
                 context.symbol_table.set(func_name, func_value)
 

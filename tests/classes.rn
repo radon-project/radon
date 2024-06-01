@@ -20,10 +20,10 @@ class Foo {
         return Foo(this.x + other.x)
     }
 
-    fun i_am_static() {
+    static fun i_am_static() {
         print("i am static")
     }
-    const c = "i am static const"
+    static const c = "i am static const"
 }
 
 var a = Foo(34)

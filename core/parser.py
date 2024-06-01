@@ -1690,13 +1690,11 @@ class SymbolTable:
         self.symbols[name] = value
         return RTResult[None]().success(None)
 
-    def set_var(self, name: str, value: Value, qualifier_tok: Optional[Token] = None) -> RTResult[None]:
+    def set_var(self, name: str, value: Value, qualifier: Optional[str] = None) -> RTResult[None]:
         if name in self.consts:
             return RTResult[None]().failure(
                 RTError(value.pos_start, value.pos_end, f"Cannot reassign to constant {name}", value.context)
             )
-        qualifier = None if qualifier_tok is None else qualifier_tok.value
-        assert qualifier is None or isinstance(qualifier, str)
         match qualifier:
             case None:
                 if name in self.symbols:
@@ -1723,7 +1721,7 @@ class SymbolTable:
                 self.consts.add(name)
         return RTResult[None]().success(None)
 
-    def set_static(self, name: str, value: Value, qualifier: Optional[Token] = None) -> RTResult[None]:
+    def set_static(self, name: str, value: Value, qualifier: Optional[str] = None) -> RTResult[None]:
         res = RTResult[None]()
         res.register(self.set_var(name, value, qualifier))
         if res.should_return():
