@@ -15,6 +15,7 @@ STDLIBS = [
     "argparser",
     "array",
     "colorlib",
+    "io",
     "math",
     "radiation",
     "system",

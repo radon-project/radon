@@ -1,0 +1,53 @@
+import radiation
+
+
+class Input {
+    static fun get_int(text="") {
+        const _val = input(text)
+        try {
+            return int(_val)
+        } catch as err {
+            raise radiation.ValueError("Invalid input")
+        }
+    }
+
+    static fun get_float(text="") {
+        const _val = input(text)
+        try {
+            return float(_val)
+        } catch as err {
+            raise radiation.ValueError("Invalid input")
+        }
+    }
+
+    static fun get_string(text="") {
+        return input(text)
+    }
+
+    static fun get_bool(text="") {
+        const _val = String(input(text))
+        if _val.casefold() == "true" {
+            return true
+        } elif _val.casefold() == "false" {
+            return false
+        } else {
+            raise radiation.ValueError("Invalid input")
+        }
+    }
+
+    static fun get_password(text="") {
+        var ns = {"text": text}
+        pyapi("import getpass; val = getpass.getpass(text)", ns)
+        return ns["val"]
+    }
+}
+
+class Output {
+    static fun write(...values, sep=" ", end="\n") {       
+        var output = ""
+        for value in values {
+            output += str(value) + sep
+        }
+        print(output + end)
+    }
+}
