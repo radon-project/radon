@@ -12,6 +12,5 @@ print(str_val)
 var password = io.Input.get_password("Enter a password: ")
 print(password)
 
-# issue here
 var val = input("Enter a value: ")
-io.Output.write(val)
+io.Output.write(val, sep="\n")
