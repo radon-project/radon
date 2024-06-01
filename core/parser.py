@@ -568,8 +568,14 @@ class Parser:
                         return res
                     assert pair is not None
                     kw, val = pair
-                    if kw is None:
+                    if kw is None and len(kwarg_nodes) == 0:
                         arg_nodes.append(val)
+                    elif kw is None:
+                        return res.failure(
+                            InvalidSyntaxError(
+                                val.pos_start, val.pos_end, "Positional arguments may not come after keyword arguments"
+                            )
+                        )
                     else:
                         kwarg_nodes[kw] = val
 
