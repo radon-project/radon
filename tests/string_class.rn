@@ -1,24 +1,24 @@
-s = String("This is a string")
+const s = String("This is a string")
 
-s_upper = s.upper()
+const s_upper = s.upper()
 assert s_upper == "THIS IS A STRING"
 
-s_lower = s.lower()
+const s_lower = s.lower()
 assert s_lower == "this is a string"
 
-s_capitalize = s.capitalize()
+const s_capitalize = s.capitalize()
 assert s_capitalize == "This is a string"
 
-s_title = s.title()
+const s_title = s.title()
 assert s_title == "This Is A String"
 
-s_swapcase = s.swapcase()
+const s_swapcase = s.swapcase()
 assert s_swapcase == "tHIS IS A STRING"
 
-s_len = s.length()
+const s_len = s.length()
 assert s_len == 16
 
-s_count = s.count("i")
+const s_count = s.count("i")
 assert s_count == 3
 
 try {

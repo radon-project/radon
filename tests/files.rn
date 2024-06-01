@@ -1,5 +1,5 @@
 
-f = File("hello.txt", "w")
+var f = File("hello.txt", "w")
 f.write("Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
 f.close()
 

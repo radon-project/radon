@@ -1,9 +1,9 @@
 
-string1 = "this is my string."
-string_obj = String(string1)
+const string1 = "this is my string."
+const string_obj = String(string1)
 
-v = "i"
-count = string_obj.count(v)
+const v = "i"
+const count = string_obj.count(v)
 
 print(count)
 

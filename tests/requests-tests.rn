@@ -1,29 +1,29 @@
 # API testing
 
-requests = Requests()
-json = Json()
+const requests = Requests()
+const json = Json()
 
 # get request testing
-response_get = requests.get("https://jsonplaceholder.typicode.com/posts")
+const response_get = requests.get("https://jsonplaceholder.typicode.com/posts")
 assert arr_len(json.loads(response_get)) == 100
 
 # post request testing
-response_post = requests.post("https://jsonplaceholder.typicode.com/posts", {"title": "foo", "body": "bar", "userId": 1})
-value = json.loads(response_post)
+const response_post = requests.post("https://jsonplaceholder.typicode.com/posts", {"title": "foo", "body": "bar", "userId": 1})
+var value = json.loads(response_post)
 assert value["id"] == 101
 
 # put request testing
-response_put = requests.put("https://jsonplaceholder.typicode.com/posts/1", {"title": "foo", "body": "bar", "userId": 1})
+const response_put = requests.put("https://jsonplaceholder.typicode.com/posts/1", {"title": "foo", "body": "bar", "userId": 1})
 value = json.loads(response_put)
 assert value["id"] == 1
 
 # patch request testing
-response_patch = requests.patch("https://jsonplaceholder.typicode.com/posts/52", {"title": "foo"})
+const response_patch = requests.patch("https://jsonplaceholder.typicode.com/posts/52", {"title": "foo"})
 value = json.loads(response_patch)
 assert value["id"] == 52
 
 # delete request testing
-response_delete = requests.delete("https://jsonplaceholder.typicode.com/posts/1")
+const response_delete = requests.delete("https://jsonplaceholder.typicode.com/posts/1")
 assert json.loads(response_delete) == {}
 
 print("API testing passed!")

@@ -124,8 +124,6 @@ KEYWORDS = [
     "catch",
     "as",
     "in",
-    "nonlocal",
-    "global",
     "const",
     "static",
     "assert",
@@ -135,6 +133,7 @@ KEYWORDS = [
     "fallthrough",
     "raise",
     "fallout",
+    "var",
 ]
 
 TokenValue: TypeAlias = Optional[str | int | float]
