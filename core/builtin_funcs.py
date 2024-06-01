@@ -66,7 +66,11 @@ class BuiltInFunction(BaseFunction):
         else:
             method = self.func
 
-        res.register(self.check_and_populate_args(method.arg_names, args, kwargs, method.defaults, exec_ctx))
+        res.register(
+            self.check_and_populate_args(
+                method.arg_names, args, kwargs, method.defaults, len(method.arg_names), exec_ctx
+            )
+        )
         if res.should_return():
             return res
 

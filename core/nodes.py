@@ -239,6 +239,7 @@ class FuncDefNode:
     static: bool
     desc: str
     va_name: Optional[str]
+    max_pos_args: int
 
     pos_start: Position
     pos_end: Position

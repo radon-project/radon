@@ -42,7 +42,7 @@ class Position:
     ftxt: str
 
     def __str__(self) -> str:
-        return f"{self.fn}:{self.ln}:{self.col}"
+        return f"{self.fn}:{self.ln+1}:{self.col+1}"
 
     def advance(self, current_char: Optional[str] = None) -> Position:
         self.idx += 1

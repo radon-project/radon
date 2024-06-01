@@ -568,8 +568,14 @@ class Parser:
                         return res
                     assert pair is not None
                     kw, val = pair
-                    if kw is None:
+                    if kw is None and len(kwarg_nodes) == 0:
                         arg_nodes.append(val)
+                    elif kw is None:
+                        return res.failure(
+                            InvalidSyntaxError(
+                                val.pos_start, val.pos_end, "Positional arguments may not come after keyword arguments"
+                            )
+                        )
                     else:
                         kwarg_nodes[kw] = val
 
@@ -1233,6 +1239,7 @@ class Parser:
         defaults: list[Optional[Node]] = []
         has_optionals = False
         is_va = False
+        max_pos_args = 0
         va_name: Optional[str] = None
 
         if self.current_tok.type == TT_SPREAD:
@@ -1248,6 +1255,8 @@ class Parser:
             self.advance(res)
             if not is_va:
                 arg_name_toks.append(arg_name_tok)
+                if va_name is None:
+                    max_pos_args += 1
 
             if is_va:
                 va_name = arg_name_tok.value
@@ -1284,6 +1293,9 @@ class Parser:
                 assert isinstance(arg_name_tok.value, str)
                 if not is_va:
                     arg_name_toks.append(arg_name_tok)
+                    if va_name is None:
+                        max_pos_args += 1
+
                 self.advance(res)
 
                 if is_va:
@@ -1335,6 +1347,7 @@ class Parser:
                     static=static,
                     desc="[No Description]",
                     va_name=va_name,
+                    max_pos_args=max_pos_args,
                     pos_start=node_pos_start,
                     pos_end=self.current_tok.pos_end,
                 )
@@ -1375,6 +1388,7 @@ class Parser:
                 static=static,
                 desc=desc,
                 va_name=va_name,
+                max_pos_args=max_pos_args,
                 pos_start=node_pos_start,
                 pos_end=self.current_tok.pos_end,
             )
