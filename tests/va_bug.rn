@@ -1,0 +1,5 @@
+fun f(...args, kw=null) -> print(kw)
+
+f(1, 2, 3)
+f(1, 2, 3, kw=4, 5, 6)
+

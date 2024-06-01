@@ -1051,12 +1051,17 @@ class BaseFunction(Value):
         return new_context
 
     def check_args(
-        self, arg_names: list[str], args: list[Value], kwargs: dict[str, Value], defaults: list[Optional[Value]]
+        self,
+        arg_names: list[str],
+        args: list[Value],
+        kwargs: dict[str, Value],
+        defaults: list[Optional[Value]],
+        max_pos_args: int,
     ) -> RTResult[None]:
         res = RTResult[None]()
 
         args_count = len(args) + len(kwargs)
-        if self.va_name is None and args_count > len(arg_names):
+        if self.va_name is None and (args_count > len(arg_names) or len(args) > max_pos_args):
             return res.failure(
                 RTError(
                     self.pos_start,
@@ -1090,18 +1095,24 @@ class BaseFunction(Value):
 
         return res.success(None)
 
-    def populate_args(self, arg_names, args, kwargs, defaults, exec_ctx):
+    def populate_args(self, arg_names, args, kwargs, defaults, max_pos_args, exec_ctx):
+        for i, (arg_name, default) in enumerate(zip(arg_names, defaults)):
+            if default is not None:
+                exec_ctx.symbol_table.set(arg_name, default)
+
+        populated = 0
         for i in range(len(arg_names)):
             arg_name = arg_names[i]
-            if arg_name in kwargs:
+            if i >= max_pos_args or arg_name in kwargs or i >= len(args):
                 continue
-            arg_value = defaults[i] if i >= len(args) else args[i]
+            arg_value = args[i]
             arg_value.set_context(exec_ctx)
             exec_ctx.symbol_table.set(arg_name, arg_value)
+            populated += 1
 
         if self.va_name is not None:
             va_list = []
-            for i in range(len(arg_names), len(args)):
+            for i in range(populated, len(args)):
                 arg = args[i]
                 arg.set_context(exec_ctx)
                 va_list.append(arg)
@@ -1111,12 +1122,12 @@ class BaseFunction(Value):
             kwarg.set_context(exec_ctx)
             exec_ctx.symbol_table.set(kw, kwarg)
 
-    def check_and_populate_args(self, arg_names, args, kwargs, defaults, exec_ctx):
+    def check_and_populate_args(self, arg_names, args, kwargs, defaults, max_pos_args, exec_ctx):
         res = RTResult()
-        res.register(self.check_args(arg_names, args, kwargs, defaults))
+        res.register(self.check_args(arg_names, args, kwargs, defaults, max_pos_args))
         if res.should_return():
             return res
-        self.populate_args(arg_names, args, kwargs, defaults, exec_ctx)
+        self.populate_args(arg_names, args, kwargs, defaults, max_pos_args, exec_ctx)
         return res.success(None)
 
 
@@ -1359,6 +1370,7 @@ class Function(BaseFunction):
     arg_names: list[str]
     defaults: list[Optional[Value]]
     should_auto_return: bool
+    max_pos_args: int
 
     def __help_repr__(self) -> str:
         return f"Help on function {self.name}:\n\n{self.__help_repr_method__()}"
@@ -1382,6 +1394,7 @@ class Function(BaseFunction):
         should_auto_return: bool,
         desc: str,
         va_name: Optional[str],
+        max_pos_args: int,
     ) -> None:
         super().__init__(name, symbol_table)
         self.body_node = body_node
@@ -1390,6 +1403,7 @@ class Function(BaseFunction):
         self.should_auto_return = should_auto_return
         self.desc = desc
         self.va_name = va_name
+        self.max_pos_args = max_pos_args
 
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         from core.interpreter import Interpreter  # Lazy import
@@ -1398,7 +1412,9 @@ class Function(BaseFunction):
         interpreter = Interpreter()
         exec_ctx = self.generate_new_context()
 
-        res.register(self.check_and_populate_args(self.arg_names, args, kwargs, self.defaults, exec_ctx))
+        res.register(
+            self.check_and_populate_args(self.arg_names, args, kwargs, self.defaults, self.max_pos_args, exec_ctx)
+        )
         if res.should_return():
             return res
 
@@ -1424,6 +1440,7 @@ class Function(BaseFunction):
             self.should_auto_return,
             self.desc,
             self.va_name,
+            self.max_pos_args,
         )
         copy.set_context(self.context)
         copy.set_pos(self.pos_start, self.pos_end)
