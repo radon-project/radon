@@ -1,6 +1,6 @@
 
-f = File("examples/files.rn")
-contents = f.read()
+const f = File("examples/files.rn")
+const contents = f.read()
 f.close()
 
 print(contents)

@@ -223,14 +223,11 @@ class Interpreter:
                 module_file = module_name.split("/")[-1]
                 module_path = os.path.dirname(os.path.realpath(module_name))
 
-                global CURRENT_DIR
-                # if CURRENT_DIR is None:
-                CURRENT_DIR = module_path
-
-                module_name = os.path.join(CURRENT_DIR, module_file)
+                module_name = os.path.join(context.get_import_cwd(), module_file)
             else:
                 # For STDLIB modules
-                module_name = os.path.join(BASE_DIR, "stdlib", f"{module_name}.rn")
+                module_path = os.path.join(BASE_DIR, "stdlib")
+                module_name = os.path.join(module_path, f"{module_name}.rn")
 
             with open(module_name, "r") as f:
                 script = f.read()
@@ -241,6 +238,7 @@ class Interpreter:
         symbol_table = create_global_symbol_table()
         new_ctx = Context(module_name, context, node.pos_start)
         new_ctx.symbol_table = symbol_table
+        new_ctx.import_cwd = module_path
         _, error, should_exit = run(module_name, script, context=new_ctx)
 
         if error:
