@@ -39,7 +39,9 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
         line_text = f"{line[:col_start_color]}{Log.deep_error(line[col_start_color:col_end_color], bold=True)}{line[col_end_color:]}\n"
         lstripped_len = len(line_text) - len(line_text.lstrip())
         result += " " * fixed_ident + line_text.lstrip()
-        result += " " * (col_start - lstripped_len + fixed_ident) + Log.deep_error("^" * (col_end - col_start), bold=True)
+        result += " " * (col_start - lstripped_len + fixed_ident) + Log.deep_error(
+            "^" * (col_end - col_start), bold=True
+        )
 
         # Re-calculate indices
         idx_start = idx_end
