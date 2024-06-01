@@ -55,7 +55,7 @@ fun test(l) {
     print(l[::])
 }
 
-l = [0]
+const l = [0]
 
 for i = 0 to 100 {
     arr_append(l, i)

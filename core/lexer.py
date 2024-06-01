@@ -78,8 +78,7 @@ class Lexer:
                 tokens.append(Token(TT_COLON, pos_start=self.pos))
                 self.advance()
             elif self.current_char == ".":
-                tokens.append(Token(TT_DOT, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_dot())
             elif self.current_char == "!":
                 token, error = self.make_not_equals()
                 if error is not None:
@@ -272,6 +271,18 @@ class Lexer:
             self.advance()
 
         return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
+
+    def make_dot(self) -> Token:
+        tok_type = TT_DOT
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.text[self.pos.idx :].startswith(".."):
+            self.advance()
+            self.advance()
+            tok_type = TT_SPREAD
+
+        return Token(tok_type, pos_start=pos_start, pos_end=self.pos.copy())
 
     def skip_comment(self) -> None:
         multi_line = False

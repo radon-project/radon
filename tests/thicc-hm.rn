@@ -1,4 +1,4 @@
-radon_object = [
+const radon_object = [
   {
     "id": 1,
     "name": "Leanne Graham",

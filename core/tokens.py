@@ -15,6 +15,7 @@ STDLIBS = [
     "argparser",
     "array",
     "colorlib",
+    "io",
     "math",
     "radiation",
     "system",
@@ -41,7 +42,7 @@ class Position:
     ftxt: str
 
     def __str__(self) -> str:
-        return f"{self.fn}:{self.ln}:{self.col}"
+        return f"{self.fn}:{self.ln+1}:{self.col+1}"
 
     def advance(self, current_char: Optional[str] = None) -> Position:
         self.idx += 1
@@ -101,6 +102,7 @@ TT_EOF = TokenType("EOF")  # End Of File
 TT_SLICE = TokenType("SLICE")  # x[1:2:3]
 TT_PLUS_PLUS = TokenType("PLUS_PLUS")  # ++
 TT_MINUS_MINUS = TokenType("MINUS_MINUS")  # --
+TT_SPREAD = TokenType("SPREAD")  # ...
 
 KEYWORDS = [
     "and",
@@ -123,8 +125,6 @@ KEYWORDS = [
     "catch",
     "as",
     "in",
-    "nonlocal",
-    "global",
     "const",
     "static",
     "assert",
@@ -134,6 +134,7 @@ KEYWORDS = [
     "fallthrough",
     "raise",
     "fallout",
+    "var",
 ]
 
 TokenValue: TypeAlias = Optional[str | int | float]

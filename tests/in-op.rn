@@ -1,5 +1,5 @@
 # with Array
-arr = [1,2,3,4,5]
+var arr = [1,2,3,4,5]
 
 # with if-else
 if 1 in arr {
@@ -20,7 +20,7 @@ while 3 in arr {
 arr = [1,2,3,4,5]
 assert 4 in arr
 
-hm = {
+const hm = {
     "key1": "value1",
     "key2": "value2"
 }
@@ -51,9 +51,9 @@ class Person {
     }
 }
 
-john = Person("John")
-bob = Person("Bob")
-alice = Person("Alice")
+const john = Person("John")
+const bob = Person("Bob")
+const alice = Person("Alice")
 
 john.befriend(bob)
 assert "Bob" in john

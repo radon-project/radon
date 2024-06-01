@@ -2,6 +2,14 @@
 f = File("examples/files.rn")
 contents = f.read()
 f.close()
+f.is_closed()
 
 print(contents)
 
+print("-------------")
+
+f = File("examples/files.rn")
+print(f.readline())
+print(f.readlines())
+
+f.close()

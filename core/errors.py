@@ -56,6 +56,7 @@ class Error:
     pos_end: Position
     error_name: str
     details: Optional[str]
+    context: Optional[Context] = None
 
     def as_string(self) -> str:
         """Return error as string"""
@@ -130,9 +131,11 @@ class RTError(Error):
         ctx = self.context
 
         while ctx:
+            fn = pos.fn if pos is not None else None
+            ln = pos.ln + 1 if pos is not None else None
+            name = ctx.display_name if ctx is not None else None
             result = (
-                f"  File {Log.light_info(pos.fn)}, line {Log.light_info(str(pos.ln + 1))}, in {Log.light_info(ctx.display_name)}\n"
-                + result
+                f"  File {Log.light_info(fn)}, line {Log.light_info(str(ln))}, in {Log.light_info(name)}\n" + result
             )
             pos = ctx.parent_entry_pos  # type: ignore
             ctx = ctx.parent  # type: ignore

@@ -111,6 +111,12 @@ class Value:
     def is_true(self) -> bool:
         return False
 
+    # Help text for help() in radon
+    def __help_repr__(self) -> str:
+        return """
+This data type help is not implemented yet
+"""
+
     def illegal_operation(self, *others: Value) -> RTError:
         if len(others) == 0:
             others = (self,)
@@ -148,6 +154,13 @@ class Iterator(Value):
 
     def __str__(self) -> str:
         return "<iterator>"
+
+    def __help_repr__(self) -> str:
+        return """
+Iterator
+
+An Iterator is an object that enables traversal over a collection, one element at a time.
+"""
 
     def __repr__(self) -> str:
         return str(self)
@@ -279,6 +292,22 @@ class Number(Value):
     def __str__(self) -> str:
         return str(self.value)
 
+    def __help_repr__(self) -> str:
+        return """
+Number
+
+A Number represents a numeric value. It can be an integer, float, or other numeric type.
+
+Operations:
+    +, -, *, /    -> Basic arithmetic operations.
+    //, %         -> Integer division and modulus.
+    ^            -> Exponentiation.
+    math.factorial() -> Gets the factorial of a number (standard math library)
+    str()    -> Converts the number to its string representation.
+
+Example: 25
+"""
+
     def __repr__(self) -> str:
         return str(self.value)
 
@@ -344,6 +373,19 @@ class Boolean(Value):
 
     def __repr__(self) -> str:
         return "true" if self.value else "false"
+
+    def __help_repr__(self) -> str:
+        return """
+Boolean
+
+A Boolean represents a truth value: True or False.
+
+Operations:
+    and, or, not   -> Logical operations.
+    ==, !=         -> Equality and inequality checks.
+
+Example: true
+"""
 
     @classmethod
     def true(cls) -> Boolean:
@@ -479,6 +521,22 @@ class String(Value):
 
     def __repr__(self) -> str:
         return f'"{self.value}"'
+
+    def __help_repr__(self) -> str:
+        return """
+String
+
+A String is a sequence of characters.
+
+Methods:
+    len(str)       -> Returns the length of the string.
+
+String standard library methods:
+    find(str)   -> Find a character in a string and return its index (-1 if not found)
+    to_int()    -> Magic method to convert string to int if possible
+
+Example: "Hello World!"
+"""
 
     def __iter__(self) -> PyIterator[str]:
         return iter(self.value)
@@ -656,6 +714,29 @@ class Array(Value):
     def __repr__(self) -> str:
         return f'[{", ".join(repr(x) for x in self.elements)}]'
 
+    def __help_repr__(self) -> str:
+        return """
+Array
+
+An Array is an ordered collection of elements.
+
+Methods:
+    len(arr)       -> Returns the number of elements in the array.
+
+Array standard library methods:
+    map(func)      -> Map an array with a function
+    append(item)   -> Append an element from the right
+    pop(index)     -> Removes and returns the last element of the array.
+    extend(arr)    -> Extend by another array
+    find(element)  -> Get the index of an element in the array (-1 if not found)
+
+    is_empty()     -> Returns boolean indicating if the array is empty or not
+    to_string()    -> Convert to string
+    is_array()     -> returns true
+
+Example: [1,2,3,true,"Hello World!"]
+"""
+
     def __iter__(self):
         return iter(self.elements)
 
@@ -771,6 +852,15 @@ class HashMap(Value):
 
     def __str__(self) -> str:
         return self.__repr__()
+
+    def __help_repr__(self) -> str:
+        return """
+HashMap
+
+A HashMap is a collection of key-value pairs.
+
+Example: {"key":"value"}
+"""
 
     def __repr__(self) -> str:
         __val = ", ".join([f"{repr(k)}: {repr(v)}" for k, v in self.values.items()])
@@ -946,6 +1036,9 @@ class PyAPI(Value):
 class BaseFunction(Value):
     name: str
     symbol_table: Optional[SymbolTable]
+    desc: str
+    arg_names: list[str]
+    va_name: Optional[str]
 
     def __init__(self, name: Optional[str], symbol_table: Optional[SymbolTable]) -> None:
         super().__init__()
@@ -958,12 +1051,17 @@ class BaseFunction(Value):
         return new_context
 
     def check_args(
-        self, arg_names: list[str], args: list[Value], kwargs: dict[str, Value], defaults: list[Optional[Value]]
+        self,
+        arg_names: list[str],
+        args: list[Value],
+        kwargs: dict[str, Value],
+        defaults: list[Optional[Value]],
+        max_pos_args: int,
     ) -> RTResult[None]:
         res = RTResult[None]()
 
         args_count = len(args) + len(kwargs)
-        if args_count > len(arg_names):
+        if self.va_name is None and (args_count > len(arg_names) or len(args) > max_pos_args):
             return res.failure(
                 RTError(
                     self.pos_start,
@@ -997,25 +1095,39 @@ class BaseFunction(Value):
 
         return res.success(None)
 
-    def populate_args(self, arg_names, args, kwargs, defaults, exec_ctx):
+    def populate_args(self, arg_names, args, kwargs, defaults, max_pos_args, exec_ctx):
+        for i, (arg_name, default) in enumerate(zip(arg_names, defaults)):
+            if default is not None:
+                exec_ctx.symbol_table.set(arg_name, default)
+
+        populated = 0
         for i in range(len(arg_names)):
             arg_name = arg_names[i]
-            if arg_name in kwargs:
+            if i >= max_pos_args or arg_name in kwargs or i >= len(args):
                 continue
-            arg_value = defaults[i] if i >= len(args) else args[i]
+            arg_value = args[i]
             arg_value.set_context(exec_ctx)
             exec_ctx.symbol_table.set(arg_name, arg_value)
+            populated += 1
+
+        if self.va_name is not None:
+            va_list = []
+            for i in range(populated, len(args)):
+                arg = args[i]
+                arg.set_context(exec_ctx)
+                va_list.append(arg)
+            exec_ctx.symbol_table.set(self.va_name, Array(va_list))
 
         for kw, kwarg in kwargs.items():
             kwarg.set_context(exec_ctx)
             exec_ctx.symbol_table.set(kw, kwarg)
 
-    def check_and_populate_args(self, arg_names, args, kwargs, defaults, exec_ctx):
+    def check_and_populate_args(self, arg_names, args, kwargs, defaults, max_pos_args, exec_ctx):
         res = RTResult()
-        res.register(self.check_args(arg_names, args, kwargs, defaults))
+        res.register(self.check_args(arg_names, args, kwargs, defaults, max_pos_args))
         if res.should_return():
             return res
-        self.populate_args(arg_names, args, kwargs, defaults, exec_ctx)
+        self.populate_args(arg_names, args, kwargs, defaults, max_pos_args, exec_ctx)
         return res.success(None)
 
 
@@ -1113,6 +1225,16 @@ class Instance(BaseInstance):
         except AttributeError:
             return Null.null()
 
+    def __help_repr__(self) -> str:
+        result: str = f"Help on object {self.parent_class.name}:\n\nclass {self.parent_class.name}\n|\n"
+        for k in self.symbol_table.symbols:
+            f = self.symbol_table.symbols[k]
+            if isinstance(f, Function):
+                result += f.__help_repr_method__()
+            elif isinstance(f, Value) and k != "this":
+                result += f"| {k} = {f!r}\n|\n"
+        return result
+
     def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]:
         method = method.copy()
         if method.symbol_table is None:
@@ -1193,6 +1315,16 @@ class Class(BaseClass):
             return None
         return method
 
+    def __help_repr__(self) -> str:
+        result: str = f"Help on object {self.name}:\n\nclass {self.name}\n|\n"
+        for k in self.symbol_table.symbols:
+            f = self.symbol_table.symbols[k]
+            if isinstance(f, Function):
+                result += f.__help_repr_method__()
+            elif isinstance(f, Value) and k != "this":
+                result += f"| {k} = {f!r}\n|\n"
+        return result
+
     def create(self, args: list[Value]) -> RTResult[BaseInstance]:
         res = RTResult[BaseInstance]()
 
@@ -1238,6 +1370,19 @@ class Function(BaseFunction):
     arg_names: list[str]
     defaults: list[Optional[Value]]
     should_auto_return: bool
+    max_pos_args: int
+
+    def __help_repr__(self) -> str:
+        return f"Help on function {self.name}:\n\n{self.__help_repr_method__()}"
+
+    def __help_repr_method__(self) -> str:
+        arg_strs: list[str] = []
+        for i in range(len(self.arg_names)):
+            if self.defaults[i] is not None:
+                arg_strs.append(f"{self.arg_names[i]} = {self.defaults[i].__repr__()}")
+            else:
+                arg_strs.append(self.arg_names[i])
+        return f"| fun {self.name}({', '.join(arg_strs)})\n|\t{self.desc}\n|\n"
 
     def __init__(
         self,
@@ -1247,12 +1392,18 @@ class Function(BaseFunction):
         arg_names: list[str],
         defaults: list[Optional[Value]],
         should_auto_return: bool,
+        desc: str,
+        va_name: Optional[str],
+        max_pos_args: int,
     ) -> None:
         super().__init__(name, symbol_table)
         self.body_node = body_node
         self.arg_names = arg_names
         self.defaults = defaults
         self.should_auto_return = should_auto_return
+        self.desc = desc
+        self.va_name = va_name
+        self.max_pos_args = max_pos_args
 
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         from core.interpreter import Interpreter  # Lazy import
@@ -1261,7 +1412,9 @@ class Function(BaseFunction):
         interpreter = Interpreter()
         exec_ctx = self.generate_new_context()
 
-        res.register(self.check_and_populate_args(self.arg_names, args, kwargs, self.defaults, exec_ctx))
+        res.register(
+            self.check_and_populate_args(self.arg_names, args, kwargs, self.defaults, self.max_pos_args, exec_ctx)
+        )
         if res.should_return():
             return res
 
@@ -1279,7 +1432,15 @@ class Function(BaseFunction):
 
     def copy(self) -> Function:
         copy = Function(
-            self.name, self.symbol_table, self.body_node, self.arg_names, self.defaults, self.should_auto_return
+            self.name,
+            self.symbol_table,
+            self.body_node,
+            self.arg_names,
+            self.defaults,
+            self.should_auto_return,
+            self.desc,
+            self.va_name,
+            self.max_pos_args,
         )
         copy.set_context(self.context)
         copy.set_pos(self.pos_start, self.pos_end)

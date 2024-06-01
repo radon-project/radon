@@ -11,19 +11,30 @@ from typing import NoReturn
 
 
 class Interpreter:
-    def assign(self, *, var_name, value, context, extra_names=[], qualifier=None, pos_start, pos_end):
-        res = RTResult()
+    def assign(
+        self,
+        *,
+        var_name: str,
+        value: Value,
+        context: Context,
+        extra_names: list[Token] = [],
+        qualifier: Optional[Token] = None,
+        pos_start: Position,
+        pos_end: Position,
+    ) -> RTResult[Value]:
+        res = RTResult[Value]()
 
         if extra_names != []:
             assert qualifier is None
             nd = context.symbol_table.get(var_name)
             prev = None
 
-            if not nd:
+            if nd is None:
                 return res.failure(RTError(pos_start, pos_end, f"'{var_name}' not defined", context))
 
             for index, name_tok in enumerate(extra_names):
                 name = name_tok.value
+                assert isinstance(name, str)
 
                 if not isinstance(nd, Class) and not isinstance(nd, Instance):
                     return res.failure(RTError(pos_start, pos_end, "Value must be instance of class or class", context))
@@ -31,15 +42,19 @@ class Interpreter:
                 prev = nd
                 nd = nd.symbol_table.symbols[name] if name in nd.symbol_table.symbols else None
 
-                if not nd and index != len(extra_names) - 1:
+                if nd is None and index != len(extra_names) - 1:
                     return res.failure(RTError(pos_start, pos_end, f"'{name}' not defined", context))
 
+            assert prev is not None
+            assert isinstance(name, str)
             res.register(prev.symbol_table.set(name, value))
             if res.should_return():
                 return res
             return res.success(value)
 
-        res.register(context.symbol_table.set(var_name, value, qualifier))
+        qualifier_str = None if qualifier is None else qualifier.value
+        assert qualifier_str is None or isinstance(qualifier_str, str)
+        res.register(context.symbol_table.set_var(var_name, value, qualifier_str))
         if res.should_return():
             return res
         return res.success(value)
@@ -132,9 +147,11 @@ class Interpreter:
     def visit_VarAssignNode(self, node: VarAssignNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         var_name = node.var_name_tok.value
+        assert isinstance(var_name, str)
         value = res.register(self.visit(node.value_node, context))
         if res.should_return():
             return res
+        assert value is not None
 
         return self.assign(
             var_name=var_name,
@@ -247,7 +264,14 @@ class Interpreter:
 
         res = RTResult[Value]()
         res.register(
-            self.assign(var_name=name, value=module, context=context, pos_start=node.pos_start, pos_end=node.pos_end)
+            self.assign(
+                var_name=name,
+                value=module,
+                context=context,
+                pos_start=node.pos_start,
+                pos_end=node.pos_end,
+                qualifier=Token(TT_KEYWORD, "const", pos_start=node.pos_start),
+            )
         )
         if res.should_return():
             return res
@@ -469,6 +493,7 @@ class Interpreter:
         res = RTResult[Value]()
 
         func_name = node.var_name_tok.value if node.var_name_tok else None
+        func_desc = node.desc
         assert func_name is None or isinstance(func_name, str)
         body_node = node.body_node
         arg_names = [str(arg_name.value) for arg_name in node.arg_name_toks]
@@ -483,7 +508,17 @@ class Interpreter:
             defaults.append(default_value)
 
         func_value = (
-            Function(func_name, context.symbol_table, body_node, arg_names, defaults, node.should_auto_return)
+            Function(
+                func_name,
+                context.symbol_table,
+                body_node,
+                arg_names,
+                defaults,
+                node.should_auto_return,
+                func_desc,
+                va_name=node.va_name,
+                max_pos_args=node.max_pos_args,
+            )
             .set_context(context)
             .set_pos(node.pos_start, node.pos_end)
         )
@@ -492,7 +527,7 @@ class Interpreter:
             assert context.symbol_table is not None
             assert isinstance(func_name, str), "this could be a bug in the parser"
             if node.static:
-                context.symbol_table.set_static(func_name, func_value)
+                context.symbol_table.set_static(func_name, func_value, "var")
             else:
                 context.symbol_table.set(func_name, func_value)
 

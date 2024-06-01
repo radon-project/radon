@@ -292,7 +292,7 @@ class Parser:
         var_assign_node = res.try_register(self.assign_expr())
         if var_assign_node is not None:
             return res.success(var_assign_node)
-        elif res.error:
+        elif res.error is not None:
             return res
         else:
             self.reverse(res.to_reverse_count)
@@ -316,7 +316,7 @@ class Parser:
             self.advance(res)
 
         qualifier = None
-        if self.current_tok.type == TT_KEYWORD and self.current_tok.value in ("global", "nonlocal", "const"):
+        if self.current_tok.type == TT_KEYWORD and self.current_tok.value in ("var", "const"):
             qualifier = self.current_tok
             self.advance(res)
 
@@ -568,8 +568,14 @@ class Parser:
                         return res
                     assert pair is not None
                     kw, val = pair
-                    if kw is None:
+                    if kw is None and len(kwarg_nodes) == 0:
                         arg_nodes.append(val)
+                    elif kw is None:
+                        return res.failure(
+                            InvalidSyntaxError(
+                                val.pos_start, val.pos_end, "Positional arguments may not come after keyword arguments"
+                            )
+                        )
                     else:
                         kwarg_nodes[kw] = val
 
@@ -1197,6 +1203,8 @@ class Parser:
     def func_def(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
 
+        node_pos_start = self.current_tok.pos_start
+
         static = False
         if self.current_tok.matches(TT_KEYWORD, "static"):
             self.advance(res)
@@ -1229,30 +1237,49 @@ class Parser:
         self.advance(res)
         arg_name_toks = []
         defaults: list[Optional[Node]] = []
-        hasOptionals = False
+        has_optionals = False
+        is_va = False
+        max_pos_args = 0
+        va_name: Optional[str] = None
+
+        if self.current_tok.type == TT_SPREAD:
+            is_va = True
+            self.advance(res)
 
         if self.current_tok.type == TT_IDENTIFIER:
             pos_start = self.current_tok.pos_start.copy()
             pos_end = self.current_tok.pos_end.copy()
 
-            arg_name_toks.append(self.current_tok)
+            arg_name_tok = self.current_tok
+            assert isinstance(arg_name_tok.value, str)
             self.advance(res)
+            if not is_va:
+                arg_name_toks.append(arg_name_tok)
+                if va_name is None:
+                    max_pos_args += 1
 
-            if self.current_tok.type == TT_EQ:
+            if is_va:
+                va_name = arg_name_tok.value
+                is_va = False
+            elif self.current_tok.type == TT_EQ:
                 self.advance(res)
                 default = res.register(self.expr())
                 if res.error:
                     return res
                 assert default is not None
                 defaults.append(default)
-                hasOptionals = True
-            elif hasOptionals:
+                has_optionals = True
+            elif has_optionals:
                 return res.failure(InvalidSyntaxError(pos_start, pos_end, "Expected optional parameter."))
             else:
                 defaults.append(None)
 
             while self.current_tok.type == TT_COMMA:
                 self.advance(res)
+
+                if self.current_tok.type == TT_SPREAD:
+                    is_va = True
+                    self.advance(res)
 
                 if self.current_tok.type != TT_IDENTIFIER:
                     return res.failure(
@@ -1261,18 +1288,28 @@ class Parser:
 
                 pos_start = self.current_tok.pos_start.copy()
                 pos_end = self.current_tok.pos_end.copy()
-                arg_name_toks.append(self.current_tok)
+
+                arg_name_tok = self.current_tok
+                assert isinstance(arg_name_tok.value, str)
+                if not is_va:
+                    arg_name_toks.append(arg_name_tok)
+                    if va_name is None:
+                        max_pos_args += 1
+
                 self.advance(res)
 
-                if self.current_tok.type == TT_EQ:
+                if is_va:
+                    va_name = arg_name_tok.value
+                    is_va = False
+                elif self.current_tok.type == TT_EQ:
                     self.advance(res)
                     default = res.register(self.expr())
                     if res.error:
                         return res
                     assert default is not None
                     defaults.append(default)
-                    hasOptionals = True
-                elif hasOptionals:
+                    has_optionals = True
+                elif has_optionals:
                     return res.failure(InvalidSyntaxError(pos_start, pos_end, "Expected optional parameter."))
                 else:
                     defaults.append(None)
@@ -1300,7 +1337,21 @@ class Parser:
                 return res
             assert body is not None
 
-            return res.success(FuncDefNode(var_name_tok, arg_name_toks, defaults, body, True, static=static))
+            return res.success(
+                FuncDefNode(
+                    var_name_tok,
+                    arg_name_toks,
+                    defaults,
+                    body,
+                    True,
+                    static=static,
+                    desc="[No Description]",
+                    va_name=va_name,
+                    max_pos_args=max_pos_args,
+                    pos_start=node_pos_start,
+                    pos_end=self.current_tok.pos_end,
+                )
+            )
 
         self.skip_newlines()
         if self.current_tok.type != TT_LBRACE:
@@ -1309,6 +1360,13 @@ class Parser:
             )
 
         self.advance(res)
+        self.skip_newlines()
+
+        desc: str = "[No Description]"
+        if self.current_tok.type == TT_STRING:
+            # Set description
+            desc = str(self.current_tok.value)
+            self.advance(res)
 
         body = res.register(self.statements())
         if res.error:
@@ -1320,7 +1378,21 @@ class Parser:
 
         self.advance(res)
 
-        return res.success(FuncDefNode(var_name_tok, arg_name_toks, defaults, body, False, static=static))
+        return res.success(
+            FuncDefNode(
+                var_name_tok,
+                arg_name_toks,
+                defaults,
+                body,
+                False,
+                static=static,
+                desc=desc,
+                va_name=va_name,
+                max_pos_args=max_pos_args,
+                pos_start=node_pos_start,
+                pos_end=self.current_tok.pos_end,
+            )
+        )
 
     def switch_statement(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
@@ -1624,22 +1696,25 @@ class SymbolTable:
             return self.parent.get(name)
         return value
 
-    def set(self, name: str, value: Value, qualifier: Optional[Token] = None) -> RTResult[None]:
-        class dummy:
-            TT_KW = TT_KEYWORD
+    def set(self, name: str, value: Value) -> RTResult[None]:
+        if name in self.consts:
+            return RTResult[None]().failure(
+                RTError(value.pos_start, value.pos_end, f"Cannot reassign to constant {name}", value.context)
+            )
+        self.symbols[name] = value
+        return RTResult[None]().success(None)
 
+    def set_var(self, name: str, value: Value, qualifier: Optional[str] = None) -> RTResult[None]:
         if name in self.consts:
             return RTResult[None]().failure(
                 RTError(value.pos_start, value.pos_end, f"Cannot reassign to constant {name}", value.context)
             )
         match qualifier:
             case None:
-                self.symbols[name] = value
-            case Token(dummy.TT_KW, "nonlocal"):
                 if name in self.symbols:
                     self.symbols[name] = value
-                elif self.parent:
-                    self.parent.set(name, value, qualifier)
+                elif self.parent is not None:
+                    self.parent.set_var(name, value, qualifier)
                 else:
                     return RTResult[None]().failure(
                         RTError(
@@ -1649,21 +1724,20 @@ class SymbolTable:
                             value.context,
                         )
                     )
-            case Token(dummy.TT_KW, "global"):
-                if self.parent is None:
-                    self.symbols[name] = value
-                else:
-                    self.parent.set(name, value, qualifier)
-            case Token(dummy.TT_KW, "const"):
+            case "var":
+                if name in self.symbols:
+                    return RTResult[None]().failure(
+                        RTError(value.pos_start, value.pos_end, f"Cannot re-declare variable {name}", value.context)
+                    )
+                self.symbols[name] = value
+            case "const":
                 self.symbols[name] = value
                 self.consts.add(name)
-            case _:
-                assert False, "invalid qualifier"
         return RTResult[None]().success(None)
 
-    def set_static(self, name: str, value: Value, qualifier: Optional[Token] = None) -> RTResult[None]:
+    def set_static(self, name: str, value: Value, qualifier: Optional[str] = None) -> RTResult[None]:
         res = RTResult[None]()
-        res.register(self.set(name, value, qualifier))
+        res.register(self.set_var(name, value, qualifier))
         if res.should_return():
             return res
         self.statics.add(name)

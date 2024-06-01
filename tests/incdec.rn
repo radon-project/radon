@@ -1,5 +1,5 @@
 
-x = 69
+var x = 69
 print(x)
 x++
 print(x)
@@ -13,11 +13,11 @@ print(x--)
 print(x--)
 
 print("----------------")
-y = 69
+var y = 69
 print(x + " " + y)
 if true {
     x++
-    nonlocal y++
+    y++
 }
 
 print(x + " " + y)

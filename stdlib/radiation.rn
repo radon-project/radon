@@ -19,7 +19,7 @@ fun LogicalError(message = null) -> message
 fun RuntimeError(message = null) -> message
 
 # List of all errors
-errors = [
+const errors = [
     ValueError,
     TypeError,
     IOError,

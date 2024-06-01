@@ -12,39 +12,23 @@
 •
 [Examples](examples/)
 
-<a href="https://github.com/radon-project/radon" title="GitHub stars">
-  <img src="https://img.shields.io/github/stars/radon-project/radon?style=flat&logo=github" alt="GitHub stars">
-</a>
-<a href="https://github.com/radon-project/radon" title="GitHub forks">
-  <img src="https://img.shields.io/github/forks/radon-project/radon?style=flat&logo=github" alt="GitHub forks">
-</a>
-<a href="https://github.com/radon-project/radon" title="GitHub watchers">
-  <img src="https://img.shields.io/github/watchers/radon-project/radon?style=flat&logo=github" alt="GitHub watchers">
-</a>
-<a href="https://github.com/radon-project/radon/issues" title="GitHub issues">
-  <img src="https://img.shields.io/github/issues/radon-project/radon?style=flat&logo=github" alt="GitHub issues">
-</a>
-<a href="https://github.com/radon-project/radon/pulls" title="GitHub pull requests">
-  <img src="https://img.shields.io/github/issues-pr/radon-project/radon?style=flat&logo=github" alt="GitHub pull requests">
-</a>
-<a href="https://github.com/radon-project/radon" title="Total hits">
-  <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fradon-project%2Fradon&count_bg=%2352B308&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false"/>
-  <a href="https://discord.gg/y2x4CSX7DM" title="Join the community">
-  <img src="https://img.shields.io/discord/1137834560290308306?style=flat&logo=discord&logoColor=%235865F2&label=join&link=https%3A%2F%2Fdiscord.gg%2Fy2x4CSX7DM" alt="Discord">
-</a>
-</a>
+![GitHub Workflow Status](https://github.com/radon-project/radon/actions/workflows/ci.yaml/badge.svg "GitHub Workflow Status")
+![GitHub license](https://img.shields.io/github/license/radon-project/radon?style=flat "License")
+![Total hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fradon-project%2Fradon&count_bg=%2352B308&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false "Total hits")
+[![Discord](https://img.shields.io/discord/1137834560290308306?style=flat&logo=discord&logoColor=%235865F2&label=join&link=https%3A%2F%2Fdiscord.gg%2Fy2x4CSX7DM "Discord")](https://discord.gg/y2x4CSX7DM)
+
 </div>
 
 Radon is a programming language that is designed to be easy to learn and use. It is a high-level language intended to be used for general purpose programming. It is designed to be easy to learn and use, while still being powerful enough to be used for most tasks. Some of the features of Radon include:
 
 - A simple syntax that is easy to learn and use
 - Dynamic typing so that you don't have to worry about types
-- Powerful standard library that makes it easy to do common tasks (On the way)
+- Powerful standard library that makes it easy to do common tasks (Development)
 - Easy to use package manager that makes it easy to install packages (Future feature)
 
 ## Installation
 
-It is currently in development state. It is not ready for use yet. But you can still try it out by cloning the repository and running the `radon-project/radon` repository.
+Radon is currently in development state. It is not ready for use yet. But you can still try it out by cloning the repository and running the `radon-project/radon` repository.
 
 ```bash
 git clone https://github.com/radon-project/radon.git
@@ -57,212 +41,40 @@ python radon.py
 python radon.py -s <filename>
 ```
 
-## Project Structure
+Read the [documentation](https://radon-project.github.io/docs) to learn more about the language.
 
-```
-radon
-├── core
-│   ├── builtin_funcs.py
-│   ├── datatypes.py
-│   ├── errors.py
-│   ├── __init__.py
-│   ├── interpreter.py
-│   ├── lexer.py
-│   ├── nodes.py
-│   ├── parser.py
-│   └── tokens.py
-├── examples
-│   ├── args_test.rn
-│   ├── arrays.rn
-│   ├── classes.rn
-│   ├── functions.rn
-│   ├── import_test.rn
-│   ├── new_syntax.rn
-│   ├── python_api.rn
-│   ├── simple.rn
-│   └── syntax.rn
-├── logo.png
-├── Makefile
-├── radon.py
-├── README.md
-├── stdlib
-│   ├── Argparser.rn
-│   ├── Array.rn
-│   ├── Math.rn
-│   ├── String.rn
-│   ├── System.rn
-│   └── Winlib.rn
-├── tests
-└── TODO.md
-```
+## Quick Start
 
-## Standard Library
-
-We are currently working on the standard library. We need contributors to help us build the standard library. If you are interested, please make contributions to the `stdlib` directory.
-
-## Syntax
-
-Check out the syntax:
+Here is a simple example of a Radon program that asks the user for their username and password and then checks if the username is "radon" and the password is "password". If the username and password are correct, it prints "Log in successful", otherwise it prints "Invalid credentials".
 
 ```radon
-# This is a comment
+import io
 
-# Arithmetic operators
-# + - Addition
-# - - Subtraction
-# * - Multiplication
-# / - Division
-# % - Modulus
-# ^ - Exponentiation
-
-# Comparison operators
-# == - Equal to
-# != - Not equal to
-# > - Greater than
-# < - Less than
-# >= - Greater than or equal to
-# <= - Less than or equal to
-
-# Logical operators
-# and - Logical and
-# or - Logical or
-# not - Logical not
-
-# Assignment operators (Development)
-# = - Assign
-# += - Add and assign
-# -= - Subtract and assign
-# *= - Multiply and assign
-# /= - Divide and assign
-# %= - Modulus and assign
-# ^= - Exponentiation and assign
-
-# Variable definition
-var a = 10
-var b = 20
-print(a + b) # 30
-
-var c = "Hello"
-var d = "World"
-print(c + " " + d) # Hello World
-
-# Conditional statement
-if a > b {
-    print("a is greater than b")
-} elif a < b {
-    print("a is less than b")
-} else {
-    print("a is equal to b")
-}
-
-# For loop
-var x = 9 # Multiplication table of 9
-
-for i = 1 to 11 {
-    print(str(x) + " X " + str(i) + " = " + str(x * i))
-}
-
-# While loop
-while x > 0 {
-    print(x)
-    var x = x - 1
-}
-
-# Function definition
-fun add(a, b) {
-    return a + b
-}
-
-print(add(10, 20)) # 30
-
-# Anonymous function
-var sub = fun (a, b) {
-    return a - b
-}
-
-print(sub(20, 10)) # 10
-
-# Single line function
-fun mul(a, b) -> a * b
-print(mul(10, 20)) # 200
-
-# Class definition
-class Person {
-    # Constructor
-    fun Person(name, age) {
-        var this.name = name
-        var this.age = age
+class Network {
+    fun __constructor__(username, password) {
+        this.username = username
+        this.password = password
     }
 
-    fun get_name() {
-        return this.name
-    }
-
-    fun get_age() {
-        return this.age
+    fun login() {
+        if this.username == "radon" {
+            if this.password == "password" {
+                print("Log in successful")
+            } else {
+                print("Invalid credentials")
+            }
+        } else {
+            print("Invalid credentials")
+        }
     }
 }
 
-# Use a class
-var person = Person("Almas", 21)
-var details = "Name is : " + person.get_name() + ", Age : " + str(person.get_age())
-print(details)
+var username = input("Enter you username: ")
+# Access password securely using get_password
+var password = io.Input.get_password("Enter your password: ")
 
-# Include statement
-include Math # to include math library
-include "examples/simple.rn" # to use a path
-
-# builtin functions
-
-# Utility methods
-cls()
-clear()
-exit()
-
-# same as include statement
-require()
-
-# Command line arguments
-sys_args()
-
-# API methods
-pyapi(string)
-
-# Typecase methods
-int()
-float()
-str()
-bool()
-type()
-
-# Type checker methods
-is_num()
-is_int()
-is_float()
-is_str()
-is_bool()
-is_array()
-is_fun()
-
-# String methods
-str_len()
-str_find(string, index)
-str_slice(string, start, end)
-
-# I/O methods
-print()
-print_ret()
-input()
-input_int()
-
-# Array methods
-arr_len()
-arr_push(array, item)
-arr_pop(array, index)
-arr_append(array, item)
-arr_extend(array1, array2)
-arr_find(array, index)
-arr_slice(array, start, end)
+var network = Network(username, password)
+network.login()
 ```
 
 ## Contributing
@@ -280,6 +92,8 @@ Steps to contribute:
 7. Create a pull request
 
 Before making a pull request create an issue and discuss the changes you want to make. If you have any questions, feel free to ask in the issues section.
+
+You can also join our [Discord server](https://discord.gg/y2x4CSX7DM) to discuss the language and get help.
 
 ## License
 

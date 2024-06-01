@@ -1,0 +1,33 @@
+class Test
+{
+    const property1 = "Hello, World!"
+
+    fun __constructor__()
+    {
+
+    }
+
+    fun func1(arg1,arg2)
+    {
+        "Description for func1"
+    }
+
+    fun func2(arg1)
+    {
+        "Description for func2"
+    }
+
+    fun no_description() {
+        return null
+    }
+}
+
+fun standalone(arg1,arg2)
+{
+    "This is a standalone function"
+}
+
+help("Hello")
+help(Test)
+help(Test())
+help(standalone)

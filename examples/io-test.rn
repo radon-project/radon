@@ -1,0 +1,16 @@
+import io
+
+var int_num = io.Input.get_int("Enter an integer number: ")
+print(int_num)
+
+var float_num = io.Input.get_float("Enter a float number: ")
+print(float_num)
+
+var str_val = io.Input.get_string("Enter a string: ")
+print(str_val)
+
+var password = io.Input.get_password("Enter a password: ")
+print(password)
+
+var val = input("Enter a value: ")
+io.Output.write(val, sep="\n")

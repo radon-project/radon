@@ -229,6 +229,7 @@ class WhileNode:
         self.pos_end = self.body_node.pos_end
 
 
+@dataclass
 class FuncDefNode:
     var_name_tok: Optional[Token]
     arg_name_toks: list[Token]
@@ -236,34 +237,12 @@ class FuncDefNode:
     body_node: Node
     should_auto_return: bool
     static: bool
+    desc: str
+    va_name: Optional[str]
+    max_pos_args: int
 
     pos_start: Position
     pos_end: Position
-
-    def __init__(
-        self,
-        var_name_tok: Optional[Token],
-        arg_name_toks: list[Token],
-        defaults: list[Optional[Node]],
-        body_node: Node,
-        should_auto_return: bool,
-        static: bool = False,
-    ) -> None:
-        self.var_name_tok = var_name_tok
-        self.arg_name_toks = arg_name_toks
-        self.defaults = defaults
-        self.body_node = body_node
-        self.should_auto_return = should_auto_return
-        self.static = static
-
-        if self.var_name_tok:
-            self.pos_start = self.var_name_tok.pos_start
-        elif len(self.arg_name_toks) > 0:
-            self.pos_start = self.arg_name_toks[0].pos_start
-        else:
-            self.pos_start = self.body_node.pos_start
-
-        self.pos_end = self.body_node.pos_end
 
 
 class CallNode:
