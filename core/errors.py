@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str:
     """Return string with arrows"""
-    result = "\n"
+    result: str = ""
     # Calculate indices
     idx_start = max(text.rfind("\n", 0, pos_start.idx), 0)
     idx_end = text.find("\n", idx_start + 1)
@@ -34,10 +34,12 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
         col_end_color = col_end + 1
 
         # Append to result
+        fixed_ident: int = 4
+
         line_text = f"{line[:col_start_color]}{Log.deep_error(line[col_start_color:col_end_color], bold=True)}{line[col_end_color:]}\n"
         lstripped_len = len(line_text) - len(line_text.lstrip())
-        result += line_text.lstrip()
-        result += " " * (col_start - lstripped_len) + Log.deep_error("^" * (col_end - col_start), bold=True)
+        result += " " * fixed_ident + line_text.lstrip()
+        result += " " * (col_start - lstripped_len + fixed_ident) + Log.deep_error("^" * (col_end - col_start), bold=True)
 
         # Re-calculate indices
         idx_start = idx_end
