@@ -133,8 +133,7 @@ class RTError(Error):
             ln = pos.ln + 1 if pos is not None else None
             name = ctx.display_name if ctx is not None else None
             result = (
-                f"  File {Log.light_info(fn)}, line {Log.light_info(str(ln))}, in {Log.light_info(name)}\n"
-                + result
+                f"  File {Log.light_info(fn)}, line {Log.light_info(str(ln))}, in {Log.light_info(name)}\n" + result
             )
             pos = ctx.parent_entry_pos  # type: ignore
             ctx = ctx.parent  # type: ignore

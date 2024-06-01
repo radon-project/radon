@@ -262,7 +262,14 @@ class Interpreter:
 
         res = RTResult[Value]()
         res.register(
-            self.assign(var_name=name, value=module, context=context, pos_start=node.pos_start, pos_end=node.pos_end, qualifier=Token(TT_KEYWORD, "const", pos_start=node.pos_start))
+            self.assign(
+                var_name=name,
+                value=module,
+                context=context,
+                pos_start=node.pos_start,
+                pos_end=node.pos_end,
+                qualifier=Token(TT_KEYWORD, "const", pos_start=node.pos_start),
+            )
         )
         if res.should_return():
             return res
