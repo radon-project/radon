@@ -43,11 +43,12 @@ class Input {
 }
 
 class Output {
-    static fun write(...values, sep=" ", end="\n") {       
-        var output = ""
-        for value in values {
-            output += str(value) + sep
+    static fun write(...values, sep=" ", end="\n") {        
+        var ns = {
+            "values": values,
+            "sep": sep,
+            "end": end
         }
-        print(output + end)
+        pyapi("print(*values, sep=sep, end=end)", ns)
     }
 }
