@@ -1,0 +1,243 @@
+fun getcwd() {
+    "Get the current working directory."
+
+    var ns = {}
+    pyapi("import os; cwd = os.getcwd()", ns)
+    return ns["cwd"]
+}
+
+fun listdir(path=".") {
+    "List the files in the current directory."
+
+    var ns = {"path": path}
+    pyapi("import os; list = os.listdir(path)", ns)
+    return ns["list"]
+}
+
+fun mkdir(name) {
+    "Create a directory."
+
+    var ns = {"name": name}
+    pyapi("import os; value = os.mkdir(name)", ns)
+    return ns["value"]
+}
+
+fun mkdirs(name) {
+    "Create a directory and any missing parent directories."
+
+    var ns = {"name": name}
+    pyapi("import os; value = os.mkdirs(name)", ns)
+    return ns["value"]
+}
+
+fun rmdir(name) {
+    "Remove a directory."
+
+    var ns = {"name": name}
+    pyapi("import os; value = os.rmdir(name)", ns)
+    return ns["value"]
+}
+
+fun rmdirs(name) {
+    "Remove a directory and any missing parent directories."
+
+    var ns = {"name": name}
+    pyapi("import os; value = os.rmdirs(name)", ns)
+    return ns["value"]
+}
+
+fun remove(name) {
+    "Remove a file."
+
+    var ns = {"name": name}
+    pyapi("import os; value = os.remove(name)", ns)
+    return ns["value"]
+}
+
+fun rename(old, new) {
+    "Rename a file or directory."
+
+    var ns = {"old": old, "new": new}
+    pyapi("import os; value = os.rename(old, new)", ns)
+    return ns["value"]
+}
+
+fun symlink(src, dst) {
+    "Create a symbolic link."
+
+    var ns = {"src": src, "dst": dst}
+    pyapi("import os; value = os.symlink(src, dst)", ns)
+    return ns["value"]
+}
+
+fun readlink(path) {
+    "Read the target of a symbolic link."
+
+    var ns = {"path": path}
+    pyapi("import os; value = os.readlink(path)", ns)
+    return ns["value"]
+}
+
+fun stat(path) {
+    "Get the status of a file."
+
+    var ns = {"path": path}
+    pyapi("import os; value = os.stat(path)", ns)
+    return ns["value"]
+}
+
+fun lstat(path) {
+    "Get the status of a file without following symbolic links."
+
+    var ns = {"path": path}
+    pyapi("import os; value = os.lstat(path)", ns)
+    return ns["value"]
+}
+
+fun walk(top) {
+    "Walk a directory tree."
+
+    var ns = {"top": top}
+    pyapi("import os; value = os.walk(top)", ns)
+    return ns["value"]
+}
+
+fun chmod(path, mode) {
+    "Change the mode of a file."
+
+    var ns = {"path": path, "mode": mode}
+    pyapi("import os; value = os.chmod(path, mode)", ns)
+    return ns["value"]
+}
+
+fun chown(path, uid, gid) {
+    "Change the owner and group of a file."
+
+    var ns = {"path": path, "uid": uid, "gid": gid}
+    pyapi("import os; value = os.chown(path, uid, gid)", ns)
+    return ns["value"]
+}
+
+fun utime(path, times) {
+    "Change the access and modification times of a file."
+
+    var ns = {"path": path, "times": times}
+    pyapi("import os; value = os.utime(path, times)", ns)
+    return ns["value"]
+}
+
+fun link(src, dst) {
+    "Create a hard link."
+
+    var ns = {"src": src, "dst": dst}
+    pyapi("import os; value = os.link(src, dst)", ns)
+    return ns["value"]
+}
+
+fun unlink(path) {
+    "Remove a file."
+
+    var ns = {"path": path}
+    pyapi("import os; value = os.unlink(path)", ns)
+    return ns["value"]
+}
+
+fun chdir(path) {
+    "Change the current working directory."
+
+    var ns = {"path": path}
+    pyapi("import os; value = os.chdir(path)", ns)
+    return ns["value"]
+}
+
+fun access(path, mode) {
+    "Check if a file can be accessed."
+
+    var ns = {"path": path, "mode": mode}
+    pyapi("import os; value = os.access(path, mode)", ns)
+    return ns["value"]
+}
+
+
+class _Path {
+    "Path manipulation functions."
+
+    fun __constructor__() {}
+
+    static fun join(...args) {
+        "Join path components together."
+
+        var ns = {"args": args}
+        pyapi("import os; val = os.path.join(args)", ns)
+        return ns["val"]
+    }
+
+    static fun isfile(path) {
+        "Check if a path is a file."
+
+        var ns = {"path": path}
+        pyapi("import os; val = os.path.isfile(path)", ns)
+        return ns["val"]
+    }
+
+    static fun isdir(path) {
+        "Check if a path is a directory."
+
+        var ns = {"path": path}
+        pyapi("import os; val = os.path.isdir(path)", ns)
+        return ns["val"]
+    }
+
+    static fun islink(path) {
+        "Check if a path is a symbolic link."
+
+        var ns = {"path": path}
+        pyapi("import os; val = os.path.islink(path)", ns)
+        return ns["val"]
+    }
+
+    static fun ismount(path) {
+        "Check if a path is a mount point."
+
+        var ns = {"path": path}
+        pyapi("import os; val = os.path.ismount(path)", ns)
+        return ns["val"]
+    }
+    
+    static fun exists(path) {
+        "Check if a path exists."
+
+        var ns = {"path": path}
+        pyapi("import os; val = os.path.exists(path)", ns)
+        return ns["val"]
+    }
+}
+
+var path = _Path
+
+
+class Test
+{
+    var property1 = "Hello, World!"
+
+    fun __constructor__()
+    {
+
+    }
+
+    fun func1(arg1, arg2=true)
+    {
+        "Description for func1"
+    }
+
+    fun func2(arg1=null)
+    {
+        "Description for func2"
+        return true
+    }
+
+    fun no_description() {
+        return null
+    }
+}
+

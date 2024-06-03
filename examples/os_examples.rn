@@ -1,0 +1,18 @@
+import os
+
+var cwd = os.getcwd()
+print(cwd)
+
+var is_file = os.path.isfile("examples/posts.json")
+print(is_file)
+
+var is_dir = os.path.isdir("examples")
+print(is_dir)
+
+var list_dir = os.listdir("tests")
+print(list_dir)
+# print(arr_len(list_dir))
+
+# for file in list_dir {
+#     print(file)
+# }

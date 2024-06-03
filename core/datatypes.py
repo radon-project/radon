@@ -907,6 +907,10 @@ class Type(Value):
 def radonify(value: object, pos_start: Position, pos_end: Position, context: Context) -> Value:
     def _radonify(value: object) -> Value:
         match value:
+            case True:
+                return Boolean.true()
+            case False:
+                return Boolean.false()
             case dict():
                 return HashMap({k: radonify(v, pos_start, pos_end, context) for k, v in value.items()})
             case list():
@@ -915,10 +919,6 @@ def radonify(value: object, pos_start: Position, pos_end: Position, context: Con
                 return String(value)
             case int() | float():
                 return Number(value)
-            case True:
-                return Boolean.true()
-            case False:
-                return Boolean.false()
             case None:
                 return Null.null()
             case _ if inspect.isfunction(value):
