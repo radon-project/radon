@@ -17,6 +17,7 @@ STDLIBS = [
     "colorlib",
     "io",
     "math",
+    "os",
     "radiation",
     "system",
     "string",
