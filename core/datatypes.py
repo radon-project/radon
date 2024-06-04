@@ -1460,10 +1460,12 @@ class Module(Value):
         for k in self.symbol_table.symbols:
             f = self.symbol_table.symbols[k]
 
-            if (type(f).__name__ == "BuiltInClass") or (type(f).__name__ == "BuiltInFunction"): continue
-            if k == "null" or k == "false" or k == "true": continue
-                
-            if isinstance(f,Function):
+            if (type(f).__name__ == "BuiltInClass") or (type(f).__name__ == "BuiltInFunction"):
+                continue
+            if k == "null" or k == "false" or k == "true":
+                continue
+
+            if isinstance(f, Function):
                 result += f.__help_repr_method__()
             elif isinstance(f, Value):
                 result += f"| {k} = {f!r}\n|\n"
