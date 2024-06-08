@@ -1455,6 +1455,22 @@ class Module(Value):
     file_path: str
     symbol_table: SymbolTable
 
+    def __help_repr__(self) -> str:
+        result: str = f"Help on object {self.name}:\n\nmodule {self.name}\n|\n"
+        for k in self.symbol_table.symbols:
+            f = self.symbol_table.symbols[k]
+
+            if (type(f).__name__ == "BuiltInClass") or (type(f).__name__ == "BuiltInFunction"):
+                continue
+            if k == "null" or k == "false" or k == "true":
+                continue
+
+            if isinstance(f, Function):
+                result += f.__help_repr_method__()
+            elif isinstance(f, Value):
+                result += f"| {k} = {f!r}\n|\n"
+        return result
+
     def __init__(self, name: str, file_path: str, symbol_table: SymbolTable) -> None:
         super().__init__()
         self.name = name
