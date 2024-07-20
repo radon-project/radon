@@ -47,14 +47,14 @@ class FileObject(BuiltInObject):
 
     @args([])
     @method
-    def readline(ctx):
+    def readline(self, ctx: Context):
         res = RTResult[Value]()
-        self = ctx.symbol_table.get("this")
         try:
             value = self.file.readline()
             return res.success(String(value))
         except OSError as e:
-            return res.failure(RTError(None, None, f"Could not read from file: {e.strerror}", None))
+            pos = Position(-1, -1, -1, "<idk>", "<idk>")
+            return res.failure(RTError(pos, pos, f"Could not read from file: {e.strerror}", ctx))
 
     @args([])
     @method
