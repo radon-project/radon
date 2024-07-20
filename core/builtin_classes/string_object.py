@@ -118,15 +118,15 @@ class StringObject(BuiltInObject):
             )
         return res.success(Boolean(self.value.endswith(string.value)))
 
-    @args(["string"], [String("")])
+    @args(["string"], [String(" ")])
     @method
     def split(self, ctx: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        string = ctx.symbol_table.get("string")
+        string = ctx.symbol_table.get("string") # String object
         assert string is not None
         if not isinstance(string, String):
             return res.failure(RTError(string.pos_start, string.pos_end, "Cannot split a non-string", string.context))
-        return res.success(Array([String(i) for i in self.value.split(string.value)]))
+        return res.success(Array([String(i) for i in self.value.split(str(string))]))
 
     @args(["string"], [String("")])
     @method
