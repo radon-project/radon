@@ -215,29 +215,3 @@ class _Path {
 
 var path = _Path
 
-
-class Test
-{
-    var property1 = "Hello, World!"
-
-    fun __constructor__()
-    {
-
-    }
-
-    fun func1(arg1, arg2=true)
-    {
-        "Description for func1"
-    }
-
-    fun func2(arg1=null)
-    {
-        "Description for func2"
-        return true
-    }
-
-    fun no_description() {
-        return null
-    }
-}
-
