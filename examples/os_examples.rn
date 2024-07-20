@@ -11,8 +11,8 @@ print(is_dir)
 
 var list_dir = os.listdir("tests")
 print(list_dir)
-# print(arr_len(list_dir))
+print(len(list_dir))
 
-# for file in list_dir {
-#     print(file)
-# }
+for file in list_dir {
+    print(file)
+}
