@@ -18,17 +18,19 @@ for i in [1, 2, 3, 4, 5] {
     print(i)
 }
 
+#! Comment starts from here
 for i in [1, 2, 3, 4, 5] {
     if i == 3 {
-        break
+        break # it is exiting the program; not just the loop it self.
     }
     print(i)
 }
-
+!#
 
 # While loop
-#!
-while i < 10 {
-    print(i)
-    i = i + 1
+
+var j = 11
+while j < 15 {
+    print(j)
+    j += 1
 }
