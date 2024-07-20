@@ -1,6 +1,6 @@
-import Argparser
+import argparser
 
-parser = Argparser.Argparser()
+var parser = argparser.Argparser()
 parser.add_flag("--version", "-v", "Show version")
 parser.add_named("--output", "Output file")
 parser.add_pos_opt("filename", "File")
