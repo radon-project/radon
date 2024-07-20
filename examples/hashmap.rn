@@ -1,13 +1,13 @@
 # HashMap data type in Radon
 
-hashmap = {
+var hashmap = {
     "name": "John",
     "age": 23,
     "address": "123 Main St"
 }
 print(hashmap)
 
-value = hashmap["name"]
+var value = hashmap["name"]
 print(value)
 
 hashmap["bcd"] = 234
@@ -16,7 +16,7 @@ hashmap["abc"] = 456
 print(hashmap)
 
 while true {
-    key = input("Enter key: ")
+    var key = input("Enter key: ")
     if key == "exit" {break}
     print(hashmap[key])
 }
