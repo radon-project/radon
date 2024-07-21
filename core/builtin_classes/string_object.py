@@ -122,7 +122,7 @@ class StringObject(BuiltInObject):
     @method
     def split(self, ctx: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        string = ctx.symbol_table.get("string") # String object
+        string = ctx.symbol_table.get("string")  # String object
         assert string is not None
         if not isinstance(string, String):
             return res.failure(RTError(string.pos_start, string.pos_end, "Cannot split a non-string", string.context))
