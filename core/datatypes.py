@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Any, Generator
 from typing import Iterator as PyIterator
 from typing import Optional, TypeAlias, TypeVar
 
@@ -103,8 +103,8 @@ class Value:
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         return RTResult[Value]().failure(self.illegal_operation())
 
-    def contains(self, value: Value) -> ResultTuple:
-        return None, self.illegal_operation(value)
+    def contains(self, other: Value) -> ResultTuple:
+        return None, self.illegal_operation(other)
 
     def copy(self: Self) -> Self:
         raise Exception("No copy method defined")
@@ -542,10 +542,10 @@ Example: "Hello World!"
     def __iter__(self) -> PyIterator[str]:
         return iter(self.value)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> str:
         return self.value[index]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.value)
 
 
@@ -688,10 +688,10 @@ class Array(Value):
             )
         return self, None
 
-    def contains(self, value: Value) -> ResultTuple:
+    def contains(self, other: Value) -> ResultTuple:
         ret: Boolean = Boolean.false()
         for val in self.elements:
-            cmp, err = val.get_comparison_eq(value)
+            cmp, err = val.get_comparison_eq(other)
             if err is not None:
                 return None, err
             assert cmp is not None
@@ -738,13 +738,13 @@ Array standard library methods:
 Example: [1,2,3,true,"Hello World!"]
 """
 
-    def __iter__(self):
+    def __iter__(self) -> PyIterator[Value]:
         return iter(self.elements)
 
-    def __getitem__(self, index) -> Value:
+    def __getitem__(self, index: int) -> Value:
         return self.elements[index]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.elements)
 
 
@@ -790,10 +790,10 @@ class HashMap(Value):
 
         return self, None
 
-    def contains(self, value: Value) -> ResultTuple:
+    def contains(self, other: Value) -> ResultTuple:
         ret = Boolean.false()
         for val in self.values.keys():
-            cmp, err = value.get_comparison_eq(String(val))
+            cmp, err = other.get_comparison_eq(String(val))
             if err:
                 return None, err
             assert cmp is not None
@@ -913,9 +913,11 @@ def radonify(value: object, pos_start: Position, pos_end: Position, context: Con
             case False:
                 return Boolean.false()
             case dict():
-                return HashMap({k: radonify(v, pos_start, pos_end, context) for k, v in value.items()})
+                _value1: dict[str, Value] = value
+                return HashMap({k: radonify(v, pos_start, pos_end, context) for k, v in _value1.items()})
             case list():
-                return Array([radonify(v, pos_start, pos_end, context) for v in value])
+                _value2: list[Value] = value
+                return Array([radonify(v, pos_start, pos_end, context) for v in _value2])
             case str():
                 return String(value)
             case int() | float():
@@ -930,8 +932,8 @@ def radonify(value: object, pos_start: Position, pos_end: Position, context: Con
                 params = list(signature.parameters.keys())
 
                 @args(params)
-                def wrapper(ctx):
-                    res = RTResult()
+                def wrapper(ctx: Context) -> RTResult[Value]:
+                    res = RTResult[Value]()
 
                     deradonified_params = (deradonify(ctx.symbol_table.get(param)) for param in params)
 
@@ -948,7 +950,7 @@ def radonify(value: object, pos_start: Position, pos_end: Position, context: Con
     return _radonify(value).set_pos(pos_start, pos_end).set_context(context)
 
 
-def deradonify(value: Value) -> object:
+def deradonify(value: Optional[Value]) -> str | dict[str, Any] | int | float | list[object] | object:
     match value:
         case PyObj():
             return value.value
@@ -961,11 +963,10 @@ def deradonify(value: Value) -> object:
         case Array():
             return [deradonify(v) for v in value.elements]
         case BaseFunction():
-
-            def ret(*args, **kwargs):
+            def ret(*args: list[Value], **kwargs: dict[str, Value]) -> object:
                 res = value.execute(
                     [radonify(arg, value.pos_start, value.pos_end, value.context) for arg in args],
-                    {k: radonify(arg) for k, arg in kwargs.items()},
+                    {k: radonify(arg, value.pos_start, value.pos_end, value.context) for k, arg in kwargs.items()},
                 )
                 if res.error:
                     raise RuntimeError(f"Radon exception: {res.error.as_string()}")
@@ -1006,7 +1007,7 @@ class PyAPI(Value):
         """TODO: update docs"""
 
         try:
-            locals_dict = deradonify(ns)
+            locals_dict: dict[str, Any] = deradonify(ns) # type: ignore
             assert isinstance(locals_dict, dict)
             # Execute the code and store the output in locals_dict
             exec(self.code, {}, locals_dict)
@@ -1018,7 +1019,7 @@ class PyAPI(Value):
                 ns.values[key] = value
 
         except Exception as e:
-            return RTResult().failure(
+            return RTResult[Value]().failure(
                 RTError(
                     self.pos_start,
                     self.pos_end,
@@ -1097,7 +1098,7 @@ class BaseFunction(Value):
 
         return res.success(None)
 
-    def populate_args(self, arg_names, args, kwargs, defaults, max_pos_args, exec_ctx):
+    def populate_args(self, arg_names: list[str], args: list[Value], kwargs: dict[str, Value], defaults: list[Optional[Value]], max_pos_args: int, exec_ctx: Context) -> None:
         for i, (arg_name, default) in enumerate(zip(arg_names, defaults)):
             if default is not None:
                 exec_ctx.symbol_table.set(arg_name, default)
@@ -1113,7 +1114,7 @@ class BaseFunction(Value):
             populated += 1
 
         if self.va_name is not None:
-            va_list = []
+            va_list: list[Value] = []
             for i in range(populated, len(args)):
                 arg = args[i]
                 arg.set_context(exec_ctx)
@@ -1124,8 +1125,8 @@ class BaseFunction(Value):
             kwarg.set_context(exec_ctx)
             exec_ctx.symbol_table.set(kw, kwarg)
 
-    def check_and_populate_args(self, arg_names, args, kwargs, defaults, max_pos_args, exec_ctx):
-        res = RTResult()
+    def check_and_populate_args(self, arg_names: list[str], args: list[Value], kwargs: dict[str, Value], defaults: list[Optional[Value]], max_pos_args: int, exec_ctx: Context) -> RTResult[None]:
+        res = RTResult[None]()
         res.register(self.check_args(arg_names, args, kwargs, defaults, max_pos_args))
         if res.should_return():
             return res
@@ -1134,10 +1135,7 @@ class BaseFunction(Value):
 
 
 class BaseInstance(Value, ABC):
-    parent_class: BaseClass
-    symbol_table: SymbolTable
-
-    def __init__(self, parent_class, symbol_table):
+    def __init__(self, parent_class: BaseClass, symbol_table: Optional[SymbolTable]):
         super().__init__()
         self.parent_class = parent_class
         self.symbol_table = SymbolTable(symbol_table)
@@ -1203,8 +1201,8 @@ class BaseInstance(Value, ABC):
         assert res is not None
         return RTResult[Value]().success(res)
 
-    def contains(self, value: Value) -> ResultTuple:
-        return self.operator("__contains__", value)
+    def contains(self, other: Value) -> ResultTuple:
+        return self.operator("__contains__", other)
 
     def is_true(self) -> bool:
         res, err = self.operator("__truthy__")
@@ -1221,9 +1219,9 @@ class Instance(BaseInstance):
     def __init__(self, parent_class: Class) -> None:
         super().__init__(parent_class, None)
 
-    def __exec_len__(self):
+    def __exec_len__(self) -> Value | Null:
         try:
-            return self.operator("__len__")[0].value
+            return self.operator("__len__")[0].value # type: ignore
         except AttributeError:
             return Null.null()
 
