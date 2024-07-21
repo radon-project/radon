@@ -229,15 +229,11 @@ class Number(Value):
     def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Boolean(self.value == other.value).set_context(self.context), None
-        elif isinstance(other, String):
-            return Boolean(self.value == other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
     def get_comparison_ne(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
-            return Boolean(self.value != other.value).set_context(self.context), None
-        elif isinstance(other, String):
             return Boolean(self.value != other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
