@@ -20,6 +20,7 @@ help:
 .PHONY: format
 format:
 	@ruff format .
+	@isort .
 
 .PHONY: lint
 lint:
