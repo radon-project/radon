@@ -1,3 +1,5 @@
+from typing import Optional
+
 from core.errors import *
 from core.tokens import *
 

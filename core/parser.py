@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import (TYPE_CHECKING, Callable, Generic, Optional, TypeAlias,
-                    TypeVar)
+from typing import TYPE_CHECKING, Callable, Generic, Optional, TypeAlias, TypeVar
 
 from core.errors import *
 from core.nodes import *

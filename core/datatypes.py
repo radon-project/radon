@@ -923,8 +923,8 @@ def radonify(value: object, pos_start: Position, pos_end: Position, context: Con
             case None:
                 return Null.null()
             case _ if inspect.isfunction(value):
-                from core.builtin_funcs import (BuiltInFunction,  # Lazy import
-                                                args)
+                from core.builtin_funcs import BuiltInFunction  # Lazy import
+                from core.builtin_funcs import args
 
                 signature = inspect.signature(value)
                 params = list(signature.parameters.keys())

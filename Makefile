@@ -19,8 +19,8 @@ help:
 
 .PHONY: format
 format:
-	@ruff format .
 	@isort .
+	@ruff format .
 
 .PHONY: lint
 lint:

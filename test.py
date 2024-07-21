@@ -4,8 +4,7 @@ import json
 import os
 import subprocess
 import sys
-from difflib import \
-    unified_diff  # Rule 34 of Python: If it exists, it's in the standard library
+from difflib import unified_diff  # Rule 34 of Python: If it exists, it's in the standard library
 from typing import IO, NamedTuple
 
 

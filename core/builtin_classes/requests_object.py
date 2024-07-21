@@ -2,8 +2,7 @@ import json
 import urllib.parse
 import urllib.request
 
-from core.builtin_classes.base_classes import (BuiltInObject, check, method,
-                                               operator)
+from core.builtin_classes.base_classes import BuiltInObject, check, method, operator
 from core.builtin_funcs import args
 from core.datatypes import *
 from core.datatypes import deradonify, radonify
