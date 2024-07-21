@@ -1,8 +1,8 @@
 # NOTE: this is supposed to fail
-m = 69
+var m = 69
 if true {
-    y = 420
-    m = y + m
+    var y = 420
+    var m = y + m
     print(m)
 }
 print(m)
