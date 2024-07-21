@@ -18,6 +18,7 @@ except ImportError:
     pass
 
 import core as base_core
+from core.colortools import Log
 from core.parser import Context
 from core.lexer import Position
 
@@ -133,8 +134,13 @@ def main(argv: list[str]) -> None:
     base_core.global_symbol_table.set("argv", base_core.radonify(argv, pos, pos, Context("<global>")))
     if source_file is not None:
         head, _ = os.path.split(source_file)
-        with open(source_file, "r") as f:
-            source = f.read()
+        try:
+            with open(source_file, "r") as f:
+                source = f.read()
+        except FileNotFoundError:
+            print(Log.deep_error(f"[!] FileNotFound: {Log.deep_error(source_file, bold=True)}"))
+            exit(1)
+
         (result, error, should_exit) = base_core.run(source_file, source, import_cwd=head)
 
         if error:
