@@ -110,7 +110,9 @@ class RTError(Error):
 
     context: Optional[Context]
 
-    def __init__(self, pos_start: Position, pos_end: Position, details: Optional[str], context: Optional[Context]) -> None:
+    def __init__(
+        self, pos_start: Position, pos_end: Position, details: Optional[str], context: Optional[Context]
+    ) -> None:
         super().__init__(pos_start, pos_end, "RuntimeError", details)
         self.context = context
 
@@ -136,7 +138,7 @@ class RTError(Error):
             result = (
                 f"  File {Log.light_info(fn)}, line {Log.light_info(str(ln))}, in {Log.light_info(name)}\n" + result
             )
-            pos = ctx.parent_entry_pos # type: ignore
+            pos = ctx.parent_entry_pos  # type: ignore
             ctx = ctx.parent
 
         return Log.light_purple("Radiation (most recent call last):\n") + result
@@ -169,6 +171,6 @@ class TryError(RTError):
 class VError(RTError):
     """Value Error class"""
 
-    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Context,):
+    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Context):
         super().__init__(pos_start, pos_end, "ValueError", context)
         self.context = context
