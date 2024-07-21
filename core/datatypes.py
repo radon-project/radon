@@ -229,12 +229,16 @@ class Number(Value):
     def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Boolean(self.value == other.value).set_context(self.context), None
+        elif isinstance(other, String):
+            return Boolean(False).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
     def get_comparison_ne(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Boolean(self.value != other.value).set_context(self.context), None
+        elif isinstance(other, String):
+            return Boolean(True).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -334,6 +338,10 @@ class Boolean(Value):
             return Boolean(self.value == other.value).set_context(self.context), None
         elif isinstance(other, Number):
             return Boolean(self.value == other.value).set_context(self.context), None
+        elif isinstance(other, String):
+            return Boolean(self.value == other.value).set_context(self.context), None
+        elif isinstance(other, Array):
+            return Boolean(self.value == other.elements).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -342,6 +350,10 @@ class Boolean(Value):
             return Boolean(self.value != other.value).set_context(self.context), None
         elif isinstance(other, Number):
             return Boolean(self.value != other.value).set_context(self.context), None
+        elif isinstance(other, String):
+            return Boolean(self.value != other.value).set_context(self.context), None
+        elif isinstance(other, Array):
+            return Boolean(self.value != other.elements).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
