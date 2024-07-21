@@ -1,3 +1,5 @@
+## This is an example of how to use the `pyapi()` `BuiltInFunction` in Radon
+## Syntax: pyapi("python code", namespace HashMap{}) -> load all variables to namespace, which is accessable by Radon later on.
 
 var ns = {}
 
