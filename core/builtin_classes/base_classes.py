@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from core.errors import *
-from core.datatypes import *
-from core.parser import RTResult
-from core.builtin_funcs import BuiltInFunction, args
+from typing import Any, Callable
 
-from typing import Callable, Any
+from core.builtin_funcs import BuiltInFunction, args
+from core.datatypes import *
+from core.errors import *
+from core.parser import RTResult
 
 
 class BuiltInClass(BaseClass):

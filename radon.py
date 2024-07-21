@@ -1,9 +1,9 @@
 #!/usr/bin/python3.12
 # By: Md. Almas Ali
 
-import sys
 import os
 import platform
+import sys
 from typing import IO
 
 try:
@@ -19,8 +19,8 @@ except ImportError:
 
 import core as base_core
 from core.colortools import Log
-from core.parser import Context
 from core.lexer import Position
+from core.parser import Context
 
 documentation_link = "https://radon-project.github.io/docs/"
 

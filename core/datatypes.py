@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from core.parser import RTResult, Context, SymbolTable
-from core.tokens import Position
-from core.errors import RTError, Error
-
 import inspect
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Generator
+from typing import Iterator as PyIterator
+from typing import Optional, TypeAlias, TypeVar
 
-from typing import TypeVar, Optional, TYPE_CHECKING, Generator, TypeAlias, Iterator as PyIterator
+from core.errors import Error, RTError
+from core.parser import Context, RTResult, SymbolTable
+from core.tokens import Position
 
 if TYPE_CHECKING:
     from core.nodes import Node
@@ -922,7 +923,8 @@ def radonify(value: object, pos_start: Position, pos_end: Position, context: Con
             case None:
                 return Null.null()
             case _ if inspect.isfunction(value):
-                from core.builtin_funcs import BuiltInFunction, args  # Lazy import
+                from core.builtin_funcs import (BuiltInFunction,  # Lazy import
+                                                args)
 
                 signature = inspect.signature(value)
                 params = list(signature.parameters.keys())

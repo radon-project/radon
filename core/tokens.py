@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import string
 import pathlib
-
-from typing import Optional, NewType, TypeAlias
+import string
 from dataclasses import dataclass
-
+from typing import NewType, Optional, TypeAlias
 
 # STANDARD LIBRARIES
 BASE_DIR = pathlib.Path(__file__).parent.parent

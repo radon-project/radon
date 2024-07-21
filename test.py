@@ -1,12 +1,12 @@
 #!/usr/bin/python3.12
 
-import sys
+import json
 import os
 import subprocess
-import json
-
-from typing import NamedTuple, IO
-from difflib import unified_diff  # Rule 34 of Python: If it exists, it's in the standard library
+import sys
+from difflib import \
+    unified_diff  # Rule 34 of Python: If it exists, it's in the standard library
+from typing import IO, NamedTuple
 
 
 class Output(NamedTuple):

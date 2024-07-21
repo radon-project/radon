@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Self
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Optional, Self
+
 from core.colortools import Log
 
 if TYPE_CHECKING:
-    from core.tokens import Position
     from core.parser import Context
+    from core.tokens import Position
 
 #######################################
 # ERRORS

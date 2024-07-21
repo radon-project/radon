@@ -1,13 +1,14 @@
-from core.errors import *
-from core.datatypes import *
-from core.parser import RTResult
-from core.builtin_funcs import args
-from core.builtin_classes.base_classes import BuiltInObject, operator, check, method
-from core.datatypes import radonify, deradonify
-
 import json
-import urllib.request
 import urllib.parse
+import urllib.request
+
+from core.builtin_classes.base_classes import (BuiltInObject, check, method,
+                                               operator)
+from core.builtin_funcs import args
+from core.datatypes import *
+from core.datatypes import deradonify, radonify
+from core.errors import *
+from core.parser import RTResult
 
 
 class RequestsObject(BuiltInObject):

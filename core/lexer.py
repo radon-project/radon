@@ -1,5 +1,5 @@
-from core.tokens import *
 from core.errors import *
+from core.tokens import *
 
 
 class Lexer:

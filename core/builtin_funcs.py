@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from core.errors import *
-from core.tokens import *
-from core.datatypes import *
-from core.parser import Parser
-from core.lexer import *
-
 import os
 from sys import stdout
+from typing import Callable, Generic, Optional, ParamSpec, Protocol, cast
 
-from typing import Optional, Callable, Protocol, cast, Generic, ParamSpec
+from core.datatypes import *
+from core.errors import *
+from core.lexer import *
+from core.parser import Parser
+from core.tokens import *
 
 P = ParamSpec("P")
 

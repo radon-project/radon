@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from core.errors import *
-from core.tokens import *
-from core.nodes import *
-
-from typing import TYPE_CHECKING, Optional, Generic, TypeVar, Callable, TypeAlias
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from typing import (TYPE_CHECKING, Callable, Generic, Optional, TypeAlias,
+                    TypeVar)
+
+from core.errors import *
+from core.nodes import *
+from core.tokens import *
 
 if TYPE_CHECKING:
     from core.datatypes import Value

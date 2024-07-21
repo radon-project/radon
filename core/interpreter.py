@@ -1,13 +1,12 @@
-from core.errors import *
-from core.parser import *
-from core.datatypes import *
-from core.builtin_funcs import run, create_global_symbol_table
-from core.colortools import Log
-
 import os
 import sys
-
 from typing import NoReturn
+
+from core.builtin_funcs import create_global_symbol_table, run
+from core.colortools import Log
+from core.datatypes import *
+from core.errors import *
+from core.parser import *
 
 
 class Interpreter:
