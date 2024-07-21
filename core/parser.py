@@ -4,7 +4,7 @@ from core.errors import *
 from core.tokens import *
 from core.nodes import *
 
-from typing import TYPE_CHECKING, Optional, Generic, TypeVar, Callable
+from typing import TYPE_CHECKING, Optional, Generic, TypeVar, Callable, TypeAlias
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
@@ -38,7 +38,7 @@ class ParseResult(Generic[T]):
 
     U = TypeVar("U")
 
-    def register(self, res):
+    def register(self, res: ParseResult[U]) -> Optional[U]:
         self.last_registered_advance_count = res.advance_count
         self.advance_count += res.advance_count
         if res.error:
@@ -84,7 +84,7 @@ class Parser:
 
         self.update_current_tok()
 
-    def advance(self, res: ParseResult) -> Token:
+    def advance(self, res: ParseResult[T]) -> Token:
         self.tok_idx += 1
         self.update_current_tok()
         res.register_advancement()
@@ -153,7 +153,7 @@ class Parser:
 
         return res.success(ArrayNode(list_statements, pos_start, self.current_tok.pos_end.copy()))
 
-    def statement(self) -> ParseResult[Optional[Node]] | ParseResult[Node]:
+    def statement(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
         pos_start = self.current_tok.pos_start.copy()
 
@@ -334,7 +334,7 @@ class Parser:
         self.advance(res)
 
         # handle class properties
-        extra_names = []
+        extra_names: list[Token] = []
 
         while self.current_tok.type == TT_DOT:
             if qualifier is not None:
@@ -538,8 +538,8 @@ class Parser:
 
         if self.current_tok.type == TT_LPAREN:
             self.advance(res)
-            arg_nodes = []
-            kwarg_nodes = {}
+            arg_nodes: list[Node] = []
+            kwarg_nodes: dict[str, Node] = {}
 
             if self.current_tok.type == TT_RPAREN:
                 self.advance(res)
@@ -786,7 +786,7 @@ class Parser:
 
     def array_expr(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
-        element_nodes = []
+        element_nodes: list[Node] = []
         pos_start = self.current_tok.pos_start.copy()
 
         if self.current_tok.type != TT_LSQUARE:
@@ -961,7 +961,7 @@ class Parser:
 
     def if_expr_cases(self, case_keyword: str) -> ParseResult[tuple[list[Case], Optional[tuple[Node, bool]]]]:
         res = ParseResult[tuple[list[Case], Optional[tuple[Node, bool]]]]()
-        cases = []
+        cases: list[tuple[Node, Node, bool]] = []
         else_case = None
 
         if not self.current_tok.matches(TT_KEYWORD, case_keyword):
@@ -1033,6 +1033,10 @@ class Parser:
         self.advance(res)
 
         is_for_in = False
+        iterable_node = None
+        start_value = None
+        end_value = None
+        step_value = None
 
         if self.current_tok.type != TT_EQ and not self.current_tok.matches(TT_KEYWORD, "in"):
             return res.failure(
@@ -1235,7 +1239,7 @@ class Parser:
                 )
 
         self.advance(res)
-        arg_name_toks = []
+        arg_name_toks: list[Token] = []
         defaults: list[Optional[Node]] = []
         has_optionals = False
         is_va = False
@@ -1409,7 +1413,7 @@ class Parser:
 
         self.skip_newlines()
 
-        cases = []
+        cases: list[tuple[Node, Node]] = []
         while self.current_tok.matches(TT_KEYWORD, "case"):
             self.advance(res)
             expr = res.register(self.expr())
@@ -1733,6 +1737,9 @@ class SymbolTable:
             case "const":
                 self.symbols[name] = value
                 self.consts.add(name)
+            case _:
+                # Handle mypy checking only. No other reason.
+                pass
         return RTResult[None]().success(None)
 
     def set_static(self, name: str, value: Value, qualifier: Optional[str] = None) -> RTResult[None]:
