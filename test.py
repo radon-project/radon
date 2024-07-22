@@ -36,7 +36,10 @@ def run_test(test: str) -> Output:
 
 def run_tests(directory: str = "tests") -> int:
     mypy = subprocess.Popen(
-        ["mypy", "."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(**os.environ, MYPY_FORCE_COLOR="1")
+        ["mypy", ".", "--strict"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=dict(**os.environ, MYPY_FORCE_COLOR="1"),
     )
 
     failed_tests: list[str] = []

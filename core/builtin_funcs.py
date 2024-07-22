@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import os
 from sys import stdout
-from typing import Callable, Generic, Optional, ParamSpec, Protocol, cast
+from typing import Callable, Generic, NoReturn, Optional, ParamSpec, Protocol, Sequence, Union, cast
 
-from core.datatypes import *
-from core.errors import *
-from core.lexer import *
-from core.parser import Parser
-from core.tokens import *
+from core.datatypes import Array, BaseFunction, Boolean, HashMap, Null, Number, PyAPI, String, Type, Value
+from core.errors import Error, InvalidSyntaxError, RTError
+from core.lexer import Lexer
+from core.parser import Context, Parser, RTResult, SymbolTable
+from core.tokens import BASE_DIR, STDLIBS, Position
 
 P = ParamSpec("P")
 
@@ -25,7 +25,7 @@ class RadonCompatibleFunction(Protocol, Generic[P]):
 
 # Decorator for built-in functions
 def args(
-    arg_names: list[str], defaults: Optional[list[Optional[Value]]] = None
+    arg_names: list[str], defaults: Optional[Sequence[Optional[Value]]] = None
 ) -> Callable[[Callable[P, RTResult[Value]]], RadonCompatibleFunction[P]]:
     if defaults is None:
         defaults = [None] * len(arg_names)
@@ -33,15 +33,13 @@ def args(
     def _args(f: Callable[P, RTResult[Value]]) -> RadonCompatibleFunction[P]:
         f.arg_names = arg_names  # type: ignore
         f.defaults = defaults  # type: ignore
-        return cast(RadonCompatibleFunction, f)
+        return cast(RadonCompatibleFunction[P], f)
 
     return _args
 
 
 class BuiltInFunction(BaseFunction):
-    func: Optional[RadonCompatibleFunction]
-
-    def __init__(self, name: str, func: Optional[RadonCompatibleFunction] = None):
+    def __init__(self, name: str, func: Optional[RadonCompatibleFunction[P]] = None):
         super().__init__(name, None)
         self.func = func
         self.va_name = None
@@ -80,7 +78,7 @@ class BuiltInFunction(BaseFunction):
         return res.success(return_value)
 
     @args([])
-    def no_execute_method(self, context: Context):
+    def no_execute_method(self, context: Context) -> NoReturn:
         raise Exception(f"No execute_{self.name} method defined")
 
     def copy(self) -> BuiltInFunction:
@@ -104,23 +102,38 @@ class BuiltInFunction(BaseFunction):
 
     @args(["value"])
     def execute_len(self, exec_ctx: Context) -> RTResult[Value]:
-        val = exec_ctx.symbol_table.get("value")
+        val: Optional[Value] = exec_ctx.symbol_table.get("value")
         try:
             if val is not None and val.__class__ is not Value:
                 if hasattr(val, "__len__"):
-                    ret = int(val.__len__())
+                    # ret = int(val.__len__())
+                    ret = int(getattr(val, "__len__")())
                 elif hasattr(val, "__exec_len__"):
-                    ret = int(val.__exec_len__())
+                    # ret = int(val.__exec_len__())
+                    ret = int(getattr(val, "__exec_len__")())
                 else:
                     raise TypeError()
                 return RTResult[Value]().success(Number(ret))
             raise TypeError()
         except TypeError:
-            return RTResult[Value]().failure(
-                Error(
-                    self.pos_start, self.pos_end, "TypeError", f'Object of type "{val.__class__.__name__}" has no len()'
+            try:
+                return RTResult[Value]().failure(
+                    Error(
+                        self.pos_start,
+                        self.pos_end,
+                        "TypeError",
+                        f'Object of type "{val.parent_class.name}" has no len()',  # type: ignore
+                    )
                 )
-            )
+            except AttributeError:
+                return RTResult[Value]().failure(
+                    Error(
+                        self.pos_start,
+                        self.pos_end,
+                        "TypeError",
+                        f'Object of type "{val.__class__.__name__}" has no len()',
+                    )
+                )
 
     @args(["value"])
     def execute_input(self, exec_ctx: Context) -> RTResult[Value]:
@@ -266,8 +279,7 @@ class BuiltInFunction(BaseFunction):
         val = int(value.value)
 
         try:
-            # _list = Array(array.elements[start.value:end.value])
-            _list = Array([array[i : i + val] for i in range(0, len(array), val)])
+            _list = Array([Array(array[i : i + val]) for i in range(0, len(array), val)])  # type: ignore
         except IndexError:
             return RTResult[Value]().failure(
                 RTError(self.pos_start, self.pos_end, "Could't not complete chunk", exec_ctx)
@@ -443,11 +455,10 @@ class BuiltInFunction(BaseFunction):
                 module_file = module.split("/")[-1]
                 module_path = os.path.dirname(os.path.realpath(module))
 
-                global CURRENT_DIR
-                if CURRENT_DIR is None:
-                    CURRENT_DIR = module_path
+                # if CURRENT_DIR is None:
+                #     CURRENT_DIR = module_path
 
-                module = os.path.join(CURRENT_DIR, module_file)
+                module = os.path.join(module_path, module_file)
             else:
                 # For STDLIB modules
                 module = os.path.join(BASE_DIR, "stdlib", f"{module}.rn")
@@ -459,7 +470,8 @@ class BuiltInFunction(BaseFunction):
                 RTError(self.pos_start, self.pos_end, f'Failed to load script "{module}"\n' + str(e), exec_ctx)
             )
 
-        _, error, should_exit = run(module, script)
+        error: Error | RTError | None
+        _, error, should_exit = run(module, script)  # type: ignore
 
         if error:
             return RTResult[Value]().failure(
@@ -535,7 +547,12 @@ def run(
     return_result: bool = False,
     hide_paths: bool = False,
     import_cwd: Optional[str] = None,
-):
+) -> Union[
+    tuple[None, Error, bool],
+    tuple[None, InvalidSyntaxError, bool],
+    tuple[None, RTResult[Value], None],
+    tuple[Optional[Value], Optional[RTError | Error], bool],
+]:
     from core.interpreter import Interpreter  # Lazy import
 
     # Generate tokens
@@ -565,7 +582,7 @@ def run(
     result = interpreter.visit(ast.node, context)
 
     if return_result:
-        return result
+        return result  # type: ignore
     return result.value, result.error, result.should_exit
 
 
@@ -626,7 +643,7 @@ def create_global_symbol_table() -> SymbolTable:
     ret.set("File", bic.BuiltInClass("File", bic.FileObject))
     ret.set("String", bic.BuiltInClass("String", bic.StringObject))
     ret.set("Json", bic.BuiltInClass("Json", bic.JSONObject))
-    ret.set("Requests", bic.BuiltInClass("Json", bic.RequestsObject))
+    ret.set("Requests", bic.BuiltInClass("Requests", bic.RequestsObject))
     return ret
 
 

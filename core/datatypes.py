@@ -550,8 +550,6 @@ Example: "Hello World!"
 
 
 class Array(Value):
-    elements: list[Value]
-
     def __init__(self, elements: list[Value]) -> None:
         super().__init__()
         self.elements = elements
@@ -963,6 +961,7 @@ def deradonify(value: Optional[Value]) -> str | dict[str, Any] | int | float | l
         case Array():
             return [deradonify(v) for v in value.elements]
         case BaseFunction():
+
             def ret(*args: list[Value], **kwargs: dict[str, Value]) -> object:
                 res = value.execute(
                     [radonify(arg, value.pos_start, value.pos_end, value.context) for arg in args],
@@ -1007,7 +1006,7 @@ class PyAPI(Value):
         """TODO: update docs"""
 
         try:
-            locals_dict: dict[str, Any] = deradonify(ns) # type: ignore
+            locals_dict: dict[str, Any] = deradonify(ns)  # type: ignore
             assert isinstance(locals_dict, dict)
             # Execute the code and store the output in locals_dict
             exec(self.code, {}, locals_dict)
@@ -1098,7 +1097,15 @@ class BaseFunction(Value):
 
         return res.success(None)
 
-    def populate_args(self, arg_names: list[str], args: list[Value], kwargs: dict[str, Value], defaults: list[Optional[Value]], max_pos_args: int, exec_ctx: Context) -> None:
+    def populate_args(
+        self,
+        arg_names: list[str],
+        args: list[Value],
+        kwargs: dict[str, Value],
+        defaults: list[Optional[Value]],
+        max_pos_args: int,
+        exec_ctx: Context,
+    ) -> None:
         for i, (arg_name, default) in enumerate(zip(arg_names, defaults)):
             if default is not None:
                 exec_ctx.symbol_table.set(arg_name, default)
@@ -1125,7 +1132,15 @@ class BaseFunction(Value):
             kwarg.set_context(exec_ctx)
             exec_ctx.symbol_table.set(kw, kwarg)
 
-    def check_and_populate_args(self, arg_names: list[str], args: list[Value], kwargs: dict[str, Value], defaults: list[Optional[Value]], max_pos_args: int, exec_ctx: Context) -> RTResult[None]:
+    def check_and_populate_args(
+        self,
+        arg_names: list[str],
+        args: list[Value],
+        kwargs: dict[str, Value],
+        defaults: list[Optional[Value]],
+        max_pos_args: int,
+        exec_ctx: Context,
+    ) -> RTResult[None]:
         res = RTResult[None]()
         res.register(self.check_args(arg_names, args, kwargs, defaults, max_pos_args))
         if res.should_return():
@@ -1221,7 +1236,7 @@ class Instance(BaseInstance):
 
     def __exec_len__(self) -> Value | Null:
         try:
-            return self.operator("__len__")[0].value # type: ignore
+            return self.operator("__len__")[0].value  # type: ignore
         except AttributeError:
             return Null.null()
 

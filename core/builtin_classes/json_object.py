@@ -2,10 +2,9 @@ import json
 
 from core.builtin_classes.base_classes import BuiltInObject, check, method, operator
 from core.builtin_funcs import args
-from core.datatypes import *
-from core.datatypes import deradonify, radonify
-from core.errors import *
-from core.parser import RTResult
+from core.datatypes import Null, String, Value, deradonify, radonify
+from core.errors import RTError
+from core.parser import Context, RTResult
 
 
 class JSONObject(BuiltInObject):

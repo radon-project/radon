@@ -4,7 +4,10 @@
 import os
 import platform
 import sys
-from typing import IO
+from typing import IO, Optional
+
+from core.datatypes import Value
+from core.errors import Error, RTError
 
 try:
     import readline
@@ -19,8 +22,8 @@ except ImportError:
 
 import core as base_core
 from core.colortools import Log
-from core.lexer import Position
 from core.parser import Context
+from core.tokens import Position
 
 documentation_link = "https://radon-project.github.io/docs/"
 
@@ -56,15 +59,20 @@ def shell() -> None:
                     if brace_count == 0:
                         break
 
-            (result, error, should_exit) = base_core.run("<stdin>", text)
+            result: list[Optional[Value]]
+            error: Error | RTError | None
+            should_exit: Optional[bool]
+            (result, error, should_exit) = base_core.run("<stdin>", text, import_cwd=os.getcwd())  # type: ignore
 
             if error:
                 print(error.as_string())
             else:
                 if result:
                     if len(result) == 1:
-                        result = result[0]
-                    print(repr(result))
+                        # result = result[0]
+                        print(repr(result[0]))
+                    else:
+                        print(repr(result))
 
             if should_exit:
                 break
@@ -141,7 +149,9 @@ def main(argv: list[str]) -> None:
             print(Log.deep_error(f"[!] FileNotFound: {Log.deep_error(source_file, bold=True)}"))
             exit(1)
 
-        (result, error, should_exit) = base_core.run(source_file, source, import_cwd=head)
+        error: Error | RTError | None
+        should_exit: Optional[bool]
+        (_, error, should_exit) = base_core.run(source_file, source, import_cwd=head)  # type: ignore
 
         if error:
             print(error.as_string())
@@ -151,7 +161,7 @@ def main(argv: list[str]) -> None:
             exit()
 
     elif command is not None:
-        (result, error, should_exit) = base_core.run("<cli>", command)
+        (_, error, should_exit) = base_core.run("<cli>", command)  # type: ignore
 
         if error:
             print(error.as_string())
