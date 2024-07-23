@@ -9,10 +9,11 @@ from core.parser import Context, RTResult, SymbolTable
 
 
 class BuiltInClass(BaseClass):
+    desc: Optional[str]
     instance_class: BuiltInObjectMeta
 
-    def __init__(self, name: str, instance_class: BuiltInObjectMeta) -> None:
-        super().__init__(name, instance_class.__symbol_table__)
+    def __init__(self, name: str, desc: Optional[str], instance_class: BuiltInObjectMeta) -> None:
+        super().__init__(name, desc, instance_class.__symbol_table__)
         self.instance_class = instance_class
 
     def create(self, args: list[Value]) -> RTResult[BaseInstance]:
