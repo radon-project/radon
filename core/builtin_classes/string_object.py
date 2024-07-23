@@ -20,6 +20,14 @@ class StringObject(BuiltInObject):
         res = RTResult[Value]()
         return res.success(String(self.value + other.value))
 
+    def __string_display__(self) -> str:
+        """This method helps __repr__ to display as we want."""
+        return self.value
+
+    def __len__(self) -> int:
+        """Return the length of string."""
+        return len(self.value)
+
     @args([])
     @method
     def upper(self, _ctx: Context) -> RTResult[Value]:
