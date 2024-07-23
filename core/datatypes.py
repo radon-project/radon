@@ -1377,7 +1377,7 @@ class Class(BaseClass):
         return res.success(None)
 
     def __repr__(self) -> str:
-        return f"<class {self.name}>"
+        return f"<class {self.name!r}>"
 
 
 class Function(BaseFunction):
@@ -1462,7 +1462,7 @@ class Function(BaseFunction):
         return copy
 
     def __repr__(self) -> str:
-        return f"<function {self.name}>"
+        return f"<function {self.name} at {hex(id(self))}>"
 
 
 class Module(Value):
