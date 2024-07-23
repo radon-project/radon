@@ -10,6 +10,8 @@ from core.parser import Context, RTResult
 
 
 class RequestsObject(BuiltInObject):
+    """Buili-in API requests object."""
+
     @operator("__constructor__")
     @check([], [])
     def constructor(self) -> RTResult[Value]:

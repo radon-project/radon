@@ -6,7 +6,7 @@ from core.parser import Context, RTResult
 
 
 class StringObject(BuiltInObject):
-    value: str
+    """Buili-in String manipulation object."""
 
     @operator("__constructor__")
     @check([String], [String("")])
