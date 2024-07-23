@@ -513,8 +513,9 @@ class BuiltInFunction(BaseFunction):
                         builtin_class_functions.add(bk)
 
         result: list[str] = [*sorted(variables), *sorted(functions), *sorted(classes), *sorted(builtin_class_functions)]
+        string_list: list[String] = list(map(String, result))
 
-        return RTResult[Value]().success(Array(result))  # type: ignore
+        return RTResult[Value]().success(Array(string_list))  # type: ignore
 
     @args(["module"])
     def execute_require(self, exec_ctx: Context) -> RTResult[Value]:
