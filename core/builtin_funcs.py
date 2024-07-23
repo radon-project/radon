@@ -434,6 +434,14 @@ class BuiltInFunction(BaseFunction):
 
         return RTResult[Value]().success(Number(time.time()))
 
+    @args(["obj"])
+    def execute_dir(self, exec_ctx: Context) -> RTResult[Value]:
+        obj = exec_ctx.symbol_table.get("obj")
+        if obj is None:
+            return RTResult[Value]().failure(Error(self.pos_start, self.pos_end, "TypeError", "Argument is null"))
+        print(obj.symbol_table)
+        return RTResult[Value]().success(Null.null())
+
     @args(["module"])
     def execute_require(self, exec_ctx: Context) -> RTResult[Value]:
         module_val = exec_ctx.symbol_table.get("module")
@@ -639,6 +647,7 @@ def create_global_symbol_table() -> SymbolTable:
     ret.set("license", BuiltInFunction("license"))
     ret.set("credits", BuiltInFunction("credits"))
     ret.set("help", BuiltInFunction("help"))
+    ret.set("dir", BuiltInFunction("dir"))
     # Built-in classes
     ret.set("File", bic.BuiltInClass("File", bic.FileObject))
     ret.set("String", bic.BuiltInClass("String", bic.StringObject))
