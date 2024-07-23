@@ -361,6 +361,7 @@ class HashMapNode:
 @dataclass
 class ClassNode:
     class_name_tok: Token
+    desc: str
     body_nodes: Node
 
     pos_start: Position

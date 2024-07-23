@@ -1271,6 +1271,13 @@ class Parser:
             return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
 
         self.advance(res)
+        self.skip_newlines()
+
+        desc: str = "[No Description]"
+        if self.current_tok.type == TT_STRING:
+            # Set description
+            desc = str(self.current_tok.value)
+            self.advance(res)
 
         body = res.register(self.statements())
         if res.error:
@@ -1282,7 +1289,7 @@ class Parser:
 
         self.advance(res)
 
-        return res.success(ClassNode(class_name_tok, body, pos_start, self.current_tok.pos_end))
+        return res.success(ClassNode(class_name_tok, desc, body, pos_start, self.current_tok.pos_end))
 
     def func_def(self) -> ParseResult[Node]:
         res = ParseResult[Node]()

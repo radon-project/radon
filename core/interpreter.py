@@ -805,7 +805,7 @@ class Interpreter:
         if res.should_return():
             return res
 
-        cls = Class(class_name, ctx.symbol_table).set_context(context).set_pos(node.pos_start, node.pos_end)
+        cls = Class(class_name, node.desc, ctx.symbol_table).set_context(context).set_pos(node.pos_start, node.pos_end)
         context.symbol_table.set(class_name, cls)
         return res.success(cls)
 
