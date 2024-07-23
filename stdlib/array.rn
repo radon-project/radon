@@ -1,9 +1,20 @@
 class Array {
+    "The array class."
+
     fun __constructor__(list) {
+        "The constructor method."
         this.list = list
     }
 
     fun map(func) {
+        "Map any function on each elements of this array.
+
+        Example:
+        var arr = array.Array([1,2,3,4,5])
+        arr.map(str)
+        print(arr)
+        # output: [\"1\", \"2\", \"3\", \"4\", \"5\"]"
+
         const new_elements = []
 
         for elt in this.list {
@@ -13,14 +24,41 @@ class Array {
         return new_elements
     }
 
-    fun append(item) -> arr_append(this.list, item)
-    fun pop(index) -> arr_pop(this.list, index)
-    fun extend(list) -> arr_extend(this.list, list)
-    fun find(index) -> (this.list)[index]
-    fun slice(start, end) -> ((this.list)[start:end])
+    fun append(item) {
+        "Append any item to this array."
+        return arr_append(this.list, item)
+    }
+    fun pop(index) {
+        "Pop out item by index number."
+        return arr_pop(this.list, index)
+    }
+    fun extend(list) {
+        "Extend current array with new."
+        return arr_extend(this.list, list)
+    }
+    fun find(index) {
+        "Find any item in array."
+        return (this.list)[index]
+    }
+    fun slice(start, end) {
+        "Slice method to cutout any part of the array by index number."
+        return ((this.list)[start:end])
+    }
     
-    fun __len__() -> len(this.list)
-    fun is_empty() -> this.list == []
-    fun to_string() -> str(this.list)
-    fun is_array() -> true
+    fun __len__() {
+        "Return array total length."
+        return len(this.list)
+    }
+    fun is_empty() {
+        "Check is the array empty."
+        return this.list == []
+    }
+    fun to_string() {
+        "Convert array to string."
+        str(this.list)
+    }
+    fun is_array() {
+        "Check is this an array or not."
+        return true
+    }
 }
