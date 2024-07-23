@@ -8,7 +8,7 @@ from typing import Optional, TypeAlias, TypeVar
 
 from core.errors import Error, RTError
 from core.parser import Context, RTResult, SymbolTable
-from core.tokens import Position
+from core.tokens import STDLIBS, Position
 
 if TYPE_CHECKING:
     from core.nodes import Node
@@ -1480,7 +1480,9 @@ class Module(Value):
         return self
 
     def __repr__(self) -> str:
-        return f"<module {self.name} @ {self.file_path!r}>"
+        if self.name in STDLIBS:
+            return f"<module {self.name!r} (stdlib)>"
+        return f"<module {self.name!r} from {self.file_path!r}>"
 
 
 class Null(Value):
