@@ -1,0 +1,7 @@
+import os
+
+assert len(dir(os)) == 22, "OS module has been changed"
+
+for method in dir(os) {
+    assert type(method) == type(""), "dir() didn't return String data!"
+}
