@@ -85,7 +85,7 @@ def run_tests(directory: str = "tests") -> int:
         return 1
 
 
-def record_tests(directory: str ="tests") -> int:
+def record_tests(directory: str = "tests") -> int:
     for test in os.listdir(directory):
         if not test.endswith(".rn"):
             continue
