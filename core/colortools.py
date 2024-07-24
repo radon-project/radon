@@ -164,6 +164,20 @@ class Log:
         return value
 
     @staticmethod
+    def light_white(text: str, bold: bool = False) -> str:
+        value = f"{ForegroundColor.GRAY.value}{text}{ForegroundColor.TRANSPARENT.value}"
+        if bold:
+            return f"{Style.BOLD.value}{value}"
+        return value
+
+    @staticmethod
+    def deep_white(text: str, bold: bool = False) -> str:
+        value = f"{ForegroundColor.WHITE.value}{text}{ForegroundColor.TRANSPARENT.value}"
+        if bold:
+            return f"{Style.BOLD.value}{value}"
+        return value
+
+    @staticmethod
     def underline(text: str, bold: bool = False) -> str:
         return f"{Style.UNDERLINE.value}{text}{Style.CLEAR.value}"
 

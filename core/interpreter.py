@@ -302,6 +302,7 @@ class Interpreter:
 
             with open(module_name, "r") as f:
                 script = f.read()
+                docs: str = "[No Description]"
         except Exception as e:
             return RTResult[Value]().failure(
                 RTError(node.pos_start, node.pos_end, f'Failed to load script "{module_name}"\n' + str(e), exec_ctx)
@@ -327,7 +328,7 @@ class Interpreter:
         if should_exit:
             return RTResult[Value]().success_exit(Null.null())
         assert isinstance(node.module.value, str), "this could be a bug in the parser"
-        module = Module(node.module.value, module_name, symbol_table)
+        module = Module(node.module.value, module_name, docs, symbol_table)
 
         name = node.name.value if node.name is not None else node.module.value
         assert isinstance(name, str)
@@ -641,7 +642,7 @@ class Interpreter:
             return res
         elif handled_error is not None:
             var_name = node.exc_iden.value
-            context.symbol_table.set(str(var_name), res.error)  # type: ignore
+            context.symbol_table.set(str(var_name), String(res.error.details))  # type: ignore
             res.error = None
 
             res.register(self.visit(node.catch_block, context))
@@ -805,7 +806,7 @@ class Interpreter:
         if res.should_return():
             return res
 
-        cls = Class(class_name, ctx.symbol_table).set_context(context).set_pos(node.pos_start, node.pos_end)
+        cls = Class(class_name, node.desc, ctx.symbol_table).set_context(context).set_pos(node.pos_start, node.pos_end)
         context.symbol_table.set(class_name, cls)
         return res.success(cls)
 

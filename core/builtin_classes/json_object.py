@@ -8,6 +8,8 @@ from core.parser import Context, RTResult
 
 
 class JSONObject(BuiltInObject):
+    """Buili-in json manipulation object."""
+
     @operator("__constructor__")
     @check([], [])
     def constructor(self) -> RTResult[Value]:
