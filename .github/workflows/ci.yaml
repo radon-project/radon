@@ -5,7 +5,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 -m pip install mypy ruff
-      - run: python3 test.py full
-
-
+      - run: python3.12 -m pip install mypy ruff
+      - run: python3.12 test.py full
