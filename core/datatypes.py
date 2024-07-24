@@ -25,7 +25,7 @@ ClassInstance: TypeAlias = Any
 
 def generate_help_docs(obj: ClassInstance) -> str:
     """Generate help() docs for any class instance."""
-    from core.builtin_funcs import BuiltInFunction # Lazy import
+    from core.builtin_funcs import BuiltInFunction  # Lazy import
 
     output: str = ""
 

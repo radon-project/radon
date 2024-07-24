@@ -642,7 +642,7 @@ class Interpreter:
             return res
         elif handled_error is not None:
             var_name = node.exc_iden.value
-            context.symbol_table.set(str(var_name), res.error)  # type: ignore
+            context.symbol_table.set(str(var_name), String(res.error.details))  # type: ignore
             res.error = None
 
             res.register(self.visit(node.catch_block, context))
