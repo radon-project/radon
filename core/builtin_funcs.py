@@ -4,7 +4,21 @@ import os
 from sys import stdout
 from typing import Callable, Generic, NoReturn, Optional, ParamSpec, Protocol, Sequence, Union, cast
 
-from core.datatypes import Array, BaseFunction, Boolean, HashMap, Null, Number, PyAPI, String, Type, Value
+from core.datatypes import (
+    Array,
+    BaseFunction,
+    Boolean,
+    Class,
+    Function,
+    HashMap,
+    Module,
+    Null,
+    Number,
+    PyAPI,
+    String,
+    Type,
+    Value,
+)
 from core.errors import Error, InvalidSyntaxError, RTError
 from core.lexer import Lexer
 from core.parser import Context, Parser, RTResult, SymbolTable
@@ -102,20 +116,20 @@ class BuiltInFunction(BaseFunction):
 
     @args(["value"])
     def execute_len(self, exec_ctx: Context) -> RTResult[Value]:
-        val: Optional[Value] = exec_ctx.symbol_table.get("value")
+        val = exec_ctx.symbol_table.get("value")
         try:
             if val is not None and val.__class__ is not Value:
                 if hasattr(val, "__len__"):
-                    # ret = int(val.__len__())
                     ret = int(getattr(val, "__len__")())
                 elif hasattr(val, "__exec_len__"):
-                    # ret = int(val.__exec_len__())
                     ret = int(getattr(val, "__exec_len__")())
+                elif val.parent_class.instance_class.__len__ is not None:  # type: ignore
+                    ret = int(val.parent_class.instance_class.__len__())  # type: ignore
                 else:
                     raise TypeError()
                 return RTResult[Value]().success(Number(ret))
             raise TypeError()
-        except TypeError:
+        except (TypeError, AttributeError):
             try:
                 return RTResult[Value]().failure(
                     Error(
@@ -434,6 +448,75 @@ class BuiltInFunction(BaseFunction):
 
         return RTResult[Value]().success(Number(time.time()))
 
+    @args(["obj"])
+    def execute_dir(self, exec_ctx: Context) -> RTResult[Value]:
+        from core.builtin_classes.base_classes import BuiltInInstance
+
+        obj: Module = exec_ctx.symbol_table.get("obj")  # type: ignore
+
+        def variable_check(obj: String | Number | Boolean | HashMap | Null | Array | Value | str) -> bool:
+            """
+            Checks if it's a datatype or not.
+            Returns True if it's a datatype to detect as variable.
+            """
+            if (
+                isinstance(obj, String)
+                or isinstance(obj, Number)
+                or isinstance(obj, Boolean)
+                or isinstance(obj, HashMap)
+                or isinstance(obj, Null)
+                or isinstance(obj, Array)
+            ):
+                return True
+            return False
+
+        # TODO: Datatypes will be supported after fixing OOP implementation.
+        if variable_check(obj):
+            return RTResult[Value]().failure(
+                Error(self.pos_start, self.pos_end, "TypeError", "Argument is must be Modules or Classes.")
+            )
+
+        variables: set[str] = set()
+        functions: set[str] = set()
+        classes: set[str] = set()
+        builtin_class_functions: set[str] = set()
+        # builtin_class_functions.add('__constructor__') # Class should always have a constructor.
+
+        f: Function | Class | Value
+        k: str
+
+        for k in obj.symbol_table.symbols.keys():
+            f = obj.symbol_table.symbols[k]
+            # print(k, f)
+            # print(type(k), type(f))
+            if isinstance(f, Function):
+                functions.add(k)
+            elif isinstance(f, Class):
+                classes.add(k)
+            elif variable_check(f):
+                if k not in {"true", "false", "null"}:
+                    variables.add(k)
+            elif isinstance(f, BuiltInInstance):
+                bf: Function | Class | Value
+                bk: str
+
+                for bk in f.parent_class.symbol_table.symbols.keys():
+                    bf = f.parent_class.symbol_table.symbols[bk]
+                    if isinstance(bf, Function):
+                        functions.add(bk)
+                    elif isinstance(bf, Class):
+                        classes.add(bk)
+                    elif variable_check(f):
+                        if k not in {"true", "false", "null"}:
+                            variables.add(bk)
+                    elif isinstance(bf, BuiltInFunction):
+                        builtin_class_functions.add(bk)
+
+        result: list[str] = [*sorted(variables), *sorted(functions), *sorted(classes), *sorted(builtin_class_functions)]
+        string_list: list[String] = list(map(String, result))
+
+        return RTResult[Value]().success(Array(string_list))  # type: ignore
+
     @args(["module"])
     def execute_require(self, exec_ctx: Context) -> RTResult[Value]:
         module_val = exec_ctx.symbol_table.get("module")
@@ -639,6 +722,7 @@ def create_global_symbol_table() -> SymbolTable:
     ret.set("license", BuiltInFunction("license"))
     ret.set("credits", BuiltInFunction("credits"))
     ret.set("help", BuiltInFunction("help"))
+    ret.set("dir", BuiltInFunction("dir"))
     # Built-in classes
     ret.set("File", bic.BuiltInClass("File", bic.FileObject))
     ret.set("String", bic.BuiltInClass("String", bic.StringObject))

@@ -39,7 +39,7 @@ class BuiltInClass(BaseClass):
         return self.symbol_table.get(name)
 
     def __repr__(self) -> str:
-        return f"<built-in class {self.name}>"
+        return f"<class {self.name!r} (built-in)>"
 
 
 class BuiltInInstance(BaseInstance):
@@ -72,6 +72,14 @@ class BuiltInInstance(BaseInstance):
         assert value is not None
         return value, None
 
+    def __repr__(self) -> str:
+        if "__string_display__" in dir(self.obj):
+            return str(getattr(self.obj, "__string_display__")())
+        return f"<instance '{self.obj}' (built-in)>"
+
+    def __len__(self) -> int:
+        return len(self.obj)  # type: ignore
+
 
 class BuiltInObjectMeta(type):
     __symbol_table__: SymbolTable
@@ -103,6 +111,12 @@ class BuiltInObject(metaclass=BuiltInObjectMeta):
 
     def __init__(self, parent_class: BuiltInClass) -> None:
         self.parent_class = parent_class
+
+    def __str__(self) -> str:
+        return self.parent_class.name
+
+    def __repr__(self) -> str:
+        return self.parent_class.name
 
 
 # Decorators for methods and operators

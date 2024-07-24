@@ -1,0 +1,28 @@
+import os
+import array
+
+# stdlibs
+print(dir(os))
+print(dir(os.path))
+print(dir(array))
+print(dir(array.Array))
+
+var arr = array.Array([])
+print(dir(arr))
+
+# built-in classes
+var j = String("Some random string")
+print(j)
+print(len(j))
+print(len(dir(j)))
+print(dir(String))
+print(dir(Requests))
+
+# Datatypes
+var my_var = "Some"
+
+try {
+    print(dir(my_var))
+} catch as err {
+    print(err) # TypeError: Argument is must be Modules or Classes.
+}

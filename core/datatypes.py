@@ -8,7 +8,7 @@ from typing import Optional, TypeAlias, TypeVar
 
 from core.errors import Error, RTError
 from core.parser import Context, RTResult, SymbolTable
-from core.tokens import Position
+from core.tokens import STDLIBS, Position
 
 if TYPE_CHECKING:
     from core.nodes import Node
@@ -1377,7 +1377,7 @@ class Class(BaseClass):
         return res.success(None)
 
     def __repr__(self) -> str:
-        return f"<class {self.name}>"
+        return f"<class {self.name!r}>"
 
 
 class Function(BaseFunction):
@@ -1462,7 +1462,7 @@ class Function(BaseFunction):
         return copy
 
     def __repr__(self) -> str:
-        return f"<function {self.name}>"
+        return f"<function {self.name} at {hex(id(self))}>"
 
 
 class Module(Value):
@@ -1496,7 +1496,9 @@ class Module(Value):
         return self
 
     def __repr__(self) -> str:
-        return f"<module {self.name} @ {self.file_path!r}>"
+        if self.name in STDLIBS:
+            return f"<module {self.name!r} (stdlib)>"
+        return f"<module {self.name!r} from {self.file_path!r}>"
 
 
 class Null(Value):
