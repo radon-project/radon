@@ -15,7 +15,7 @@
 ![GitHub Workflow Status](https://github.com/radon-project/radon/actions/workflows/ci.yaml/badge.svg "GitHub Workflow Status")
 ![GitHub license](https://img.shields.io/github/license/radon-project/radon?style=flat "License")
 ![Total hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fradon-project%2Fradon&count_bg=%2352B308&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false "Total hits")
-[![Discord](https://img.shields.io/discord/1137834560290308306?style=flat&logo=discord&logoColor=%235865F2&label=join&link=https%3A%2F%2Fdiscord.gg%2Fy2x4CSX7DM "Discord")](https://discord.gg/y2x4CSX7DM)
+[![Discord](https://img.shields.io/discord/1137834560290308306?style=flat&logo=discord&logoColor=%235865F2&label=join&link=https%3A%2F%2Fdiscord.gg%2FnNkQKfcxqa "Discord")](https://discord.com/invite/nNkQKfcxqa)
 
 </div>
 
