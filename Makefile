@@ -6,6 +6,7 @@ help:
 	@echo "Targets:"
 	@echo "  format             - Format code"
 	@echo "  lint               - Check code quality and formattings"
+	@echo "  typecheck          - Static type checking in strict mode"
 	@echo "  test               - Run tests"
 	@echo "  test-record        - Record tests"
 	@echo "  test-diff [FILE]   - Diff tests"
@@ -26,6 +27,10 @@ format:
 lint:
 	@ruff format --check .
 	@ruff check .
+
+.PHONY: typecheck
+typecheck:
+	@mypy . --strict
 
 .PHONY: test
 test:
