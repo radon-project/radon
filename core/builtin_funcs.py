@@ -379,6 +379,7 @@ class BuiltInFunction(BaseFunction):
 
     @args(["value"])
     def execute_int(self, exec_ctx: Context) -> RTResult[Value]:
+        """Convert to Integer value."""
         value = exec_ctx.symbol_table.get("value")
         try:
             return RTResult[Value]().success(Number(int(value.value)))  # type: ignore
@@ -728,6 +729,7 @@ def create_global_symbol_table() -> SymbolTable:
     ret.set("String", bic.BuiltInClass("String", bic.StringObject.__doc__, bic.StringObject))
     ret.set("Json", bic.BuiltInClass("Json", bic.JSONObject.__doc__, bic.JSONObject))
     ret.set("Requests", bic.BuiltInClass("Requests", bic.RequestsObject.__doc__, bic.RequestsObject))
+    ret.set("builtins", bic.BuiltInClass("builtins", bic.BuiltinsObject.__doc__, bic.BuiltinsObject))
     return ret
 
 
