@@ -105,6 +105,7 @@ class VarAssignNode:
 class ImportNode:
     module: Token
     name: Optional[Token]
+    docs: str
 
     pos_start: Position
     pos_end: Position

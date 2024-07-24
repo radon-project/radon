@@ -302,6 +302,7 @@ class Interpreter:
 
             with open(module_name, "r") as f:
                 script = f.read()
+                docs: str = "[No Description]"
         except Exception as e:
             return RTResult[Value]().failure(
                 RTError(node.pos_start, node.pos_end, f'Failed to load script "{module_name}"\n' + str(e), exec_ctx)
@@ -327,7 +328,7 @@ class Interpreter:
         if should_exit:
             return RTResult[Value]().success_exit(Null.null())
         assert isinstance(node.module.value, str), "this could be a bug in the parser"
-        module = Module(node.module.value, module_name, symbol_table)
+        module = Module(node.module.value, module_name, docs, symbol_table)
 
         name = node.name.value if node.name is not None else node.module.value
         assert isinstance(name, str)

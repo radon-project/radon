@@ -25,12 +25,23 @@ ClassInstance: TypeAlias = Any
 
 def generate_help_docs(obj: ClassInstance) -> str:
     """Generate help() docs for any class instance."""
+    from core.builtin_funcs import BuiltInFunction # Lazy import
 
-    # print(obj, type(obj), dir(obj))
     output: str = ""
+
     if isinstance(obj, Module):
-        output += f"Help on class {Log.deep_white(obj.name, bold=True)} in module builtins:\n\n"
+        output += f"Help on module {Log.deep_white(obj.name, bold=True)}:\n\n"
+        doc: str
+        if obj.__doc__:
+            doc = obj.__doc__
+        else:
+            doc = obj.docs
+        output += f"{Log.deep_white(obj.name, bold=True)}: {doc}\n"
+
+    elif isinstance(obj, BuiltInFunction):
+        output += f"Help on buili-in function {Log.deep_white(obj.name, bold=True)}:\n\n"
         output += f"{Log.deep_white(obj.name, bold=True)}: {obj.__doc__}\n"
+
     else:
         output += f"{obj.__class__.__name__}: {obj.__doc__}\n"
 
@@ -1515,12 +1526,14 @@ class Function(BaseFunction):
 class Module(Value):
     name: str
     file_path: str
+    docs: str
     symbol_table: SymbolTable
 
-    def __init__(self, name: str, file_path: str, symbol_table: SymbolTable) -> None:
+    def __init__(self, name: str, file_path: str, docs: str, symbol_table: SymbolTable) -> None:
         super().__init__()
         self.name = name
         self.file_path = file_path
+        self.docs = docs
         self.symbol_table = symbol_table
 
     def copy(self) -> Module:

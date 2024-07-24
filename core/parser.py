@@ -89,7 +89,7 @@ from core.tokens import (
 )
 
 if TYPE_CHECKING:
-    from core.datatypes import Value
+    from core.datatypes import Boolean, Value
 
 T = TypeVar("T")
 
@@ -341,6 +341,7 @@ class Parser:
 
             module = self.current_tok
             self.advance(res)
+            docs: str = "[No Description]"
 
             if self.current_tok.matches(TT_KEYWORD, "as"):
                 self.advance(res)
@@ -354,9 +355,9 @@ class Parser:
                     )
                 name = self.current_tok
                 self.advance(res)
-                return res.success(ImportNode(module, name, module.pos_start, name.pos_end))
+                return res.success(ImportNode(module, name, docs, module.pos_start, name.pos_end))
 
-            return res.success(ImportNode(module, None, module.pos_start, module.pos_end))
+            return res.success(ImportNode(module, None, docs, module.pos_start, module.pos_end))
 
         expr = res.register(self.expr())
         if res.error:
@@ -1841,9 +1842,16 @@ class SymbolTable:
         self.statics.add(name)
         return res.success(None)
 
+    def remove(self, name: str) -> RTResult["Boolean"]:
+        from core.datatypes import Boolean
 
-#    def remove(self, name):
-#        del self.symbols[name]
+        res = RTResult[Boolean]()
+        val = self.symbols.get(name, None)
+        if val is not None:
+            del self.symbols[name]
+            return res.success(Boolean(True))
+        else:
+            return res.success(Boolean(False))
 
 
 @dataclass
