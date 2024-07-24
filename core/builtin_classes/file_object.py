@@ -1,10 +1,11 @@
-from core.errors import *
-from core.datatypes import *
-from core.parser import RTResult
-from core.builtin_funcs import args
-from core.builtin_classes.base_classes import BuiltInObject, operator, check, method
-
 from typing import IO
+
+from core.builtin_classes.base_classes import BuiltInObject, check, method, operator
+from core.builtin_funcs import args
+from core.datatypes import Array, Boolean, Null, Number, String, Value
+from core.errors import RTError
+from core.parser import Context, RTResult
+from core.tokens import Position
 
 
 class FileObject(BuiltInObject):
@@ -47,7 +48,7 @@ class FileObject(BuiltInObject):
 
     @args([])
     @method
-    def readline(self, ctx: Context):
+    def readline(self, ctx: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         try:
             value = self.file.readline()

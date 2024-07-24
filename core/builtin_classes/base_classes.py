@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from core.errors import *
-from core.datatypes import *
-from core.parser import RTResult
-from core.builtin_funcs import BuiltInFunction, args
+from typing import Any, Callable, Optional, Sequence, TypeAlias, TypeVar
 
-from typing import Callable, Any
+from core.builtin_funcs import BuiltInFunction, args
+from core.datatypes import BaseClass, BaseFunction, BaseInstance, ResultTuple, Value
+from core.errors import RTError
+from core.parser import Context, RTResult, SymbolTable
 
 
 class BuiltInClass(BaseClass):
@@ -43,8 +43,6 @@ class BuiltInClass(BaseClass):
 
 
 class BuiltInInstance(BaseInstance):
-    obj: BuiltInObject
-
     def __init__(self, parent_class: BuiltInClass, obj: BuiltInObject) -> None:
         super().__init__(parent_class, parent_class.instance_class.__symbol_table__)
         self.obj = obj
@@ -57,7 +55,7 @@ class BuiltInInstance(BaseInstance):
         @args(method.func.arg_names, method.func.defaults)
         def new_func(ctx: Context) -> RTResult[Value]:
             assert method.func is not None
-            return method.func(self.obj, ctx)
+            return method.func(self.obj, ctx)  # type: ignore
 
         return RTResult[BaseFunction]().success(BuiltInFunction(method.name, new_func))
 
@@ -108,10 +106,12 @@ class BuiltInObject(metaclass=BuiltInObjectMeta):
 
 
 # Decorators for methods and operators
-C = TypeVar("C", bound=Callable)
+C = TypeVar("C", bound=Callable)  # type: ignore
 
 
 def operator(dunder: str) -> Callable[[C], C]:
+    """Convert to operator."""
+
     def _deco(f: C) -> C:
         f.__operator__ = dunder  # type: ignore
         return f
@@ -120,20 +120,29 @@ def operator(dunder: str) -> Callable[[C], C]:
 
 
 def method(f: C) -> C:
+    """Convert to method."""
     f.__is_method__ = True  # type: ignore
     return f
 
 
-# Decorator to check argument types
-def check(
-    types: list[type[Value]], defaults: Optional[list[Optional[Value]]] = None
-) -> Any:  # return type == "idk figure it out"
+MethodType: TypeAlias = (
+    Callable[[Any], RTResult[Value]]
+    | Callable[[Any, Any], RTResult[Value]]
+    | Callable[[Any, Any, Any], RTResult[Value]]
+)
+DecoReturn: TypeAlias = Callable[[BuiltInInstance, Sequence[str]], RTResult[Value]]
+CheckReturn: TypeAlias = Callable[[MethodType], DecoReturn]
+
+
+def check(types: Sequence[type[Value]], defaults: Optional[Sequence[Optional[Value]]] = None) -> CheckReturn:
+    """Decorator to check argument types"""
+
     if defaults is None:
         defaults = [None] * len(types)
 
-    def _deco(f):
-        def wrapper(self, args):
-            res = RTResult()
+    def _deco(f: MethodType) -> DecoReturn:
+        def wrapper(self: BuiltInInstance, args: Sequence[str]) -> RTResult[Value]:
+            res = RTResult[Value]()
             func_name = f.__name__
             class_name = self.parent_class.name
             full_func_name = f"{class_name}.{func_name}()"
@@ -160,7 +169,7 @@ def check(
                 )
 
             # Populate defaults
-            real_args = []
+            real_args: list[Value | str] = []
             for i, typ in enumerate(types):
                 arg = defaults[i] if i >= len(args) else args[i]
                 assert arg is not None, "We should have already errored"

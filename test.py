@@ -1,12 +1,11 @@
 #!/usr/bin/python3.12
 
-import sys
+import json
 import os
 import subprocess
-import json
-
-from typing import NamedTuple, IO
+import sys
 from difflib import unified_diff  # Rule 34 of Python: If it exists, it's in the standard library
+from typing import IO, NamedTuple
 
 
 class Output(NamedTuple):
@@ -37,7 +36,10 @@ def run_test(test: str) -> Output:
 
 def run_tests(directory: str = "tests") -> int:
     mypy = subprocess.Popen(
-        ["mypy", "."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(**os.environ, MYPY_FORCE_COLOR="1")
+        ["mypy", ".", "--strict"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=dict(**os.environ, MYPY_FORCE_COLOR="1"),
     )
 
     failed_tests: list[str] = []

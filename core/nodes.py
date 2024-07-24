@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol, Optional, TypeAlias, runtime_checkable
+from typing import TYPE_CHECKING, Optional, Protocol, TypeAlias, runtime_checkable
 
 if TYPE_CHECKING:
-    from core.tokens import Token, Position
+    from core.tokens import Position, Token
 
 
 @runtime_checkable

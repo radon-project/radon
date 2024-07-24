@@ -1,13 +1,82 @@
-from core.errors import *
-from core.parser import *
-from core.datatypes import *
-from core.builtin_funcs import run, create_global_symbol_table
-from core.colortools import Log
-
 import os
 import sys
+from typing import Callable, NoReturn, Optional
 
-from typing import NoReturn
+from core.builtin_funcs import create_global_symbol_table, run
+from core.colortools import Log
+from core.datatypes import (
+    Array,
+    BaseClass,
+    BaseFunction,
+    BaseInstance,
+    Class,
+    Function,
+    HashMap,
+    Instance,
+    Module,
+    Null,
+    Number,
+    String,
+    Value,
+)
+from core.errors import Error, RTError, TryError
+from core.nodes import (
+    ArrayNode,
+    AssertNode,
+    AttrAccessNode,
+    BinOpNode,
+    BreakNode,
+    CallNode,
+    ClassNode,
+    ContinueNode,
+    DecNode,
+    FalloutNode,
+    FallthroughNode,
+    ForInNode,
+    ForNode,
+    FuncDefNode,
+    HashMapNode,
+    IfNode,
+    ImportNode,
+    IncNode,
+    IndexGetNode,
+    IndexSetNode,
+    Node,
+    NumberNode,
+    RaiseNode,
+    ReturnNode,
+    SliceGetNode,
+    StringNode,
+    SwitchNode,
+    TryNode,
+    UnaryOpNode,
+    UnitRaiseNode,
+    VarAccessNode,
+    VarAssignNode,
+    WhileNode,
+)
+from core.parser import Context, RTResult, SymbolTable
+from core.tokens import (
+    BASE_DIR,
+    STDLIBS,
+    TT_DIV,
+    TT_EE,
+    TT_GT,
+    TT_GTE,
+    TT_IDIV,
+    TT_KEYWORD,
+    TT_LT,
+    TT_LTE,
+    TT_MINUS,
+    TT_MOD,
+    TT_MUL,
+    TT_NE,
+    TT_PLUS,
+    TT_POW,
+    Position,
+    Token,
+    TokenValue,
+)
 
 
 class Interpreter:
@@ -32,6 +101,7 @@ class Interpreter:
             if nd is None:
                 return res.failure(RTError(pos_start, pos_end, f"'{var_name}' not defined", context))
 
+            name: Optional[TokenValue] = None
             for index, name_tok in enumerate(extra_names):
                 name = name_tok.value
                 assert isinstance(name, str)
@@ -62,7 +132,7 @@ class Interpreter:
     def call_value(self, value_to_call: Value, node: CallNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
-        args = []
+        args: list[Value] = []
         for arg_node in node.arg_nodes:
             arg = res.register(self.visit(arg_node, context))
             if res.should_return():
@@ -70,7 +140,7 @@ class Interpreter:
             assert arg is not None
             args.append(arg)
 
-        kwargs = {}
+        kwargs: dict[str, Value] = {}
         for kw, kwarg_node in node.kwarg_nodes.items():
             kwarg = res.register(self.visit(kwarg_node, context))
             if res.should_return():
@@ -87,7 +157,7 @@ class Interpreter:
 
     def visit(self, node: Node, context: Context) -> RTResult[Value]:
         method_name = f"visit_{type(node).__name__}"
-        method = getattr(self, method_name, self.no_visit_method)
+        method: Callable[[Node, Context], NoReturn] = getattr(self, method_name, self.no_visit_method)
         try:
             return method(node, context)
         except Exception as e:
@@ -119,7 +189,7 @@ class Interpreter:
 
     def visit_ArrayNode(self, node: ArrayNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        elements = []
+        elements: list[Value] = []
 
         for element_node in node.element_nodes:
             elt = res.register(self.visit(element_node, context))
@@ -220,10 +290,11 @@ class Interpreter:
                 file_extension = module_name.split("/")[-1].split(".")[-1]
                 if file_extension != "rn":
                     module_name += ".rn"
-                module_file = module_name.split("/")[-1]
+                # module_file = module_name.split("/")[-1]
                 module_path = os.path.dirname(os.path.realpath(module_name))
 
-                module_name = os.path.join(context.get_import_cwd(), module_file)
+                module_name = os.path.join(context.get_import_cwd(), module_name)
+                # module_name = os.path.join(module_path, module_file)
             else:
                 # For STDLIB modules
                 module_path = os.path.join(BASE_DIR, "stdlib")
@@ -239,6 +310,7 @@ class Interpreter:
         new_ctx = Context(module_name, context, node.pos_start)
         new_ctx.symbol_table = symbol_table
         new_ctx.import_cwd = module_path
+        # error: Error
         _, error, should_exit = run(module_name, script, context=new_ctx)
 
         if error:
@@ -247,7 +319,7 @@ class Interpreter:
                     node.pos_start,
                     node.pos_end,
                     f'{Log.light_error("Failed to finish executing script")} {Log.light_info(module_name)}\n'
-                    + error.as_string(),
+                    + error.as_string(),  # type: ignore
                     exec_ctx,
                 )
             )
@@ -378,7 +450,7 @@ class Interpreter:
 
     def visit_ForNode(self, node: ForNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        elements = []
+        elements: list[Value] = []
 
         start_value = res.register(self.visit(node.start_value_node, context))
         if res.should_return():
@@ -423,11 +495,11 @@ class Interpreter:
 
         if step_value.value >= 0:
 
-            def condition():
+            def condition() -> bool:
                 return i < end_value.value
         else:
 
-            def condition():
+            def condition() -> bool:
                 return i > end_value.value
 
         while condition():
@@ -457,7 +529,7 @@ class Interpreter:
 
     def visit_WhileNode(self, node: WhileNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        elements = []
+        elements: list[Value] = []
 
         while True:
             condition = res.register(self.visit(node.condition_node, context))
@@ -561,7 +633,7 @@ class Interpreter:
     def visit_BreakNode(self, node: BreakNode, context: Context) -> RTResult[Value]:
         return RTResult[Value]().success_break()
 
-    def visit_TryNode(self, node: TryNode, context):
+    def visit_TryNode(self, node: TryNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         res.register(self.visit(node.try_block, context))
         handled_error = res.error
@@ -569,7 +641,7 @@ class Interpreter:
             return res
         elif handled_error is not None:
             var_name = node.exc_iden.value
-            context.symbol_table.set(var_name, res.error)
+            context.symbol_table.set(str(var_name), res.error)  # type: ignore
             res.error = None
 
             res.register(self.visit(node.catch_block, context))
@@ -596,7 +668,7 @@ class Interpreter:
         assert iterable is not None
         it = iterable.iter()
 
-        elements = []
+        elements: list[Value] = []
 
         for it_res in it:
             element = res.register(it_res)
@@ -700,7 +772,7 @@ class Interpreter:
 
     def visit_HashMapNode(self, node: HashMapNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        values = {}
+        values: dict[str, Value] = {}
 
         for key_node, value_node in node.pairs:
             key = res.register(self.visit(key_node, context))

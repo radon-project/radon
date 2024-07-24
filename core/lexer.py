@@ -1,5 +1,54 @@
-from core.tokens import *
-from core.errors import *
+from typing import Optional
+
+from core.errors import Error, ExpectedCharError, IllegalCharError
+from core.tokens import (
+    DIGITS,
+    KEYWORDS,
+    TT_ARROW,
+    TT_COLON,
+    TT_COMMA,
+    TT_DE,
+    TT_DIV,
+    TT_DOT,
+    TT_EE,
+    TT_EOF,
+    TT_EQ,
+    TT_FLOAT,
+    TT_GT,
+    TT_GTE,
+    TT_IDE,
+    TT_IDENTIFIER,
+    TT_IDIV,
+    TT_INT,
+    TT_KEYWORD,
+    TT_LBRACE,
+    TT_LPAREN,
+    TT_LSQUARE,
+    TT_LT,
+    TT_LTE,
+    TT_MDE,
+    TT_ME,
+    TT_MINUS,
+    TT_MINUS_MINUS,
+    TT_MOD,
+    TT_MUL,
+    TT_NE,
+    TT_NEWLINE,
+    TT_PE,
+    TT_PLUS,
+    TT_PLUS_PLUS,
+    TT_POW,
+    TT_POWE,
+    TT_RBRACE,
+    TT_RPAREN,
+    TT_RSQUARE,
+    TT_SPREAD,
+    TT_STRING,
+    TT_TE,
+    VALID_IDENTIFIERS,
+    Position,
+    Token,
+)
 
 
 class Lexer:

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Optional, Self
+
 from core.colortools import Log
 
 if TYPE_CHECKING:
-    from core.tokens import Position
     from core.parser import Context
+    from core.tokens import Position
 
 #######################################
 # ERRORS
@@ -67,11 +68,11 @@ class Error:
         result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
 
-    def set_pos(self, pos_start=None, pos_end=None):
+    def set_pos(self, pos_start: Optional[Position] = None, pos_end: Optional[Position] = None) -> Self:
         """Says it's gonna set the position, but actually does NOTHING"""
         return self
 
-    def set_context(self, context=None):
+    def set_context(self, context: Optional[Context] = None) -> Self:
         """Says it's gonna set the context, but actually does NOTHING"""
         return self
 
@@ -80,8 +81,8 @@ class Error:
             return f"{self.error_name}: {self.details}"
         return self.error_name
 
-    def copy(self):
-        return __class__(self.pos_start, self.pos_end, self.error_name, self.details)
+    def copy(self) -> Self:
+        return type(self)(self.pos_start, self.pos_end, self.error_name, self.details)
 
 
 class IllegalCharError(Error):
@@ -108,9 +109,11 @@ class InvalidSyntaxError(Error):
 class RTError(Error):
     """Runtime Error class"""
 
-    context: Context
+    context: Optional[Context]
 
-    def __init__(self, pos_start: Position, pos_end: Position, details: Optional[str], context: Context) -> None:
+    def __init__(
+        self, pos_start: Position, pos_end: Position, details: Optional[str], context: Optional[Context]
+    ) -> None:
         super().__init__(pos_start, pos_end, "RuntimeError", details)
         self.context = context
 
@@ -137,11 +140,11 @@ class RTError(Error):
                 f"  File {Log.light_info(fn)}, line {Log.light_info(str(ln))}, in {Log.light_info(name)}\n" + result
             )
             pos = ctx.parent_entry_pos  # type: ignore
-            ctx = ctx.parent  # type: ignore
+            ctx = ctx.parent
 
         return Log.light_purple("Radiation (most recent call last):\n") + result
 
-    def set_context(self, context=None):
+    def set_context(self, context: Optional[Context] = None) -> Self:
         """Says it's gonna set the context, but actually does nothing"""
         return self
 
@@ -169,6 +172,6 @@ class TryError(RTError):
 class VError(RTError):
     """Value Error class"""
 
-    def __init__(self, pos_start, pos_end, details, context):
-        super().__init__(pos_start, pos_end, "ValueError", details)
+    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Context):
+        super().__init__(pos_start, pos_end, "ValueError", context)
         self.context = context
