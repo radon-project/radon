@@ -1,1 +1,1 @@
-{"code": 0, "stdout": "RuntimeError: Cannot count an empty string\n", "stderr": ""}
+{"code": 0, "stdout": "Cannot count an empty string\n", "stderr": ""}
