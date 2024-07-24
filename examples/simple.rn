@@ -2,26 +2,34 @@
 # Linear search algorithm
 fun find(list, value) {
     for i = 0 to len(list) {
-        if i == value {
+        if list[i] == value {
             return i
         }
     }
     return -1
 }
 
-# list = [1, 2, 3, 4, 5]
-# index = find(list, 3)
-# print(index)
+var list = [1, 2, 3, 4, 5]
+var index = find(list, 3)
+print(index)
 
-fun iseven(num) -> if (num%2) == 0 { print("even") } else { print("odd") }
+fun iseven(num) -> if (num % 2) == 0 { return true } else { return false } # returning null !!
+print(iseven(234))
+print("iseven(42): " + str(iseven(42)))
+print("iseven(2341): " + str(iseven(2341)))
 
 class Algorithm {
+    fun __constructor__(){} # without constructor class is raiseing function is not defined.
+
     fun find(list, value) {
         for i = 0 to len(list) {
-            if i == value {
+            if list[i] == value {
                 return i
             }
         }
         return -1
     }
 }
+
+var algo = Algorithm()
+print(algo.find(list, 3))

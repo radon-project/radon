@@ -1,13 +1,13 @@
-import Array
+import array
 
-arr = Array.Array([1,2,3,4,5,6,7,8,9,10])
+const arr = array.Array([1,2,3,4,5,6,7,8,9,10])
 arr.append(11)
 print(arr.to_string())
 
 arr.pop(0)
 print(arr.to_string())
 
-print(arr.len())
+print(len(arr))
 
 arr.extend(["this", "is", "a", "array"])
 print(arr.to_string())

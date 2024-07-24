@@ -31,12 +31,12 @@
 # ^= - Exponentiation and assign
 
 # Variable definition
-a = 10
-b = 20
+var a = 10
+var b = 20
 print(a + b) # 30
 
-c = "Hello"
-d = "World"
+var c = "Hello"
+var d = "World"
 print(c + " " + d) # Hello World
 
 # Conditional statement
@@ -49,7 +49,7 @@ if a > b {
 }
 
 # For loop
-x = 9 # Multiplication table of 9
+var x = 9 # Multiplication table of 9
 
 for i = 1 to 11 {
     print(str(x) + " X " + str(i) + " = " + str(x * i))
@@ -58,7 +58,7 @@ for i = 1 to 11 {
 # While loop
 while x > 0 {
     print(x)
-    x = x - 1
+    x -= 1
 }
 
 # Function definition
@@ -69,7 +69,7 @@ fun add(a, b) {
 print(add(10, 20)) # 30
 
 # Anonymous function
-sub = fun (a, b) {
+var sub = fun (a, b) {
     return a - b
 }
 
@@ -82,7 +82,7 @@ print(mul(10, 20)) # 200
 # Class definition
 class Person {
     # Constructor
-    fun Person(name, age) {
+    fun __constructor__(name, age) {
         this.name = name
         this.age = age
     }
@@ -97,6 +97,6 @@ class Person {
 }
 
 # Use a class
-person = Person("Almas", 21)
-details = "Name is : " + person.get_name() + ", Age : " + str(person.get_age())
+var person = Person("Almas", 21)
+var details = "Name is : " + person.get_name() + ", Age : " + str(person.get_age())
 print(details)

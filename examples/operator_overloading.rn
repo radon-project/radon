@@ -21,12 +21,12 @@ class WrongOp {
     }
 }
 
-a = WrongOp(69)
+var a = WrongOp(69)
 a.dump("a")
-b = WrongOp(420)
+var b = WrongOp(420)
 b.dump("b")
 
-c = a + b
+var c = a + b
 c.dump("a + b")
-d = a - b
+var d = a - b
 d.dump("a - b")

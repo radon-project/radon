@@ -1,15 +1,14 @@
-
-const f = File("examples/files.rn")
-const contents = f.read()
-f.close()
-f.is_closed()
+const f1 = File("examples/files.rn")
+const contents = f1.read()
+f1.close()
+f1.is_closed()
 
 print(contents)
 
 print("-------------")
 
-f = File("examples/files.rn")
-print(f.readline())
-print(f.readlines())
+const f2 = File("examples/files.rn")
+print(f2.readline())
+print(f2.readlines())
 
-f.close()
+f2.close()

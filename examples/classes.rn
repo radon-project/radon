@@ -9,10 +9,10 @@ class Person {
 }
 
 print("Enter a name, or type 'exit' to quit.")
-inp = input("Name: ")
+var inp = input("Name: ")
 
 while inp != "exit" {
-	p = Person(inp)
+	var p = Person(inp)
 	print(p.Format())
 	inp = input("Name: ")
 	p.single_line()
@@ -30,6 +30,6 @@ class Some {
     fun to_object() -> "Name is : "+ this.name + " Value is : "+ str(this.value)
 }
 
-cls_ = Some()
-obj = cls_.to_object()
+var cls_ = Some()
+var obj = cls_.to_object()
 print(obj)

@@ -16,10 +16,10 @@ class Array {
     fun append(item) -> arr_append(this.list, item)
     fun pop(index) -> arr_pop(this.list, index)
     fun extend(list) -> arr_extend(this.list, list)
-    fun find(index) -> arr_find(this.list, index)
+    fun find(index) -> (this.list)[index]
     fun slice(start, end) -> ((this.list)[start:end])
     
-    fun __len__() -> arr_len(this.list)
+    fun __len__() -> len(this.list)
     fun is_empty() -> this.list == []
     fun to_string() -> str(this.list)
     fun is_array() -> true

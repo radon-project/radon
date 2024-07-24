@@ -12,5 +12,17 @@ print(str_val)
 var password = io.Input.get_password("Enter a password: ")
 print(password)
 
-var val = input("Enter a value: ")
-io.Output.write(val, sep="\n")
+var val = null
+var vals = []
+print("Type 'exit' to stop.")
+
+while val != "exit" {
+    val = input("Enter a value: ")
+    arr_append(vals, val)
+}
+
+print("unpacking is not implemented yet.")
+io.Output.write(vals, sep="\n")
+
+print("after unpacking, the result will be like this.")
+io.Output.write("dsf", "sdf", "sdf", "sdf", "sdf", "exit", sep="\n")

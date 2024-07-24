@@ -1,5 +1,7 @@
+## This is an example of how to use the `pyapi()` `BuiltInFunction` in Radon
+## Syntax: pyapi("python code", namespace HashMap{}) -> load all variables to namespace, which is accessable by Radon later on.
 
-ns = {}
+var ns = {}
 
 ns["cb"] = fun(x, y) -> (x + y) * 101
 
@@ -12,10 +14,10 @@ def my_func(x, y):
 print(f'Return value (from Radon function in Python): {cb(34, 35)}')
 ", ns)
 
-func = ns["my_func"]
+var func = ns["my_func"]
 
 print("func is: " + print_ret(func))
 
-ret = func("hello", "world")
+var ret = func("hello", "world")
 print("Return value (from Python function in Radon): " + str(ret))
 

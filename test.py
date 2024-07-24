@@ -40,7 +40,7 @@ def run_tests(directory: str = "tests") -> int:
         ["mypy", "."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(**os.environ, MYPY_FORCE_COLOR="1")
     )
 
-    failed_tests = []
+    failed_tests: list[str] = []
     for test in os.listdir(directory):
         json_file = f"{directory}/{test}.json"
         if not test.endswith(".rn"):
@@ -85,7 +85,7 @@ def run_tests(directory: str = "tests") -> int:
         return 1
 
 
-def record_tests(directory="tests") -> int:
+def record_tests(directory: str = "tests") -> int:
     for test in os.listdir(directory):
         if not test.endswith(".rn"):
             continue

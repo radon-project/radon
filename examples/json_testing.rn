@@ -1,7 +1,7 @@
-f = File("examples/posts.json", "r")
+var f = File("examples/posts.json", "r")
 
-json = Json()
-posts = json.loads(f.read())
+var json = Json()
+var posts = json.loads(f.read())
 f.close()
 
 assert arr_len(posts) == 100
