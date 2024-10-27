@@ -12,11 +12,13 @@ type_messages: dict[str, str] = {
 # List of allowed actions (used during code execution)
 allowed: dict[str, bool] = {}
 
+
 # !!! Only used for tests !!!
 def allow_all_permissions() -> None:
     allowed["unsafe_code"] = True
     allowed["disk_read"] = True
     allowed["web_requests"] = True
+
 
 def security_prompt(type: SecurityPromptType) -> None:
     # If action already allowed, continue
