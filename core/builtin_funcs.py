@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from sys import stdout
 from typing import Callable, Generic, NoReturn, Optional, ParamSpec, Protocol, Sequence, Union, cast
+from core import prompt
 
 from core.datatypes import (
     Array,
@@ -427,6 +428,8 @@ class BuiltInFunction(BaseFunction):
 
     @args(["code", "ns"])
     def execute_pyapi(self, exec_ctx: Context) -> RTResult[Value]:
+        prompt.security_prompt("unsafe_code")
+
         res = RTResult[Value]()
 
         code = exec_ctx.symbol_table.get("code")
