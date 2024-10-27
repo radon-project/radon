@@ -15,7 +15,7 @@ class FileObject(BuiltInObject):
     @operator("__constructor__")
     @check([String, String], [None, String("r")])
     def constructor(self, path: String, mode: String) -> RTResult[Value]:
-        security.security_prompt("disk_read")
+        security.security_prompt("disk_access")
 
         allowed_modes = [None, "r", "w", "a", "r+", "w+", "a+"]  # Allowed modes for opening files
         res = RTResult[Value]()
@@ -32,7 +32,7 @@ class FileObject(BuiltInObject):
     @args(["count"], [Number(-1)])
     @method
     def read(self, ctx: Context) -> RTResult[Value]:
-        security.security_prompt("disk_read")
+        security.security_prompt("disk_access")
 
         res = RTResult[Value]()
         count = ctx.symbol_table.get("count")
@@ -54,7 +54,7 @@ class FileObject(BuiltInObject):
     @args([])
     @method
     def readline(self, ctx: Context) -> RTResult[Value]:
-        security.security_prompt("disk_read")
+        security.security_prompt("disk_access")
 
         res = RTResult[Value]()
         try:
@@ -67,7 +67,7 @@ class FileObject(BuiltInObject):
     @args([])
     @method
     def readlines(self, ctx: Context) -> RTResult[Value]:
-        security.security_prompt("disk_read")
+        security.security_prompt("disk_access")
 
         res = RTResult[Value]()
         try:
@@ -80,7 +80,7 @@ class FileObject(BuiltInObject):
     @args(["data"])
     @method
     def write(self, ctx: Context) -> RTResult[Value]:
-        security.security_prompt("disk_read")
+        security.security_prompt("disk_access")
 
         res = RTResult[Value]()
         data = ctx.symbol_table.get("data")
@@ -99,7 +99,7 @@ class FileObject(BuiltInObject):
     @args([])
     @method
     def close(self, _ctx: Context) -> RTResult[Value]:
-        security.security_prompt("disk_read")
+        security.security_prompt("disk_access")
 
         res = RTResult[Value]()
         self.file.close()
@@ -108,7 +108,7 @@ class FileObject(BuiltInObject):
     @args([])
     @method
     def is_closed(self, _ctx: Context) -> RTResult[Value]:
-        security.security_prompt("disk_read")
+        security.security_prompt("disk_access")
 
         res = RTResult[Value]()
         return res.success(Boolean(self.file.closed))

@@ -428,7 +428,7 @@ class BuiltInFunction(BaseFunction):
 
     @args(["code", "ns"])
     def execute_pyapi(self, exec_ctx: Context) -> RTResult[Value]:
-        security.security_prompt("unsafe_code")
+        security.security_prompt("pyapi_requests")
 
         res = RTResult[Value]()
 
