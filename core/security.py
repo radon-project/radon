@@ -2,9 +2,9 @@ from typing import Literal
 from core.colortools import Log
 
 # Define all types of security prompts
-SecurityPromptType = Literal["pyapi_requests", "disk_access", "network_access"]
+SecurityPromptType = Literal["pyapi_access", "disk_access", "network_access"]
 type_messages: dict[str, str] = {
-    "pyapi_requests": "This program is attempting to use the Python API",
+    "pyapi_access": "This program is attempting to use the Python API",
     "disk_access": "This program is attempting to access the disk",
     "network_access": "This program is attempting to access the network"
 }
@@ -15,7 +15,7 @@ allowed: dict[str, bool] = {}
 
 # !!! Only used for tests !!!
 def allow_all_permissions() -> None:
-    allowed["pyapi_requests"] = True
+    allowed["pyapi_access"] = True
     allowed["disk_access"] = True
     allowed["network_access"] = True
 

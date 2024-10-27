@@ -137,7 +137,7 @@ def main(argv: list[str]) -> None:
             case "--allow-disk" | "-D":
                 base_core.security.allowed["disk_access"] = True
             case "--allow-py" | "-P":
-                base_core.security.allowed["pyapi_requests"] = True
+                base_core.security.allowed["pyapi_access"] = True
             case "--allow-network" | "-W":
                 base_core.security.allowed["network_access"] = True
             case _:
