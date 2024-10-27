@@ -121,8 +121,7 @@ def main(argv: list[str]) -> None:
                     usage(program_name, sys.stderr)
                     print(f"ERROR: {arg} requires an argument", file=sys.stderr)
                     exit(1)
-                source_file = argv[0]
-                break  # allow program to use remaining args
+                source_file = argv.pop(0)
             case "--version" | "-v":
                 print(base_core.__version__)
                 exit(0)
@@ -131,8 +130,10 @@ def main(argv: list[str]) -> None:
                     usage(program_name, sys.stderr)
                     print(f"ERROR: {arg} requires an argument", file=sys.stderr)
                     exit(1)
-                command = argv[0]
-                break  # allow program to use remaining args
+                command = argv.pop(0)
+            # This flag should only be used for testing, and not be allowed to be set by a user
+            case "--unsafe" | "-u":
+                base_core.prompt.allow_all_permissions()
             case _:
                 usage(program_name, sys.stderr)
                 print(f"ERROR: Unknown argument '{arg}'", file=sys.stderr)
