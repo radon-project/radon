@@ -131,9 +131,15 @@ def main(argv: list[str]) -> None:
                     print(f"ERROR: {arg} requires an argument", file=sys.stderr)
                     exit(1)
                 command = argv.pop(0)
-            # This flag should only be used for testing, and not be allowed to be set by a user
-            case "--unsafe" | "-u":
-                base_core.prompt.allow_all_permissions()
+            # These flags starting with --allow should only be used for testing, and not be allowed to be set by a user
+            case "--allow-all" | "-aall":
+                base_core.security.allow_all_permissions()
+            case "--allow-disk" | "-adisk":
+                base_core.security.allowed["disk_read"] = True
+            case "--allow-py" | "-apy":
+                base_core.security.allowed["unsafe_code"] = True
+            case "--allow-web" | "-aweb":
+                base_core.security.allowed["web_requests"] = True
             case _:
                 usage(program_name, sys.stderr)
                 print(f"ERROR: Unknown argument '{arg}'", file=sys.stderr)

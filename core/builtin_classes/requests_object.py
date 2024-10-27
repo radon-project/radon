@@ -7,7 +7,7 @@ from core.builtin_funcs import args
 from core.datatypes import HashMap, Null, String, Value, deradonify, radonify
 from core.errors import RTError
 from core.parser import Context, RTResult
-from core import prompt
+from core import security
 
 
 class RequestsObject(BuiltInObject):
@@ -19,7 +19,7 @@ class RequestsObject(BuiltInObject):
     @args(["url", "headers"], [None, HashMap({})])
     @method
     def get(self, ctx: Context) -> RTResult[Value]:
-        prompt.security_prompt("web_requests")
+        security.security_prompt("web_requests")
 
         res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
@@ -41,7 +41,7 @@ class RequestsObject(BuiltInObject):
     @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
     def post(self, ctx: Context) -> RTResult[Value]:
-        prompt.security_prompt("web_requests")
+        security.security_prompt("web_requests")
 
         res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
@@ -71,7 +71,7 @@ class RequestsObject(BuiltInObject):
     @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
     def put(self, ctx: Context) -> RTResult[Value]:
-        prompt.security_prompt("web_requests")
+        security.security_prompt("web_requests")
 
         res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
@@ -100,7 +100,7 @@ class RequestsObject(BuiltInObject):
     @args(["url", "headers"], [None, HashMap({})])
     @method
     def delete(self, ctx: Context) -> RTResult[Value]:
-        prompt.security_prompt("web_requests")
+        security.security_prompt("web_requests")
 
         res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
@@ -122,7 +122,7 @@ class RequestsObject(BuiltInObject):
     @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
     def patch(self, ctx: Context) -> RTResult[Value]:
-        prompt.security_prompt("web_requests")
+        security.security_prompt("web_requests")
 
         res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
