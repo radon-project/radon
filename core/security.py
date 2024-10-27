@@ -6,7 +6,7 @@ SecurityPromptType = Literal["pyapi_access", "disk_access", "network_access"]
 type_messages: dict[str, str] = {
     "pyapi_access": "This program is attempting to use the Python API",
     "disk_access": "This program is attempting to access the disk",
-    "network_access": "This program is attempting to access the network"
+    "network_access": "This program is attempting to access the network",
 }
 
 # List of allowed actions (used during code execution)
