@@ -18,6 +18,10 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
     """Return string with arrows"""
     result = ""
 
+    """Amount of fixed whitespace to indent for each error"""
+    fixed_indentation_len = 4
+    fixed_indentation = " " * fixed_indentation_len
+
     # Calculate indices
     idx_start = max(text.rfind("\n", 0, pos_start.idx), 0)
     idx_end = text.find("\n", idx_start + 1)
@@ -32,12 +36,9 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
         col_start = pos_start.col if i == 0 else 0
         col_end = pos_end.col if i == line_count - 1 else len(line) - 1
 
-        col_start_color = col_start  # + 1
-        col_end_color = col_end + 1
-
         # Append to result
-        result += f"{line[:col_start_color]}{Log.deep_error(line[col_start_color:col_end_color], bold=True)}{line[col_end_color:]}\n"
-        result += " " * col_start + Log.deep_error("^" * (col_end - col_start), bold=True)
+        result += f"{fixed_indentation}{line[:col_start]}{Log.deep_error(line[col_start:col_end], bold=True)}{line[col_end:]}\n"
+        result += f"{fixed_indentation}{len(line[:col_start].strip()) * " "} {Log.deep_error("^" * (col_end - col_start), bold=True)}"
 
         # Re-calculate indices
         idx_start = idx_end
