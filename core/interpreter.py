@@ -307,9 +307,10 @@ class Interpreter:
                     docs = script.split('"')[1]
                 except IndexError:
                     docs = ""
-
-                if docs == "":
-                    docs: str = "[No Description]"
+                except Exception as e:
+                    return RTResult[Value]().failure(
+                        RTError(node.pos_start, node.pos_end, "Failed to load script docs\n" + str(e), exec_ctx)
+                    )
 
         except Exception as e:
             return RTResult[Value]().failure(
