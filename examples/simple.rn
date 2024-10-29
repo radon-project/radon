@@ -13,7 +13,7 @@ var list = [1, 2, 3, 4, 5]
 var index = find(list, 3)
 print(index)
 
-fun iseven(num) -> if (num % 2) == 0 { return true } else { return false } # returning null !!
+fun iseven(num) -> num % 2 == 0
 print(iseven(234))
 print("iseven(42): " + str(iseven(42)))
 print("iseven(2341): " + str(iseven(2341)))

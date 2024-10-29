@@ -26,7 +26,9 @@ class Output(NamedTuple):
 
 
 def run_test(test: str) -> Output:
-    proc = subprocess.run([sys.executable, "radon.py", "-s", test], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.run(
+        [sys.executable, "radon.py", "-s", test, "-A"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     return Output(
         proc.returncode,
         proc.stdout.decode("utf-8").replace("\r\n", "\n"),
