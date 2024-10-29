@@ -1,0 +1,6 @@
+import os
+import radiation
+
+help(os)
+help(int)
+help(radiation)
