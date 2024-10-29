@@ -12,6 +12,7 @@ help:
 	@echo "  test-diff [FILE]   - Diff tests"
 	@echo "  py2c               - Convert Python to C"
 	@echo "  config2bin         - Convert config to binary"
+	@echo "  dev                - Run development environment"
 	@echo "  build              - Build the project"
 	@echo "  install            - Install the project"
 	@echo "  help               - Show this help message"
@@ -53,6 +54,13 @@ py2c:
 .PHONY: config2bin
 config2bin:
 	@echo "Command in development"
+
+.PHONY: dev
+dev:
+	@echo "Running development requirements installation"
+	@$(PYTHON) -m pip install -r requirements-dev.txt
+	@echo "Running development tests"
+	@$(PYTHON) test.py full
 
 .PHONY: build
 build:
