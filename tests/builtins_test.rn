@@ -1,0 +1,23 @@
+var my_func = fun () {
+    return "This is an annonymous function"
+}
+
+var b = builtins()
+
+b.set("mf", my_func)
+
+assert mf() == "This is an annonymous function", "Something is wrong in builtins class."
+
+b.remove("mf") # true
+
+try {
+    mf() # Failed to run
+} catch as err {
+    assert err == "'mf' is not defined", "Something is wrong in builtins class."
+}
+
+b.show()
+
+for blt in b.show() {
+    assert type(blt) == type(""), "Something is wrong in builtins class."
+}

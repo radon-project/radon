@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Generator
 from typing import Iterator as PyIterator
 from typing import Optional, TypeAlias, TypeVar
 
+from core.colortools import Log
 from core.errors import Error, RTError
 from core.parser import Context, RTResult, SymbolTable
 from core.tokens import STDLIBS, Position
@@ -17,6 +18,34 @@ if TYPE_CHECKING:
 
 # ResultTuple: TypeAlias = "tuple[None, Error] | tuple[Value, None]"
 ResultTuple: TypeAlias = tuple[Optional["Value"], Optional[Error]]
+
+
+ClassInstance: TypeAlias = Any
+
+
+def generate_help_docs(obj: ClassInstance) -> str:
+    """Generate help() docs for any class instance."""
+    from core.builtin_funcs import BuiltInFunction  # Lazy import
+
+    output: str = ""
+
+    if isinstance(obj, Module):
+        output += f"Help on module {Log.deep_white(obj.name, bold=True)}:\n\n"
+        doc: str
+        if obj.__doc__:
+            doc = obj.__doc__
+        else:
+            doc = obj.docs
+        output += f"{Log.deep_white(obj.name, bold=True)}: {doc}\n"
+
+    elif isinstance(obj, BuiltInFunction):
+        output += f"Help on buili-in function {Log.deep_white(obj.name, bold=True)}:\n\n"
+        output += f"{Log.deep_white(obj.name, bold=True)}: {obj.__doc__}\n"
+
+    else:
+        output += f"{obj.__class__.__name__}: {obj.__doc__}\n"
+
+    return output
 
 
 class Value:
@@ -114,9 +143,11 @@ class Value:
 
     # Help text for help() in radon
     def __help_repr__(self) -> str:
-        return """
-This data type help is not implemented yet
-"""
+        return generate_help_docs(self)
+
+    #         return """
+    # This data type help is not implemented yet
+    # """
 
     def illegal_operation(self, *others: Value) -> RTError:
         if len(others) == 0:
@@ -135,7 +166,7 @@ This data type help is not implemented yet
 
 
 class Iterator(Value):
-    it: Generator[RTResult[Value], None, None]
+    """An Iterator is an object that enables traversal over a collection, one element at a time."""
 
     def __init__(self, generator: Generator[RTResult[Value], None, None]) -> None:
         super().__init__()
@@ -1241,13 +1272,21 @@ class Instance(BaseInstance):
             return Null.null()
 
     def __help_repr__(self) -> str:
-        result: str = f"Help on object {self.parent_class.name}:\n\nclass {self.parent_class.name}\n|\n"
+        result: str = f"Help on object {Log.deep_white(self.parent_class.name, bold=True)}:\n\nclass {Log.deep_white(self.parent_class.name, bold=True)}\n |\n"
+
+        desc: list[str] = self.parent_class.desc.split("\n")  # type: ignore
+        desc = list(map(lambda s: s.strip(), desc))
+
+        for j in desc:
+            result += f" |\t{j}\n"
+        result += " |\n"
+
         for k in self.symbol_table.symbols:
             f = self.symbol_table.symbols[k]
             if isinstance(f, Function):
                 result += f.__help_repr_method__()
             elif isinstance(f, Value) and k != "this":
-                result += f"| {k} = {f!r}\n|\n"
+                result += f" |  {k} = {f!r}\n|\n"
         return result
 
     def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]:
@@ -1280,11 +1319,13 @@ class Instance(BaseInstance):
 
 class BaseClass(Value, ABC):
     name: str
+    desc: Optional[str]
     symbol_table: SymbolTable
 
-    def __init__(self, name: str, symbol_table: SymbolTable) -> None:
+    def __init__(self, name: str, desc: Optional[str], symbol_table: SymbolTable) -> None:
         super().__init__()
         self.name = name
+        self.desc = desc
         self.symbol_table = symbol_table
 
     @abstractmethod
@@ -1331,13 +1372,22 @@ class Class(BaseClass):
         return method
 
     def __help_repr__(self) -> str:
-        result: str = f"Help on object {self.name}:\n\nclass {self.name}\n|\n"
+        result: str = f"Help on object {Log.deep_white(self.name, bold=True)}:\n\nclass {Log.deep_white(self.name, bold=True)}\n |\n"
+        desc: list[str] = self.desc.split("\n")  # type: ignore
+        desc = list(map(lambda s: s.strip(), desc))
+
+        for j in desc:
+            result += f" |  {j}\n"
+        result += " |\n"
+        result += " |  Methods defined here:\n"
+        result += " |\n"
+        # result += f"|  {self.desc}\n|\n"
         for k in self.symbol_table.symbols:
             f = self.symbol_table.symbols[k]
             if isinstance(f, Function):
                 result += f.__help_repr_method__()
             elif isinstance(f, Value) and k != "this":
-                result += f"| {k} = {f!r}\n|\n"
+                result += f" |  {Log.deep_white(k, bold=True)} = {f!r}\n |\n"
         return result
 
     def create(self, args: list[Value]) -> RTResult[BaseInstance]:
@@ -1388,16 +1438,24 @@ class Function(BaseFunction):
     max_pos_args: int
 
     def __help_repr__(self) -> str:
-        return f"Help on function {self.name}:\n\n{self.__help_repr_method__()}"
+        return f"Help on function {Log.deep_white(self.name, bold=True)}:\n\n{self.__help_repr_method__()}"
 
     def __help_repr_method__(self) -> str:
         arg_strs: list[str] = []
+        result: str = ""
         for i in range(len(self.arg_names)):
             if self.defaults[i] is not None:
                 arg_strs.append(f"{self.arg_names[i]} = {self.defaults[i].__repr__()}")
             else:
                 arg_strs.append(self.arg_names[i])
-        return f"| fun {self.name}({', '.join(arg_strs)})\n|\t{self.desc}\n|\n"
+        result += f" |  {Log.deep_white(self.name, bold=True)}({', '.join(arg_strs)})\n"
+        desc: list[str] = self.desc.split("\n")
+        desc = list(map(lambda s: s.strip(), desc))
+
+        for j in desc:
+            result += f" |\t{j}\n"
+        result += " |\n"
+        return result
 
     def __init__(
         self,
@@ -1468,28 +1526,14 @@ class Function(BaseFunction):
 class Module(Value):
     name: str
     file_path: str
+    docs: str
     symbol_table: SymbolTable
 
-    def __help_repr__(self) -> str:
-        result: str = f"Help on object {self.name}:\n\nmodule {self.name}\n|\n"
-        for k in self.symbol_table.symbols:
-            f = self.symbol_table.symbols[k]
-
-            if (type(f).__name__ == "BuiltInClass") or (type(f).__name__ == "BuiltInFunction"):
-                continue
-            if k == "null" or k == "false" or k == "true":
-                continue
-
-            if isinstance(f, Function):
-                result += f.__help_repr_method__()
-            elif isinstance(f, Value):
-                result += f"| {k} = {f!r}\n|\n"
-        return result
-
-    def __init__(self, name: str, file_path: str, symbol_table: SymbolTable) -> None:
+    def __init__(self, name: str, file_path: str, docs: str, symbol_table: SymbolTable) -> None:
         super().__init__()
         self.name = name
         self.file_path = file_path
+        self.docs = docs
         self.symbol_table = symbol_table
 
     def copy(self) -> Module:

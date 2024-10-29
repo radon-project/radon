@@ -10,6 +10,8 @@ from core import security
 
 
 class FileObject(BuiltInObject):
+    """Buili-in file operation object."""
+
     file: IO[str]
 
     @operator("__constructor__")
