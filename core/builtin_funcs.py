@@ -625,6 +625,11 @@ class BuiltInFunction(BaseFunction):
         print("Contributors:\n\tangelcaru (github.com/angelcaru)\n\tVardan2009 (github.com/Vardan2009)")
         return RTResult[Value]().success(Null.null())
 
+    @args([])
+    def execute_copyright(self, exec_ctx: Context) -> RTResult[Value]:
+        print("Copyright (c) 2023-2024 Radon Software Foundation.\nAll Rights Reserved.")
+        return RTResult[Value]().success(Null.null())
+
 
 def run(
     fn: str,
@@ -725,6 +730,7 @@ def create_global_symbol_table() -> SymbolTable:
     # Shell functions
     ret.set("license", BuiltInFunction("license"))
     ret.set("credits", BuiltInFunction("credits"))
+    ret.set("copyright", BuiltInFunction("copyright"))
     ret.set("help", BuiltInFunction("help"))
     ret.set("dir", BuiltInFunction("dir"))
     # Built-in classes
