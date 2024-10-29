@@ -302,7 +302,15 @@ class Interpreter:
 
             with open(module_name, "r") as f:
                 script = f.read()
-                docs: str = "[No Description]"
+                # take the first string as the docs
+                try:
+                    docs = script.split('"')[1]
+                except IndexError:
+                    docs = ""
+
+                if docs == "":
+                    docs: str = "[No Description]"
+
         except Exception as e:
             return RTResult[Value]().failure(
                 RTError(node.pos_start, node.pos_end, f'Failed to load script "{module_name}"\n' + str(e), exec_ctx)

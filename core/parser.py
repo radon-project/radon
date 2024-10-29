@@ -341,6 +341,7 @@ class Parser:
 
             module = self.current_tok
             self.advance(res)
+
             docs: str = "[No Description]"
 
             if self.current_tok.matches(TT_KEYWORD, "as"):
