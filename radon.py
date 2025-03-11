@@ -98,14 +98,20 @@ Options and arguments:
 
     If no arguments are provided, the program will run in shell mode.
 
+Permission Modes (for testing purposes only):
+    --allow-all | -A     Allow all permissions (disk, Python API, and network access)
+    --allow-disk | -D    Allow disk access
+    --allow-py | -P      Allow Python API access
+    --allow-network | -W Allow network access
+
 Example:
     radon --source source_file.rn
     radon --command 'print("Hello, World!")'
     radon --version
     radon --help
 
-The Radon Programming Language.
-        """
+The Radon Programming Language. \
+"""
     )
 
 
