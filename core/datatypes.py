@@ -159,7 +159,7 @@ class Value:
         assert self.context is not None
         try:
             return RTError(
-                self.pos_start, others[-1].pos_end, f"Illegal operation for {(self, ) + others}", self.context
+                self.pos_start, others[-1].pos_end, f"Illegal operation for {(self,) + others}", self.context
             )
         except AttributeError:
             return RTError(self.pos_start, self.pos_end, f"Illegal operation for {self}", self.context)
@@ -742,7 +742,7 @@ class Array(Value):
         return self.__repr__()
 
     def __repr__(self) -> str:
-        return f'[{", ".join(repr(x) for x in self.elements)}]'
+        return f"[{', '.join(repr(x) for x in self.elements)}]"
 
     def __help_repr__(self) -> str:
         return """
@@ -1414,7 +1414,9 @@ class Class(BaseClass):
 
         if method is None or not isinstance(method, Function):
             return res.failure(
-                RTError(self.pos_start, self.pos_end, f"Constructor for '{self.name}' class not defined", self.context)
+                RTError(
+                    self.pos_start, self.pos_end, f"Constructor for '{self.name}' class is not defined", self.context
+                )
             )
         if method.symbol_table is None:
             method.symbol_table = SymbolTable()

@@ -2,12 +2,12 @@ import json
 import urllib.parse
 import urllib.request
 
+from core import security
 from core.builtin_classes.base_classes import BuiltInObject, check, method, operator
 from core.builtin_funcs import args
 from core.datatypes import HashMap, Null, String, Value, deradonify, radonify
 from core.errors import RTError
 from core.parser import Context, RTResult
-from core import security
 
 
 class RequestsObject(BuiltInObject):
