@@ -1,0 +1,17 @@
+class Algorithm {
+    # fun __constructor__(){}
+
+    fun find(list, value) {
+        "Linear search -> return index"
+        for i = 0 to len(list) {
+            if list[i] == value {
+                return i
+            }
+        }
+        return -1
+    }
+}
+
+var algo = Algorithm()
+var list = [1, 2, 3, 4, 5]
+print(algo.find(list, 3))
