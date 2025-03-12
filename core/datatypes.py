@@ -1414,7 +1414,7 @@ class Class(BaseClass):
 
         if method is None or not isinstance(method, Function):
             return res.failure(
-                RTError(self.pos_start, self.pos_end, f"Function '{self.name}' not defined", self.context)
+                RTError(self.pos_start, self.pos_end, f"Constructor for '{self.name}' class not defined", self.context)
             )
         if method.symbol_table is None:
             method.symbol_table = SymbolTable()
