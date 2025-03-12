@@ -1,4 +1,5 @@
 from typing import Literal
+
 from core.colortools import Log
 
 # Define all types of security prompts
@@ -25,8 +26,8 @@ def security_prompt(type: SecurityPromptType) -> None:
     if type in allowed:
         return
     # Log the message and get a y/n prompt by user
-    print(f"{Log.deep_warning(f"[{type.upper()}]")} {Log.deep_info(type_messages[type], True)}. Continue execution?")
-    print(f"{Log.deep_purple("[Y/n] -> ")}", end="")
+    print(f"{Log.deep_warning(f'[{type.upper()}]')} {Log.deep_info(type_messages[type], True)}. Continue execution?")
+    print(f"{Log.deep_purple('[Y/n] -> ')}", end="")
     # If user agreed
     if input().lower() == "y":
         # Add action to allowed list
