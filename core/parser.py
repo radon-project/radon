@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Callable, Generic, Optional, TypeAlias, TypeVar
 
-from core.errors import Error, InvalidSyntaxError, RTError
+from core.errors import Error, RNSyntaxError, RTError
 from core.nodes import (
     ArrayNode,
     AssertNode,
@@ -98,7 +98,7 @@ class ParseResult(Generic[T]):
     """Parser Result"""
 
     unignorable: bool
-    error: Optional[InvalidSyntaxError]
+    error: Optional[RNSyntaxError]
     node: Optional[T]
     last_registered_advance_count: int
     advance_count: int
@@ -135,7 +135,7 @@ class ParseResult(Generic[T]):
         self.node = node
         return self
 
-    def failure(self, error: InvalidSyntaxError) -> ParseResult[T]:
+    def failure(self, error: RNSyntaxError) -> ParseResult[T]:
         if not self.error or self.last_registered_advance_count == 0:
             self.error = error
         return self
@@ -182,7 +182,7 @@ class Parser:
     def parse(self) -> ParseResult[Node]:
         res = self.statements()
         if not res.error and self.current_tok.type != TT_EOF:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected EOF"))
+            return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected EOF"))
         return res
 
     def skip_newlines(self) -> ParseResult[None]:
@@ -254,7 +254,7 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, "fallout"):
             if not self.in_case:
                 return res.failure(
-                    InvalidSyntaxError(
+                    RNSyntaxError(
                         self.current_tok.pos_start,
                         self.current_tok.pos_end,
                         "Fallout statement must be inside a switch-case statement",
@@ -266,7 +266,7 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, "return"):
             if not self.in_func:
                 return res.failure(
-                    InvalidSyntaxError(
+                    RNSyntaxError(
                         self.current_tok.pos_start,
                         self.current_tok.pos_end,
                         "Return statement must be inside a function",
@@ -282,7 +282,7 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, "continue"):
             if not self.in_loop:
                 return res.failure(
-                    InvalidSyntaxError(
+                    RNSyntaxError(
                         self.current_tok.pos_start, self.current_tok.pos_end, "Continue statement must be inside a loop"
                     )
                 )
@@ -292,7 +292,7 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, "break"):
             if not self.in_loop:
                 return res.failure(
-                    InvalidSyntaxError(
+                    RNSyntaxError(
                         self.current_tok.pos_start, self.current_tok.pos_end, "Break statement must be inside a loop"
                     )
                 )
@@ -302,7 +302,7 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, "fallthrough"):
             if not self.in_case:
                 return res.failure(
-                    InvalidSyntaxError(
+                    RNSyntaxError(
                         self.current_tok.pos_start,
                         self.current_tok.pos_end,
                         "Fallthrough statement must be inside a switch-case statement",
@@ -332,7 +332,7 @@ class Parser:
 
             if self.current_tok.type != TT_STRING and self.current_tok.type != TT_IDENTIFIER:
                 return res.failure(
-                    InvalidSyntaxError(
+                    RNSyntaxError(
                         self.current_tok.pos_start,
                         self.current_tok.pos_end,
                         "Expected string or identifier as imported module",
@@ -348,7 +348,7 @@ class Parser:
                 self.advance(res)
                 if self.current_tok.type != TT_IDENTIFIER:
                     return res.failure(
-                        InvalidSyntaxError(
+                        RNSyntaxError(
                             self.current_tok.pos_start,
                             self.current_tok.pos_end,
                             "Expected string or identifier as imported module",
@@ -363,7 +363,7 @@ class Parser:
         expr = res.register(self.expr())
         if res.error:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected statement")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected statement")
             )
         assert expr is not None
         return res.success(expr)
@@ -383,7 +383,7 @@ class Parser:
 
         if res.error:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression")
             )
 
         assert node is not None
@@ -409,7 +409,7 @@ class Parser:
 
         if self.current_tok.type != TT_IDENTIFIER:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression")
             )
 
         var_name_tok = self.current_tok
@@ -421,7 +421,7 @@ class Parser:
         while self.current_tok.type == TT_DOT:
             if qualifier is not None:
                 return res.failure(
-                    InvalidSyntaxError(
+                    RNSyntaxError(
                         self.current_tok.pos_start,
                         self.current_tok.pos_end,
                         f"Dotted assignment must not be {qualifier.value}",
@@ -431,7 +431,7 @@ class Parser:
 
             if self.current_tok.type != TT_IDENTIFIER:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
                 )
 
             extra_names.append(self.current_tok)
@@ -479,7 +479,7 @@ class Parser:
             TT_IDE,
         ):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected assignment operator")
             )
 
         if op_tok.type == TT_PLUS_PLUS:
@@ -550,7 +550,7 @@ class Parser:
 
         if res.error:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression")
             )
         assert node is not None
 
@@ -612,7 +612,7 @@ class Parser:
 
             if self.current_tok.type != TT_IDENTIFIER:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
                 )
 
             index = AttrAccessNode(index, self.current_tok, index.pos_start, self.current_tok.pos_end)
@@ -637,7 +637,7 @@ class Parser:
                     kwarg_nodes[kw] = val
                 if res.error:
                     return res.failure(
-                        InvalidSyntaxError(
+                        RNSyntaxError(
                             self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')' or expression"
                         )
                     )
@@ -654,7 +654,7 @@ class Parser:
                         arg_nodes.append(val)
                     elif kw is None:
                         return res.failure(
-                            InvalidSyntaxError(
+                            RNSyntaxError(
                                 val.pos_start, val.pos_end, "Positional arguments may not come after keyword arguments"
                             )
                         )
@@ -663,7 +663,7 @@ class Parser:
 
                 if self.current_tok.type != TT_RPAREN:
                     return res.failure(
-                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ')'")
+                        RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ')'")
                     )
 
                 self.advance(res)
@@ -715,9 +715,7 @@ class Parser:
                 self.advance(res)
                 node = expr
             else:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')'")
-                )
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')'"))
 
         elif tok.type == TT_LSQUARE:
             array_expr = res.register(self.array_expr())
@@ -784,7 +782,7 @@ class Parser:
             node = hashmap_expr
 
         if node is None:
-            return res.failure(InvalidSyntaxError(tok.pos_start, tok.pos_end, "Expected expression"))
+            return res.failure(RNSyntaxError(tok.pos_start, tok.pos_end, "Expected expression"))
 
         while self.current_tok.type == TT_LSQUARE:
             assert node is not None
@@ -794,9 +792,7 @@ class Parser:
             if self.current_tok.type == TT_RSQUARE:
                 self.advance(res)
                 return res.failure(
-                    InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression inside []"
-                    )
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression inside []")
                 )
 
             # [index_start:index_end:index_step] or [index_start:index_end] or [index_start]
@@ -822,7 +818,7 @@ class Parser:
                     break
 
             if self.current_tok.type != TT_RSQUARE:
-                return res.failure(InvalidSyntaxError(tok.pos_start, self.current_tok.pos_end, "Expected ']'"))
+                return res.failure(RNSyntaxError(tok.pos_start, self.current_tok.pos_end, "Expected ']'"))
 
             self.advance(res)
 
@@ -884,9 +880,7 @@ class Parser:
             self.skip_newlines()
             if res.error:
                 return res.failure(
-                    InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected ']' or expression"
-                    )
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ']' or expression")
                 )
             assert elt is not None
             element_nodes.append(elt)
@@ -904,7 +898,7 @@ class Parser:
 
             if self.current_tok.type != TT_RSQUARE:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ']'")
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ']'")
                 )
 
             self.advance(res)
@@ -932,9 +926,7 @@ class Parser:
             assert key is not None
 
             if self.current_tok.type != TT_COLON:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ':'")
-                )
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ':'"))
 
             self.advance(res)
 
@@ -957,7 +949,7 @@ class Parser:
 
                 if self.current_tok.type != TT_COLON:
                     return res.failure(
-                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ':'")
+                        RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ':'")
                     )
 
                 self.advance(res)
@@ -974,7 +966,7 @@ class Parser:
             self.skip_newlines()
             if self.current_tok.type != TT_RBRACE:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or '}'")
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or '}'")
                 )
 
             self.advance(res)
@@ -1011,7 +1003,7 @@ class Parser:
 
                 if self.current_tok.type != TT_RBRACE:
                     return res.failure(
-                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
+                        RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
                     )
                 self.advance(res)
             else:
@@ -1048,7 +1040,7 @@ class Parser:
 
         if not self.current_tok.matches(TT_KEYWORD, case_keyword):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected '{case_keyword}'")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, f"Expected '{case_keyword}'")
             )
 
         self.advance(res)
@@ -1060,7 +1052,7 @@ class Parser:
         self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+            return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
 
         if self.current_tok.type == TT_LBRACE:
             self.advance(res)
@@ -1108,7 +1100,7 @@ class Parser:
 
         if self.current_tok.type != TT_IDENTIFIER:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
             )
 
         var_name = self.current_tok
@@ -1122,7 +1114,7 @@ class Parser:
 
         if self.current_tok.type != TT_EQ and not self.current_tok.matches(TT_KEYWORD, "in"):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '=' or 'in'")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '=' or 'in'")
             )
 
         elif self.current_tok.matches(TT_KEYWORD, "in"):
@@ -1141,9 +1133,7 @@ class Parser:
             assert start_value is not None
 
             if not self.current_tok.matches(TT_KEYWORD, "to"):
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'to'")
-                )
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'to'"))
 
             self.advance(res)
             end_value = res.register(self.expr())
@@ -1164,7 +1154,7 @@ class Parser:
         self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+            return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
 
         # self.advance(res)
 
@@ -1177,9 +1167,7 @@ class Parser:
             assert body is not None
 
             if self.current_tok.type != TT_RBRACE:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
-                )
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
 
             pos_end = self.current_tok.pos_end.copy()
             self.advance(res)
@@ -1220,7 +1208,7 @@ class Parser:
         self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+            return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
 
         # self.advance(res)
 
@@ -1234,9 +1222,7 @@ class Parser:
 
             # if not self.current_tok.matches(TT_KEYWORD, 'end'):
             if self.current_tok.type != TT_RBRACE:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
-                )
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
 
             self.advance(res)
 
@@ -1261,7 +1247,7 @@ class Parser:
 
         if self.current_tok.type != TT_IDENTIFIER:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
             )
 
         class_name_tok = self.current_tok
@@ -1270,7 +1256,7 @@ class Parser:
         self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+            return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
 
         self.advance(res)
         self.skip_newlines()
@@ -1287,7 +1273,7 @@ class Parser:
         assert body is not None
 
         if self.current_tok.type != TT_RBRACE:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
+            return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
 
         self.advance(res)
 
@@ -1305,7 +1291,7 @@ class Parser:
 
         if not self.current_tok.matches(TT_KEYWORD, "fun"):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'fun' or identifier")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'fun' or identifier")
             )
 
         self.advance(res)
@@ -1315,16 +1301,12 @@ class Parser:
             self.advance(res)
 
             if self.current_tok.type != TT_LPAREN:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '('")
-                )
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '('"))
         else:
             var_name_tok = None
             if self.current_tok.type != TT_LPAREN:
                 return res.failure(
-                    InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or '('"
-                    )
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or '('")
                 )
 
         self.advance(res)
@@ -1363,7 +1345,7 @@ class Parser:
                 defaults.append(default)
                 has_optionals = True
             elif has_optionals:
-                return res.failure(InvalidSyntaxError(pos_start, pos_end, "Expected optional parameter."))
+                return res.failure(RNSyntaxError(pos_start, pos_end, "Expected optional parameter."))
             else:
                 defaults.append(None)
 
@@ -1376,7 +1358,7 @@ class Parser:
 
                 if self.current_tok.type != TT_IDENTIFIER:
                     return res.failure(
-                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
+                        RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
                     )
 
                 pos_start = self.current_tok.pos_start.copy()
@@ -1403,20 +1385,18 @@ class Parser:
                     defaults.append(default)
                     has_optionals = True
                 elif has_optionals:
-                    return res.failure(InvalidSyntaxError(pos_start, pos_end, "Expected optional parameter."))
+                    return res.failure(RNSyntaxError(pos_start, pos_end, "Expected optional parameter."))
                 else:
                     defaults.append(None)
 
             if self.current_tok.type != TT_RPAREN:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',', ')' or '='")
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',', ')' or '='")
                 )
         else:
             if self.current_tok.type != TT_RPAREN:
                 return res.failure(
-                    InvalidSyntaxError(
-                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or ')'"
-                    )
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier or ')'")
                 )
 
         self.advance(res)
@@ -1449,7 +1429,7 @@ class Parser:
         self.skip_newlines()
         if self.current_tok.type != TT_LBRACE:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '->' or '{'")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '->' or '{'")
             )
 
         self.advance(res)
@@ -1467,7 +1447,7 @@ class Parser:
         assert body is not None
 
         if self.current_tok.type != TT_RBRACE:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
+            return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
 
         self.advance(res)
 
@@ -1497,7 +1477,7 @@ class Parser:
         assert subject is not None
 
         if self.current_tok.type != TT_LBRACE:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+            return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
         self.advance(res)
 
         self.skip_newlines()
@@ -1518,7 +1498,7 @@ class Parser:
                 self.advance(res)
             else:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{' or '->'")
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{' or '->'")
                 )
             self.skip_newlines()
 
@@ -1526,9 +1506,7 @@ class Parser:
             body = res.register(self.statements() if not single_statement else self.statement())
             self.in_case -= 1
             if (not single_statement) and self.current_tok.type != TT_RBRACE:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
-                )
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
             assert body is not None
 
             cases.append((expr, body))
@@ -1548,7 +1526,7 @@ class Parser:
                 self.advance(res)
             else:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{' or '->'")
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{' or '->'")
                 )
             self.skip_newlines()
 
@@ -1556,9 +1534,7 @@ class Parser:
             body = res.register(self.statements() if not single_statement else self.statement())
             self.in_case -= 1
             if (not single_statement) and self.current_tok.type != TT_RBRACE:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
-                )
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
             assert body is not None
 
             default = body
@@ -1571,7 +1547,7 @@ class Parser:
 
         if self.current_tok.type != TT_RBRACE:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}' or 'case'")
+                RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}' or 'case'")
             )
         self.advance(res)
 
@@ -1583,7 +1559,7 @@ class Parser:
         self.skip_newlines()
 
         if self.current_tok.type != TT_LBRACE:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
+            return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
 
         self.advance(res)
 
@@ -1593,7 +1569,7 @@ class Parser:
         assert try_block is not None
 
         if self.current_tok.type != TT_RBRACE:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
+            return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
 
         self.advance(res)
         self.skip_newlines()
@@ -1602,15 +1578,13 @@ class Parser:
             self.advance(res)
 
             if not self.current_tok.matches(TT_KEYWORD, "as"):
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'as'")
-                )
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'as'"))
 
             self.advance(res)
 
             if self.current_tok.type != TT_IDENTIFIER:
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
+                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
                 )
 
             exc_iden = self.current_tok
@@ -1618,9 +1592,7 @@ class Parser:
             self.skip_newlines()
 
             if self.current_tok.type != TT_LBRACE:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'")
-                )
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
 
             self.advance(res)
 
@@ -1630,15 +1602,13 @@ class Parser:
             assert catch_block is not None
 
             if self.current_tok.type != TT_RBRACE:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'")
-                )
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '}'"))
 
             self.advance(res)
 
             return res.success(TryNode(try_block, exc_iden, catch_block, pos_start, self.current_tok.pos_end.copy()))
 
-        return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'catch'"))
+        return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'catch'"))
 
     ###################################
 

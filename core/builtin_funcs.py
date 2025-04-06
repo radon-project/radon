@@ -20,7 +20,7 @@ from core.datatypes import (
     Type,
     Value,
 )
-from core.errors import Error, InvalidSyntaxError, RTError
+from core.errors import Error, InvalidSyntaxError, RNModuleNotFoundError, RTError
 from core.lexer import Lexer
 from core.parser import Context, Parser, RTResult, SymbolTable
 from core.tokens import BASE_DIR, STDLIBS, Position
@@ -554,7 +554,7 @@ class BuiltInFunction(BaseFunction):
                 script = f.read()
         except Exception as e:
             return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, f'Failed to load script "{module}"\n' + str(e), exec_ctx)
+                RNModuleNotFoundError(self.pos_start, self.pos_end, f"No module named '{module}'\n" + str(e), exec_ctx)
             )
 
         error: Error | RTError | None

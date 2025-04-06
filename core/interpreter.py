@@ -19,7 +19,7 @@ from core.datatypes import (
     String,
     Value,
 )
-from core.errors import Error, RTError, TryError
+from core.errors import Error, RNModuleNotFoundError, RNNameError, RTError, TryError
 from core.nodes import (
     ArrayNode,
     AssertNode,
@@ -208,7 +208,7 @@ class Interpreter:
         value = context.symbol_table.get(var_name)
 
         if value is None:
-            return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
+            return res.failure(RNNameError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
 
         value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
         assert value is not None
@@ -312,9 +312,15 @@ class Interpreter:
                         RTError(node.pos_start, node.pos_end, "Failed to load script docs\n" + str(e), exec_ctx)
                     )
 
-        except Exception as e:
+        except Exception:
             return RTResult[Value]().failure(
-                RTError(node.pos_start, node.pos_end, f'Failed to load script "{module_name}"\n' + str(e), exec_ctx)
+                RNModuleNotFoundError(
+                    node.pos_start,
+                    node.pos_end,
+                    # f'Failed to load script "{module_name}"\n' + str(e),
+                    f"No module named '{module_name}'",
+                    exec_ctx,
+                )
             )
         symbol_table = create_global_symbol_table()
         new_ctx = Context(module_name, context, node.pos_start)
@@ -655,6 +661,10 @@ class Interpreter:
             res.error = None
 
             res.register(self.visit(node.catch_block, context))
+
+            if res.should_return():
+                return res
+
             if res.error:
                 return res.failure(
                     TryError(
@@ -850,7 +860,7 @@ class Interpreter:
 
         old_value = context.symbol_table.get(var_name)
         if old_value is None:
-            return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
+            return res.failure(RNNameError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
 
         new_value, error = old_value.added_to(Number.one())
         if error is not None:
@@ -881,7 +891,7 @@ class Interpreter:
 
         old_value = context.symbol_table.get(var_name)
         if old_value is None:
-            return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
+            return res.failure(RNNameError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
 
         new_value, error = old_value.subbed_by(Number.one())
         if error is not None:

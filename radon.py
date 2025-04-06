@@ -4,21 +4,22 @@
 import os
 import platform
 import sys
-from typing import IO, Optional
+from typing import IO, TYPE_CHECKING, Optional
 
 from core.datatypes import Value
 from core.errors import Error, RTError
 
-try:
-    import readline
+if not TYPE_CHECKING and sys.platform != "win32":
+    try:
+        import readline
 
-    # Enable arrow key support
-    readline.parse_and_bind(r'"\e[A": history-search-backward')
-    readline.parse_and_bind(r'"\e[B": history-search-forward')
-    readline.parse_and_bind(r'"\e[C": forward-char')
-    readline.parse_and_bind(r'"\e[D": backward-char')
-except ImportError:
-    pass
+        # Enable arrow key support
+        readline.parse_and_bind(r'"\e[A": history-search-backward')
+        readline.parse_and_bind(r'"\e[B": history-search-forward')
+        readline.parse_and_bind(r'"\e[C": forward-char')
+        readline.parse_and_bind(r'"\e[D": backward-char')
+    except ImportError:
+        pass
 
 import core as base_core
 from core.colortools import Log

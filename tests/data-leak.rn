@@ -1,0 +1,17 @@
+var str1 = "Company Secret: jsdfipwjpcjop29834y98yn^&T(*&uhilhl)sf@"
+print(str1[55])
+
+#!
+var arr1 = [
+    1, 2, 4, 6, [
+        4, 5, 0, null
+    ]
+]
+print(arr1[99])
+
+var hmp1 = {
+    "key": "value",
+    "no-key": "no-value"
+}
+print(hmp1["update"])
+!#
