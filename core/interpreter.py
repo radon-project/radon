@@ -661,7 +661,7 @@ class Interpreter:
             res.error = None
 
             res.register(self.visit(node.catch_block, context))
-            
+
             if res.should_return():
                 return res
 

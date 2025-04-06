@@ -166,7 +166,7 @@ class TryError(Error):
         if self.prev_error:
             result += self.prev_error.as_string()
         result += Log.light_error("\nDuring the handling of the above error, another error occurred:\n\n")
-        return result + super().generate_radiation() # type: ignore
+        return result + super().generate_radiation()  # type: ignore
 
 
 class RNValueError(Error):
