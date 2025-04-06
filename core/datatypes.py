@@ -7,7 +7,7 @@ from typing import Iterator as PyIterator
 from typing import Optional, TypeAlias, TypeVar
 
 from core.colortools import Log
-from core.errors import Error, RTError
+from core.errors import Error, RNIndexError, RNKeyError, RNNameError, RTError
 from core.parser import Context, RTResult, SymbolTable
 from core.tokens import STDLIBS, Position
 
@@ -479,12 +479,7 @@ class String(Value):
         try:
             return String(self.value[int(index.value)]), None
         except IndexError:
-            return None, RTError(
-                index.pos_start,
-                index.pos_end,
-                f"Cannot get char {index} from string {self!r} because it is out of bounds.",
-                self.context,
-            )
+            return None, RNIndexError(index.pos_start, index.pos_end, "String index out of range", self.context)
 
     def get_slice(self, start: Optional[Value], end: Optional[Value], step: Optional[Value]) -> ResultTuple:
         if start is not None and not isinstance(start, Number):
@@ -521,12 +516,7 @@ class String(Value):
         try:
             self.value = self.value[: int(index.value)] + value.value + self.value[int(index.value + 1) :]
         except IndexError:
-            return None, RTError(
-                index.pos_start,
-                index.pos_end,
-                f"Cannot set character {index} from string {self!r} to {value!r} because it is out of bounds.",
-                self.context,
-            )
+            return None, RNIndexError(index.pos_start, index.pos_end, "String index out of range", self.context)
         return self, None
 
     def contains(self, other: Value) -> ResultTuple:
@@ -668,12 +658,7 @@ class Array(Value):
         try:
             return self.elements[int(index.value)], None
         except IndexError:
-            return None, RTError(
-                index.pos_start,
-                index.pos_end,
-                f"Cannot get element {index} from list {self!r} because it is out of bounds.",
-                self.context,
-            )
+            return None, RNIndexError(index.pos_start, index.pos_end, "Array index out of range", self.context)
         return self, None
 
     def get_slice(self, start: Optional[Value], end: Optional[Value], step: Optional[Value]) -> ResultTuple:
@@ -709,12 +694,7 @@ class Array(Value):
         try:
             self.elements[int(index.value)] = value
         except IndexError:
-            return None, RTError(
-                index.pos_start,
-                index.pos_end,
-                f"Cannot set element {index} from list {self!r} to {value!r} because it is out of bounds.",
-                self.context,
-            )
+            return None, RNIndexError(index.pos_start, index.pos_end, "Array index out of range", self.context)
         return self, None
 
     def contains(self, other: Value) -> ResultTuple:
@@ -807,8 +787,8 @@ class HashMap(Value):
         try:
             return self.values[index.value], None
         except KeyError:
-            return None, RTError(
-                self.pos_start, self.pos_end, f"Could not find key {index!r} in dict {self!r}", self.context
+            return None, RNKeyError(
+                self.pos_start, self.pos_end, f"Key '{index.value}' not found in HashMap", self.context
             )
 
     def set_index(self, index: Value, value: Value) -> ResultTuple:
@@ -1337,7 +1317,7 @@ class BaseClass(Value, ABC):
 
         value = self.get(other.value)
         if value is None:
-            return None, RTError(self.pos_start, self.pos_end, f"'{other.value}' is not defined", self.context)
+            return None, RNNameError(self.pos_start, self.pos_end, f"'{other.value}' is not defined", self.context)
 
         return value, None
 
