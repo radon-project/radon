@@ -32,7 +32,7 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
         col_start = pos_start.col if i == 0 else 0
         col_end = pos_end.col if i == line_count - 1 else len(line) - 1
 
-        col_start_color = col_start  # + 1
+        col_start_color = col_start + 1
         col_end_color = col_end + 1
 
         # Append to result
@@ -61,11 +61,11 @@ class Error:
     def as_string(self) -> str:
         """Return error as string"""
         result = Log.light_purple("Radiation (most recent call last):\n")
-        result += f"  File {Log.light_info(self.pos_start.fn)}, line {Log.light_info(str(self.pos_start.ln + 1))}\n"
-        result += f"{Log.deep_error(self.error_name, bold=True)}"
+        result += f"  File {Log.light_info(self.pos_start.fn)}, line {Log.light_info(str(self.pos_start.ln + 1))}"
+        result += string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
+        result += "\n" + f"{Log.deep_error(self.error_name, bold=True)}"
         if self.details is not None:
             result += f": {Log.light_error(self.details)}"
-        result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
 
     def set_pos(self, pos_start: Optional[Position] = None, pos_end: Optional[Position] = None) -> Self:
@@ -152,13 +152,13 @@ class RTError(Error):
         return type(self)(self.pos_start, self.pos_end, self.details, self.context)
 
 
-class TryError(RTError):
+class TryError(Error):
     prev_error: RTError
 
     def __init__(
         self, pos_start: Position, pos_end: Position, details: str, context: Context, prev_error: RTError
     ) -> None:
-        super().__init__(pos_start, pos_end, details, context)
+        super().__init__(pos_start, pos_end, "TryError", details, context)
         self.prev_error = prev_error
 
     def generate_radiation(self) -> str:
@@ -166,12 +166,74 @@ class TryError(RTError):
         if self.prev_error:
             result += self.prev_error.as_string()
         result += Log.light_error("\nDuring the handling of the above error, another error occurred:\n\n")
-        return result + super().generate_radiation()
+        return result + super().generate_radiation() # type: ignore
 
 
-class VError(RTError):
+class RNValueError(Error):
     """Value Error class"""
 
-    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Context):
-        super().__init__(pos_start, pos_end, "ValueError", context)
+    context: Optional[Context]
+
+    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Optional[Context] = None):
+        super().__init__(pos_start, pos_end, "ValueError", details)
+        self.context = context
+
+
+class RNIndexError(Error):
+    """Index Error class"""
+
+    context: Optional[Context]
+
+    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Optional[Context] = None):
+        super().__init__(pos_start, pos_end, "IndexError", details, context)
+        self.context = context
+
+
+class RNTypeError(Error):
+    """Type Error class"""
+
+    context: Optional[Context]
+
+    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Optional[Context] = None):
+        super().__init__(pos_start, pos_end, "TypeError", details, context)
+        self.context = context
+
+
+class RNKeyError(Error):
+    """Key Error class"""
+
+    context: Optional[Context]
+
+    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Optional[Context] = None):
+        super().__init__(pos_start, pos_end, "KeyError", details, context)
+        self.context = context
+
+
+class RNSyntaxError(Error):
+    """Syntax Error class"""
+
+    context: Optional[Context]
+
+    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Optional[Context] = None):
+        super().__init__(pos_start, pos_end, "SyntaxError", details, context)
+        self.context = context
+
+
+class RNModuleNotFoundError(Error):
+    """Import Error class"""
+
+    context: Optional[Context]
+
+    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Optional[Context] = None):
+        super().__init__(pos_start, pos_end, "ModuleNotFoundError", details, context)
+        self.context = context
+
+
+class RNNameError(Error):
+    """Name Error class"""
+
+    context: Optional[Context]
+
+    def __init__(self, pos_start: Position, pos_end: Position, details: str, context: Optional[Context] = None):
+        super().__init__(pos_start, pos_end, "NameError", details, context)
         self.context = context
