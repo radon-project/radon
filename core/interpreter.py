@@ -175,6 +175,9 @@ class Interpreter:
 
     ###################################
 
+    def visit_NullNode(self, node: Node, context: Context) -> RTResult[Value]:
+        return RTResult[Value]().success(Null.null())
+
     def visit_NumberNode(self, node: NumberNode, context: Context) -> RTResult[Value]:
         assert isinstance(node.tok.value, int | float), "This could be a bug in the parser or the lexer"
         return RTResult[Value]().success(
