@@ -8,6 +8,7 @@ from typing import Optional, TypeAlias, TypeVar
 
 from core.colortools import Log
 from core.errors import Error, RNIndexError, RNKeyError, RNNameError, RTError
+from core.nodes import NullNode
 from core.parser import Context, RTResult, SymbolTable
 from core.tokens import STDLIBS, Position
 
@@ -1390,17 +1391,15 @@ class Class(BaseClass):
 
     def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]:
         res = RTResult[None]()
-        method = inst.symbol_table.symbols.get("__constructor__", None)
+        # if constructor is not defined, create a default one
+        method = inst.symbol_table.symbols.get(
+            "__constructor__",
+            Function("__constructor__", inst.symbol_table, NullNode(None, None), [], [], True, "", "", 0),  # type: ignore
+        )
 
-        if method is None or not isinstance(method, Function):
-            return res.failure(
-                RTError(
-                    self.pos_start, self.pos_end, f"Constructor for '{self.name}' class is not defined", self.context
-                )
-            )
-        if method.symbol_table is None:
-            method.symbol_table = SymbolTable()
-        method.symbol_table.set("this", inst)
+        if method.symbol_table is None:  # type: ignore
+            method.symbol_table = SymbolTable()  # type: ignore
+        method.symbol_table.set("this", inst)  # type: ignore
 
         res.register(method.execute(args, kwargs))
         if res.should_return():
