@@ -1,4 +1,5 @@
 class Algorithm {
+    # Without __constructor__ Radon will auto create one for you!
     # fun __constructor__(){}
 
     fun find(list, value) {
@@ -12,6 +13,6 @@ class Algorithm {
     }
 }
 
-var algo = Algorithm()
+var algo = Algorithm() # init object
 var list = [1, 2, 3, 4, 5]
 print(algo.find(list, 3))
