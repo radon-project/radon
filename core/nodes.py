@@ -19,10 +19,10 @@ class Node(Protocol):
 
 
 class NullNode:
-    pos_start: Position
-    pos_end: Position
+    pos_start: Optional[Position]
+    pos_end: Optional[Position]
 
-    def __init__(self, pos_start: Position, pos_end: Position) -> None:
+    def __init__(self, pos_start: Optional[Position], pos_end: Optional[Position]) -> None:
         self.pos_start = pos_start
         self.pos_end = pos_end
 
