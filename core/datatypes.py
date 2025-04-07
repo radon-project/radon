@@ -1394,18 +1394,8 @@ class Class(BaseClass):
         # if constructor is not defined, create a default one
         method = inst.symbol_table.symbols.get(
             "__constructor__",
-            Function(
-                "__constructor__",
-                inst.symbol_table,
-                NullNode(None, None),
-                [],
-                [],
-                True,
-                "",
-                "",
-                0,
-            )
-        ) 
+            Function("__constructor__", inst.symbol_table, NullNode(None, None), [], [], True, "", "", 0),
+        )
 
         if method.symbol_table is None:
             method.symbol_table = SymbolTable()
