@@ -18,6 +18,15 @@ class Node(Protocol):
     def pos_end(self) -> Position: ...
 
 
+class NullNode:
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, pos_start: Position, pos_end: Position) -> None:
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+
 class NumberNode:
     tok: Token
 
