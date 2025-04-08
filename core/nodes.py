@@ -113,7 +113,7 @@ class VarAssignNode:
 @dataclass
 class FromImportNode:
     module: Token
-    packages: Optional[Token | list[Token]]
+    packages: Token | list[Token]
     names: Optional[Token | list[Token]]
     docs: str
 

@@ -352,6 +352,7 @@ class Parser:
 
             self.advance(res)
 
+            packages: list[Token] | Token
             if self.current_tok.type == TT_LPAREN:
                 self.advance(res)
                 if self.current_tok.type != TT_IDENTIFIER:
@@ -363,7 +364,7 @@ class Parser:
                         )
                     )
 
-                packages: list[Token] = []
+                packages_list: list[Token] = []
                 while self.current_tok.type != TT_RPAREN:
                     if self.current_tok.type == TT_COMMA:
                         self.advance(res)
@@ -378,7 +379,7 @@ class Parser:
                             )
                         )
 
-                    packages.append(self.current_tok)
+                    packages_list.append(self.current_tok)
                     self.advance(res)
 
                 if self.current_tok.type != TT_RPAREN:
@@ -389,7 +390,7 @@ class Parser:
                 self.advance(res)
 
             elif self.current_tok.type == TT_IDENTIFIER:
-                packages: Token = self.current_tok
+                packages = self.current_tok
                 self.advance(res)
 
             elif self.current_tok.type == TT_MUL:
@@ -405,7 +406,7 @@ class Parser:
                     )
                 )
 
-            #if self.current_tok.type != TT_IDENTIFIER:
+            # if self.current_tok.type != TT_IDENTIFIER:
             #    return res.failure(
             #        RNSyntaxError(
             #            self.current_tok.pos_start,
@@ -425,7 +426,7 @@ class Parser:
 
                 elif self.current_tok.type == TT_LPAREN:
                     self.advance(res)
-                    names: list[Token] = []
+                    names = []
 
                     while self.current_tok.type != TT_RPAREN:
                         if self.current_tok.type == TT_COMMA:
@@ -444,7 +445,11 @@ class Parser:
                         names.append(self.current_tok)
                         self.advance(res)
 
-                    if len(packages) != len(names):
+                    if isinstance(packages, list):
+                        package_count = len(packages)
+                    else:
+                        package_count = 1
+                    if package_count != len(names):
                         return res.failure(
                             RNSyntaxError(
                                 self.current_tok.pos_start,
@@ -482,7 +487,7 @@ class Parser:
             module = self.current_tok
             self.advance(res)
 
-            docs: str = "[No Description]"
+            docs = "[No Description]"
 
             if self.current_tok.matches(TT_KEYWORD, "as"):
                 self.advance(res)
