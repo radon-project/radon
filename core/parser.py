@@ -405,14 +405,14 @@ class Parser:
                     )
                 )
 
-            if self.current_tok.type != TT_IDENTIFIER:
-                return res.failure(
-                    RNSyntaxError(
-                        self.current_tok.pos_start,
-                        self.current_tok.pos_end,
-                        "Expected string or identifier as imported module",
-                    )
-                )
+            #if self.current_tok.type != TT_IDENTIFIER:
+            #    return res.failure(
+            #        RNSyntaxError(
+            #            self.current_tok.pos_start,
+            #            self.current_tok.pos_end,
+            #            "Expected string or identifier as imported module",
+            #        )
+            #    )
 
             docs: str = "[No Description]"
 
@@ -421,6 +421,7 @@ class Parser:
 
                 if self.current_tok.type == TT_IDENTIFIER:
                     name = self.current_tok
+                    names = [name]
 
                 elif self.current_tok.type == TT_LPAREN:
                     self.advance(res)
