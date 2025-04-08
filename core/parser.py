@@ -346,9 +346,7 @@ class Parser:
             if not self.current_tok.matches(TT_KEYWORD, "import"):
                 return res.failure(
                     RNSyntaxError(
-                        self.current_tok.pos_start,
-                        self.current_tok.pos_end,
-                        "Expected 'import' after 'from <module>'",
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'import' after 'from <module>'"
                     )
                 )
 
@@ -382,18 +380,18 @@ class Parser:
 
                     packages.append(self.current_tok)
                     self.advance(res)
-                    
+
                 if self.current_tok.type != TT_RPAREN:
                     return res.failure(
                         RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')'")
                     )
-                
+
                 self.advance(res)
 
             elif self.current_tok.type == TT_IDENTIFIER:
                 packages: Token = self.current_tok
                 self.advance(res)
-            
+
             elif self.current_tok.type == TT_MUL:
                 # TODO: handle wildcard imports (*)
                 self.advance(res)
@@ -423,7 +421,7 @@ class Parser:
 
                 if self.current_tok.type == TT_IDENTIFIER:
                     name = self.current_tok
-                
+
                 elif self.current_tok.type == TT_LPAREN:
                     self.advance(res)
                     names: list[Token] = []
@@ -444,7 +442,7 @@ class Parser:
 
                         names.append(self.current_tok)
                         self.advance(res)
-                    
+
                     if len(packages) != len(names):
                         return res.failure(
                             RNSyntaxError(
@@ -453,7 +451,7 @@ class Parser:
                                 "Expected same amount of names as packages",
                             )
                         )
-                
+
                 else:
                     return res.failure(
                         RNSyntaxError(
@@ -462,11 +460,10 @@ class Parser:
                             "Expected string or identifier as imported module",
                         )
                     )
-                        
-            
+
                 self.advance(res)
                 return res.success(FromImportNode(module, packages, names, docs, module.pos_start, name.pos_end))
-            
+
             return res.success(FromImportNode(module, packages, None, docs, module.pos_start, module.pos_end))
 
         if self.current_tok.matches(TT_KEYWORD, "import"):
