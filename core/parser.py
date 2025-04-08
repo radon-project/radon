@@ -20,6 +20,7 @@ from core.nodes import (
     FallthroughNode,
     ForInNode,
     ForNode,
+    FromImportNode,
     FuncDefNode,
     HashMapNode,
     IfNode,
@@ -326,6 +327,147 @@ class Parser:
                 return res
             assert switch_node is not None
             return res.success(switch_node)
+
+        if self.current_tok.matches(TT_KEYWORD, "from"):
+            self.advance(res)
+
+            if self.current_tok.type != TT_IDENTIFIER:
+                return res.failure(
+                    RNSyntaxError(
+                        self.current_tok.pos_start,
+                        self.current_tok.pos_end,
+                        "Expected string or identifier as imported module",
+                    )
+                )
+
+            module = self.current_tok
+            self.advance(res)
+
+            if not self.current_tok.matches(TT_KEYWORD, "import"):
+                return res.failure(
+                    RNSyntaxError(
+                        self.current_tok.pos_start,
+                        self.current_tok.pos_end,
+                        "Expected 'import' after 'from <module>'",
+                    )
+                )
+
+            self.advance(res)
+
+            if self.current_tok.type == TT_LPAREN:
+                self.advance(res)
+                if self.current_tok.type != TT_IDENTIFIER:
+                    return res.failure(
+                        RNSyntaxError(
+                            self.current_tok.pos_start,
+                            self.current_tok.pos_end,
+                            "Expected string or identifier as imported module",
+                        )
+                    )
+
+                packages: list[Token] = []
+                while self.current_tok.type != TT_RPAREN:
+                    if self.current_tok.type == TT_COMMA:
+                        self.advance(res)
+                        continue
+
+                    if self.current_tok.type != TT_IDENTIFIER:
+                        return res.failure(
+                            RNSyntaxError(
+                                self.current_tok.pos_start,
+                                self.current_tok.pos_end,
+                                "Expected string or identifier as imported module",
+                            )
+                        )
+
+                    packages.append(self.current_tok)
+                    self.advance(res)
+                    
+                if self.current_tok.type != TT_RPAREN:
+                    return res.failure(
+                        RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')'")
+                    )
+                
+                self.advance(res)
+
+            elif self.current_tok.type == TT_IDENTIFIER:
+                packages: Token = self.current_tok
+                self.advance(res)
+            
+            elif self.current_tok.type == TT_MUL:
+                # TODO: handle wildcard imports (*)
+                self.advance(res)
+
+            else:
+                return res.failure(
+                    RNSyntaxError(
+                        self.current_tok.pos_start,
+                        self.current_tok.pos_end,
+                        "Expected string or identifier as imported module",
+                    )
+                )
+
+            if self.current_tok.type != TT_IDENTIFIER:
+                return res.failure(
+                    RNSyntaxError(
+                        self.current_tok.pos_start,
+                        self.current_tok.pos_end,
+                        "Expected string or identifier as imported module",
+                    )
+                )
+
+            docs: str = "[No Description]"
+
+            if self.current_tok.matches(TT_KEYWORD, "as"):
+                self.advance(res)
+
+                if self.current_tok.type == TT_IDENTIFIER:
+                    name = self.current_tok
+                
+                elif self.current_tok.type == TT_LPAREN:
+                    self.advance(res)
+                    names: list[Token] = []
+
+                    while self.current_tok.type != TT_RPAREN:
+                        if self.current_tok.type == TT_COMMA:
+                            self.advance(res)
+                            continue
+
+                        if self.current_tok.type != TT_IDENTIFIER:
+                            return res.failure(
+                                RNSyntaxError(
+                                    self.current_tok.pos_start,
+                                    self.current_tok.pos_end,
+                                    "Expected string or identifier as imported module",
+                                )
+                            )
+
+                        names.append(self.current_tok)
+                        self.advance(res)
+                    
+                    if len(packages) != len(names):
+                        return res.failure(
+                            RNSyntaxError(
+                                self.current_tok.pos_start,
+                                self.current_tok.pos_end,
+                                "Expected same amount of names as packages",
+                            )
+                        )
+                
+                else:
+                    return res.failure(
+                        RNSyntaxError(
+                            self.current_tok.pos_start,
+                            self.current_tok.pos_end,
+                            "Expected string or identifier as imported module",
+                        )
+                    )
+                        
+            
+                self.advance(res)
+                return res.success(FromImportNode(module, packages, names, docs, module.pos_start, name.pos_end))
+            
+            return res.success(FromImportNode(module, packages, None, docs, module.pos_start, module.pos_end))
 
         if self.current_tok.matches(TT_KEYWORD, "import"):
             self.advance(res)

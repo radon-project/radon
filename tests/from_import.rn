@@ -1,0 +1,3 @@
+from os import Path as pt
+
+print(help(pt))

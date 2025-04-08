@@ -111,6 +111,17 @@ class VarAssignNode:
 
 
 @dataclass
+class FromImportNode:
+    module: Token
+    packages: Optional[Token | list[Token]]
+    names: Optional[Token | list[Token]]
+    docs: str
+
+    pos_start: Position
+    pos_end: Position
+
+
+@dataclass
 class ImportNode:
     module: Token
     name: Optional[Token]
