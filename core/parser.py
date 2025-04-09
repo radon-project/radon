@@ -20,6 +20,7 @@ from core.nodes import (
     FallthroughNode,
     ForInNode,
     ForNode,
+    FromImportNode,
     FuncDefNode,
     HashMapNode,
     IfNode,
@@ -327,10 +328,89 @@ class Parser:
             assert switch_node is not None
             return res.success(switch_node)
 
+        if self.current_tok.matches(TT_KEYWORD, "from"):
+            self.advance(res)
+
+            if self.current_tok.type not in (TT_STRING, TT_IDENTIFIER):
+                return res.failure(
+                    RNSyntaxError(
+                        self.current_tok.pos_start,
+                        self.current_tok.pos_end,
+                        "Expected string or identifier as imported module",
+                    )
+                )
+            module = self.current_tok
+            self.advance(res)
+
+            if not self.current_tok.matches(TT_KEYWORD, "import"):
+                return res.failure(
+                    RNSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'import' after 'from'"
+                    )
+                )
+            self.advance(res)
+
+            in_parens = False
+            if self.current_tok.type == TT_LPAREN:
+                self.advance(res)
+                in_parens = True
+            res.register(self.skip_newlines())
+            if res.error is not None:
+                return res
+
+            names: list[tuple[str, Token]] = []
+            while True:
+                if in_parens and self.current_tok.type == TT_RPAREN:
+                    break
+                if self.current_tok.type != TT_IDENTIFIER:
+                    return res.failure(
+                        RNSyntaxError(
+                            self.current_tok.pos_start,
+                            self.current_tok.pos_end,
+                            "Expected identifier as name to import",
+                        )
+                    )
+                name_from_module_tok = self.current_tok
+                name_from_module = name_from_module_tok.value
+                assert isinstance(name_from_module, str), "this could be a bug in the lexer"
+                self.advance(res)
+
+                name_to_import: Token
+                if self.current_tok.matches(TT_KEYWORD, "as"):
+                    self.advance(res)
+                    if self.current_tok.type != TT_IDENTIFIER:
+                        return res.failure(
+                            RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
+                        )
+                    name_to_import = self.current_tok
+                    self.advance(res)
+                else:
+                    name_to_import = name_from_module_tok
+
+                names.append((name_from_module, name_to_import))
+
+                if in_parens:
+                    res.register(self.skip_newlines())
+                    if res.error is not None:
+                        return res
+                if self.current_tok.type != TT_COMMA:
+                    break
+                self.advance(res)
+                res.register(self.skip_newlines())
+                if res.error is not None:
+                    return res
+
+            if self.current_tok.type == TT_RPAREN:
+                self.advance(res)
+
+            return res.success(
+                FromImportNode(module, names, "[No Description]", pos_start=pos_start, pos_end=self.current_tok.pos_end)
+            )
+
         if self.current_tok.matches(TT_KEYWORD, "import"):
             self.advance(res)
 
-            if self.current_tok.type != TT_STRING and self.current_tok.type != TT_IDENTIFIER:
+            if self.current_tok.type not in (TT_STRING, TT_IDENTIFIER):
                 return res.failure(
                     RNSyntaxError(
                         self.current_tok.pos_start,
@@ -342,7 +422,7 @@ class Parser:
             module = self.current_tok
             self.advance(res)
 
-            docs: str = "[No Description]"
+            docs = "[No Description]"
 
             if self.current_tok.matches(TT_KEYWORD, "as"):
                 self.advance(res)

@@ -134,6 +134,7 @@ KEYWORDS = [
     "raise",
     "fallout",
     "var",
+    "from",
 ]
 
 TokenValue: TypeAlias = Optional[str | int | float]

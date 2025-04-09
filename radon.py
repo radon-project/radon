@@ -1,4 +1,4 @@
-#!/usr/bin/python3.12
+#!/usr/bin/env python3
 # By: Md. Almas Ali
 
 import os
