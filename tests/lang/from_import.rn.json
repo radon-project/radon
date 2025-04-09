@@ -1,0 +1,1 @@
+{"code": 0, "stdout": "<class '_Path'>\nNOTE: the f'd up printing here is intentional\nIt helps to prevent automatic testing of memory addresses whose specific values may be platform dependent\n<function link at 0x\n<function unlink at \n<function chdir at 0\n<class 'Input'>\n<class 'Output'>\n<class 'String'>\n", "stderr": ""}
