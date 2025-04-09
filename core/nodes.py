@@ -113,8 +113,7 @@ class VarAssignNode:
 @dataclass
 class FromImportNode:
     module: Token
-    packages: Optional[Token | list[Token]]
-    names: Optional[Token | list[Token]]
+    names: list[tuple[str, Token]]
     docs: str
 
     pos_start: Position

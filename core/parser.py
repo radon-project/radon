@@ -331,7 +331,7 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, "from"):
             self.advance(res)
 
-            if self.current_tok.type != TT_IDENTIFIER:
+            if self.current_tok.type not in (TT_STRING, TT_IDENTIFIER):
                 return res.failure(
                     RNSyntaxError(
                         self.current_tok.pos_start,
@@ -339,140 +339,78 @@ class Parser:
                         "Expected string or identifier as imported module",
                     )
                 )
-
             module = self.current_tok
             self.advance(res)
 
             if not self.current_tok.matches(TT_KEYWORD, "import"):
                 return res.failure(
                     RNSyntaxError(
-                        self.current_tok.pos_start,
-                        self.current_tok.pos_end,
-                        "Expected 'import' after 'from <module>'",
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'import' after 'from'"
                     )
                 )
-
             self.advance(res)
 
+            in_parens = False
             if self.current_tok.type == TT_LPAREN:
                 self.advance(res)
+                in_parens = True
+            res.register(self.skip_newlines())
+            if res.error is not None:
+                return res
+
+            names: list[tuple[str, Token]] = []
+            while True:
+                if in_parens and self.current_tok.type == TT_RPAREN:
+                    break
                 if self.current_tok.type != TT_IDENTIFIER:
                     return res.failure(
                         RNSyntaxError(
                             self.current_tok.pos_start,
                             self.current_tok.pos_end,
-                            "Expected string or identifier as imported module",
+                            "Expected identifier as name to import",
                         )
                     )
+                name_from_module_tok = self.current_tok
+                name_from_module = name_from_module_tok.value
+                assert isinstance(name_from_module, str), "this could be a bug in the lexer"
+                self.advance(res)
 
-                packages: list[Token] = []
-                while self.current_tok.type != TT_RPAREN:
-                    if self.current_tok.type == TT_COMMA:
-                        self.advance(res)
-                        continue
-
+                name_to_import: Token
+                if self.current_tok.matches(TT_KEYWORD, "as"):
+                    self.advance(res)
                     if self.current_tok.type != TT_IDENTIFIER:
                         return res.failure(
-                            RNSyntaxError(
-                                self.current_tok.pos_start,
-                                self.current_tok.pos_end,
-                                "Expected string or identifier as imported module",
-                            )
+                            RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
                         )
-
-                    packages.append(self.current_tok)
+                    name_to_import = self.current_tok
                     self.advance(res)
-                    
-                if self.current_tok.type != TT_RPAREN:
-                    return res.failure(
-                        RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')'")
-                    )
-                
-                self.advance(res)
-
-            elif self.current_tok.type == TT_IDENTIFIER:
-                packages: Token = self.current_tok
-                self.advance(res)
-            
-            elif self.current_tok.type == TT_MUL:
-                # TODO: handle wildcard imports (*)
-                self.advance(res)
-
-            else:
-                return res.failure(
-                    RNSyntaxError(
-                        self.current_tok.pos_start,
-                        self.current_tok.pos_end,
-                        "Expected string or identifier as imported module",
-                    )
-                )
-
-            if self.current_tok.type != TT_IDENTIFIER:
-                return res.failure(
-                    RNSyntaxError(
-                        self.current_tok.pos_start,
-                        self.current_tok.pos_end,
-                        "Expected string or identifier as imported module",
-                    )
-                )
-
-            docs: str = "[No Description]"
-
-            if self.current_tok.matches(TT_KEYWORD, "as"):
-                self.advance(res)
-
-                if self.current_tok.type == TT_IDENTIFIER:
-                    name = self.current_tok
-                
-                elif self.current_tok.type == TT_LPAREN:
-                    self.advance(res)
-                    names: list[Token] = []
-
-                    while self.current_tok.type != TT_RPAREN:
-                        if self.current_tok.type == TT_COMMA:
-                            self.advance(res)
-                            continue
-
-                        if self.current_tok.type != TT_IDENTIFIER:
-                            return res.failure(
-                                RNSyntaxError(
-                                    self.current_tok.pos_start,
-                                    self.current_tok.pos_end,
-                                    "Expected string or identifier as imported module",
-                                )
-                            )
-
-                        names.append(self.current_tok)
-                        self.advance(res)
-                    
-                    if len(packages) != len(names):
-                        return res.failure(
-                            RNSyntaxError(
-                                self.current_tok.pos_start,
-                                self.current_tok.pos_end,
-                                "Expected same amount of names as packages",
-                            )
-                        )
-                
                 else:
-                    return res.failure(
-                        RNSyntaxError(
-                            self.current_tok.pos_start,
-                            self.current_tok.pos_end,
-                            "Expected string or identifier as imported module",
-                        )
-                    )
-                        
-            
+                    name_to_import = name_from_module_tok
+
+                names.append((name_from_module, name_to_import))
+
+                if in_parens:
+                    res.register(self.skip_newlines())
+                    if res.error is not None:
+                        return res
+                if self.current_tok.type != TT_COMMA:
+                    break
                 self.advance(res)
-                return res.success(FromImportNode(module, packages, names, docs, module.pos_start, name.pos_end))
-            
-            return res.success(FromImportNode(module, packages, None, docs, module.pos_start, module.pos_end))
+                res.register(self.skip_newlines())
+                if res.error is not None:
+                    return res
+
+            if self.current_tok.type == TT_RPAREN:
+                self.advance(res)
+
+            return res.success(
+                FromImportNode(module, names, "[No Description]", pos_start=pos_start, pos_end=self.current_tok.pos_end)
+            )
 
         if self.current_tok.matches(TT_KEYWORD, "import"):
             self.advance(res)
 
-            if self.current_tok.type != TT_STRING and self.current_tok.type != TT_IDENTIFIER:
+            if self.current_tok.type not in (TT_STRING, TT_IDENTIFIER):
                 return res.failure(
                     RNSyntaxError(
                         self.current_tok.pos_start,
@@ -484,7 +422,7 @@ class Parser:
             module = self.current_tok
             self.advance(res)
 
-            docs: str = "[No Description]"
+            docs = "[No Description]"
 
             if self.current_tok.matches(TT_KEYWORD, "as"):
                 self.advance(res)

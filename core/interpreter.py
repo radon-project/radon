@@ -80,6 +80,69 @@ from core.tokens import (
 )
 
 
+def resolve_module(pos_start: Position, pos_end: Position, exec_ctx: Context, module_ident: str) -> RTResult[Module]:
+    res = RTResult[Module]()
+    module_name = module_ident
+    try:
+        if module_name not in STDLIBS:
+            file_extension = module_name.split("/")[-1].split(".")[-1]
+            if file_extension != "rn":
+                module_name += ".rn"
+            # module_file = module_name.split("/")[-1]
+            module_path = os.path.dirname(os.path.realpath(module_name))
+
+            module_name = os.path.join(exec_ctx.get_import_cwd(), module_name)
+            # module_name = os.path.join(module_path, module_file)
+        else:
+            # For STDLIB modules
+            module_path = os.path.join(BASE_DIR, "stdlib")
+            module_name = os.path.join(module_path, f"{module_name}.rn")
+
+        with open(module_name, "r") as f:
+            script = f.read()
+            # take the first string as the docs
+            try:
+                docs = script.split('"')[1]
+            except IndexError:
+                docs = ""
+            except Exception as e:
+                return res.failure(RTError(pos_start, pos_end, "Failed to load script docs\n" + str(e), exec_ctx))
+
+    except FileNotFoundError:
+        return res.failure(
+            RNModuleNotFoundError(
+                pos_start,
+                pos_end,
+                # f'Failed to load script "{module_name}"\n' + str(e),
+                f"No module named '{module_name}'",
+                exec_ctx,
+            )
+        )
+
+    symbol_table = create_global_symbol_table()
+    new_ctx = Context(module_name, exec_ctx, pos_start)
+    new_ctx.symbol_table = symbol_table
+    new_ctx.import_cwd = module_path
+    # error: Error
+    _, error, should_exit = run(module_name, script, context=new_ctx)
+
+    if error:
+        return RTResult[Value]().failure(
+            RTError(
+                pos_start,
+                pos_end,
+                f"{Log.light_error('Failed to finish executing script')} {Log.light_info(module_name)}\n"
+                + error.as_string(),  # type: ignore
+                exec_ctx,
+            )
+        )
+
+    module = Module(module_ident, module_name, docs, symbol_table)
+    if should_exit:
+        return res.success_exit(module)
+    return res.success(module)
+
+
 class Interpreter:
     def assign(
         self,
@@ -284,137 +347,56 @@ class Interpreter:
 
     def visit_FromImportNode(self, node: FromImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        exec_ctx = context
 
         module_name = node.module.value
         assert isinstance(module_name, str), "This could be a bug in the lexer"
 
-        try:
-            if module_name not in STDLIBS:
-                file_extension = module_name.split("/")[-1].split(".")[-1]
-                if file_extension != "rn":
-                    module_name += ".rn"
-                # module_file = module_name.split("/")[-1]
-                module_path = os.path.dirname(os.path.realpath(module_name))
+        module = res.register(resolve_module(node.pos_start, node.pos_end, context, module_name))
+        if res.should_return():
+            return res
+        assert module is not None
 
-                module_name = os.path.join(context.get_import_cwd(), module_name)
-                # module_name = os.path.join(module_path, module_file)
-            else:
-                # For STDLIB modules
-                module_path = os.path.join(BASE_DIR, "stdlib")
-                module_name = os.path.join(module_path, f"{module_name}.rn")
+        for name_from_module, name_to_import_tok in node.names:
+            name_to_import = name_to_import_tok.value
+            assert isinstance(name_to_import, str), "this could be a bug in the parser"
 
-            with open(module_name, "r") as f:
-                script = f.read()
-                # take the first string as the docs
-                try:
-                    docs = script.split('"')[1]
-                except IndexError:
-                    docs = ""
-                except Exception as e:
-                    return RTResult[Value]().failure(
-                        RTError(node.pos_start, node.pos_end, "Failed to load script docs\n" + str(e), exec_ctx)
+            value = module.symbol_table.get(name_from_module)
+            if value is None:
+                return res.failure(
+                    RNNameError(
+                        node.pos_start,
+                        node.pos_end,
+                        f"'{name_from_module}' is not defined in module '{module.name}'",
+                        context,
                     )
+                )
 
-        except Exception:
-            return RTResult[Value]().failure(
-                RNModuleNotFoundError(
-                    node.pos_start,
-                    node.pos_end,
-                    # f'Failed to load script "{module_name}"\n' + str(e),
-                    f"No module named '{module_name}'",
-                    exec_ctx,
+            res.register(
+                self.assign(
+                    var_name=name_to_import,
+                    value=value,
+                    context=context,
+                    qualifier=Token(
+                        TT_KEYWORD, "const", pos_start=name_to_import_tok.pos_start, pos_end=name_to_import_tok.pos_end
+                    ),
+                    pos_start=node.pos_start,
+                    pos_end=node.pos_end,
                 )
             )
-        symbol_table = create_global_symbol_table()
-        new_ctx = Context(module_name, context, node.pos_start)
-        new_ctx.symbol_table = symbol_table
-        new_ctx.import_cwd = module_path
-        _, error, should_exit = run(module_name, script, context=new_ctx)
-
-        if error:
-            return RTResult[Value]().failure(
-                RTError(
-                    node.pos_start,
-                    node.pos_end,
-                    f"{Log.light_error('Failed to finish executing script')} {Log.light_info(module_name)}\n"
-                    + error.as_string(),  # type: ignore
-                    exec_ctx,
-                )
-            )
-
-        if should_exit:
-            return RTResult[Value]().success_exit(Null.null())
-        
-        # TODO: incomplete implementation of from import
-        
+            if res.should_return():
+                return res
+        return res.success(Null.null())
 
     def visit_ImportNode(self, node: ImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        exec_ctx = context
 
         module_name = node.module.value
         assert isinstance(module_name, str), "This could be a bug in the lexer"
 
-        try:
-            if module_name not in STDLIBS:
-                file_extension = module_name.split("/")[-1].split(".")[-1]
-                if file_extension != "rn":
-                    module_name += ".rn"
-                # module_file = module_name.split("/")[-1]
-                module_path = os.path.dirname(os.path.realpath(module_name))
-
-                module_name = os.path.join(context.get_import_cwd(), module_name)
-                # module_name = os.path.join(module_path, module_file)
-            else:
-                # For STDLIB modules
-                module_path = os.path.join(BASE_DIR, "stdlib")
-                module_name = os.path.join(module_path, f"{module_name}.rn")
-
-            with open(module_name, "r") as f:
-                script = f.read()
-                # take the first string as the docs
-                try:
-                    docs = script.split('"')[1]
-                except IndexError:
-                    docs = ""
-                except Exception as e:
-                    return RTResult[Value]().failure(
-                        RTError(node.pos_start, node.pos_end, "Failed to load script docs\n" + str(e), exec_ctx)
-                    )
-
-        except Exception:
-            return RTResult[Value]().failure(
-                RNModuleNotFoundError(
-                    node.pos_start,
-                    node.pos_end,
-                    # f'Failed to load script "{module_name}"\n' + str(e),
-                    f"No module named '{module_name}'",
-                    exec_ctx,
-                )
-            )
-        symbol_table = create_global_symbol_table()
-        new_ctx = Context(module_name, context, node.pos_start)
-        new_ctx.symbol_table = symbol_table
-        new_ctx.import_cwd = module_path
-        # error: Error
-        _, error, should_exit = run(module_name, script, context=new_ctx)
-
-        if error:
-            return RTResult[Value]().failure(
-                RTError(
-                    node.pos_start,
-                    node.pos_end,
-                    f"{Log.light_error('Failed to finish executing script')} {Log.light_info(module_name)}\n"
-                    + error.as_string(),  # type: ignore
-                    exec_ctx,
-                )
-            )
-
-        if should_exit:
-            return RTResult[Value]().success_exit(Null.null())
-        assert isinstance(node.module.value, str), "this could be a bug in the parser"
-        module = Module(node.module.value, module_name, docs, symbol_table)
+        module = res.register(resolve_module(node.pos_start, node.pos_end, context, module_name))
+        if res.should_return():
+            return res
+        assert module is not None
 
         name = node.name.value if node.name is not None else node.module.value
         assert isinstance(name, str)
