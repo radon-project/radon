@@ -350,15 +350,17 @@ class Parser:
                 )
             self.advance(res)
 
+            in_parens = False
             if self.current_tok.type == TT_LPAREN:
                 self.advance(res)
+                in_parens = True
             res.register(self.skip_newlines())
             if res.error is not None:
                 return res
 
             names: list[tuple[str, Token]] = []
             while True:
-                if self.current_tok.type == TT_RPAREN:
+                if in_parens and self.current_tok.type == TT_RPAREN:
                     break
                 if self.current_tok.type != TT_IDENTIFIER:
                     return res.failure(
@@ -387,6 +389,10 @@ class Parser:
 
                 names.append((name_from_module, name_to_import))
 
+                if in_parens:
+                    res.register(self.skip_newlines())
+                    if res.error is not None:
+                        return res
                 if self.current_tok.type != TT_COMMA:
                     break
                 self.advance(res)

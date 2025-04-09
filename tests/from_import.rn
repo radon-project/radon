@@ -21,3 +21,9 @@ from io import (
 
 print(Input)
 print(Out)
+
+# this situation was causing a bug before
+from string import (
+    String
+)
+print(String)
