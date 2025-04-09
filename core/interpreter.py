@@ -356,51 +356,36 @@ class Interpreter:
             return res
         assert module is not None
 
-        # TODO: incomplete implementation of from import
-        if isinstance(node.packages, list):
-            assert len(node.packages) == 1, "TODO: multiple from-imports at once"
-            package = node.packages[0]
-        else:
-            package = node.packages
+        for name_from_module, name_to_import_tok in node.names:
+            name_to_import = name_to_import_tok.value
+            assert isinstance(name_to_import, str), "this could be a bug in the parser"
 
-        if isinstance(node.names, list):
-            assert len(node.names) == 1, "TODO: multiple from-imports at once"
-            name = node.names[0]
-        elif node.names is None:
-            name = package
-        else:
-            name = node.names
+            value = module.symbol_table.get(name_from_module)
+            if value is None:
+                return res.failure(
+                    RNNameError(
+                        node.pos_start,
+                        node.pos_end,
+                        f"'{name_from_module}' is not defined in module '{module.name}'",
+                        context,
+                    )
+                )
 
-        var_name = package.value
-        assert isinstance(var_name, str), "this could be a bug in the parser"
-        value = module.symbol_table.get(var_name)
-
-        if value is None:
-            return res.failure(
-                RNNameError(
-                    node.pos_start, node.pos_end, f"'{var_name}' is not defined in module {module.name}", context
+            res.register(
+                self.assign(
+                    var_name=name_to_import,
+                    value=value,
+                    context=context,
+                    qualifier=Token(
+                        TT_KEYWORD, "const", pos_start=name_to_import_tok.pos_start, pos_end=name_to_import_tok.pos_end
+                    ),
+                    pos_start=node.pos_start,
+                    pos_end=node.pos_end,
                 )
             )
-
-        value = value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
-        assert value is not None
-
-        new_name = name.value
-        assert isinstance(new_name, str), "this could be a bug in the parser"
-        res.register(
-            self.assign(
-                var_name=new_name,
-                value=value,
-                context=context,
-                qualifier=Token(TT_KEYWORD, "const", pos_start=node.pos_start),
-                pos_start=node.pos_start,
-                pos_end=node.pos_end,
-            )
-        )
-        if res.should_return():
-            return res
-
-        return res.success(module)
+            if res.should_return():
+                return res
+        return res.success(Null.null())
 
     def visit_ImportNode(self, node: ImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()

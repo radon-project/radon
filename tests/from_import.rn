@@ -1,3 +1,15 @@
-from os import path as pt
 
-print(help(pt))
+fun print_fn(fn) {
+    var s = str(fn)
+    print(s[:20])
+}
+
+from os import path
+print(path)
+
+from os import link as ln, unlink as rm, chdir
+print("NOTE: the f'd up printing here is intentional")
+print("It helps to prevent automatic testing of memory addresses whose specific values may be platform dependent")
+print_fn(ln)
+print_fn(rm)
+print_fn(chdir)
