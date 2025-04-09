@@ -350,8 +350,16 @@ class Parser:
                 )
             self.advance(res)
 
+            if self.current_tok.type == TT_LPAREN:
+                self.advance(res)
+            res.register(self.skip_newlines())
+            if res.error is not None:
+                return res
+
             names: list[tuple[str, Token]] = []
             while True:
+                if self.current_tok.type == TT_RPAREN:
+                    break
                 if self.current_tok.type != TT_IDENTIFIER:
                     return res.failure(
                         RNSyntaxError(
@@ -380,11 +388,18 @@ class Parser:
                 names.append((name_from_module, name_to_import))
 
                 if self.current_tok.type != TT_COMMA:
-                    pos_end = name_to_import.pos_end
                     break
                 self.advance(res)
+                res.register(self.skip_newlines())
+                if res.error is not None:
+                    return res
 
-            return res.success(FromImportNode(module, names, "[No Description]", pos_start=pos_start, pos_end=pos_end))
+            if self.current_tok.type == TT_RPAREN:
+                self.advance(res)
+
+            return res.success(
+                FromImportNode(module, names, "[No Description]", pos_start=pos_start, pos_end=self.current_tok.pos_end)
+            )
 
         if self.current_tok.matches(TT_KEYWORD, "import"):
             self.advance(res)

@@ -13,3 +13,11 @@ print("It helps to prevent automatic testing of memory addresses whose specific 
 print_fn(ln)
 print_fn(rm)
 print_fn(chdir)
+
+from io import (
+     Input,
+     Output as Out,
+)
+
+print(Input)
+print(Out)
