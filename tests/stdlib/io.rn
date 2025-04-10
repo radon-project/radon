@@ -1,0 +1,3 @@
+from io import Output
+
+Output.write("foo", "bar", "baz", sep=",", end=";")

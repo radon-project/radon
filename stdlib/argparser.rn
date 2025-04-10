@@ -151,8 +151,9 @@ class Argparser {
                         }
                     }
                 } else {
+                    var flag = null
                     for letter in arg[1:] {
-                        const flag = this.flag_by_shortname(letter)
+                        flag = this.flag_by_shortname(letter)
                         if is_null(flag) {
                             this.report_error(program_name, "unknown flag: '-"+letter+"'")
                         } else {

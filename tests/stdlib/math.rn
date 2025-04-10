@@ -1,0 +1,7 @@
+import math
+
+print(math.PI)
+print(math.sqrt(2))
+print(math.pow(2, 5))
+print(math.factorial(7))
+print(math.sin(math.PI * 0.3435))
