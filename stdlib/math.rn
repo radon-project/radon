@@ -38,15 +38,15 @@ fun power(n, p) {
 
 # Sine implementation in radon.
 fun sin(n) {
-    var n = n % (2 * this.PI)
+    n = n % (2 * PI)
     
     if n < 0 {
-        n = 2 * this.PI - n
+        n = 2 * PI - n
     }
 
     var sign = 1
-    if n > this.PI {
-        n = n - this.PI
+    if n > PI {
+        n = n - PI
         sign = -1
     }
 
@@ -54,8 +54,8 @@ fun sin(n) {
     var coefficient = 3
 
     for i=0 to 10 {
-        pow_val = n ^ coefficient
-        frac = factorial(coefficient)
+        var pow_val = n ^ coefficient
+        var frac = factorial(coefficient)
         
         if i % 2 == 0{
             result -= pow_val / frac

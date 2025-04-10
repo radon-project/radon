@@ -132,7 +132,7 @@ def main(argv: list[str]) -> int:
                 tests_to_run = "./tests/"
             return run_tests(tests_to_run)
         case "record":
-            if len(argv) == 0:
+            if len(argv) > 0:
                 tests_to_record = argv.pop(0)
             else:
                 tests_to_record = "./tests/"

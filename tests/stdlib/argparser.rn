@@ -1,0 +1,21 @@
+from argparser import Argparser;
+
+var parser = Argparser("Does the floopty-flop.");
+parser.add_pos_opt("str-arg", "String argument", required=true);
+parser.add_pos_opt("int-arg", "Integer argument", required=true, conversor=int);
+parser.add_flag("--boppity-mode", "-b", "Whether or not to also do the boppity in addition to the floopty-flop.");
+parser.add_flag("--ai-integration", "-a", "Enable useless AI features");
+parser.add_named("--named-arg", "A named argument.", default_=69, conversor=int);
+
+const program_name = "floopty-flop-doer"
+print(parser.usage(program_name))
+print(parser.parse([program_name, "foo.txt", "420"]))
+print(parser.parse([program_name, "foo.txt", "420", "--boppity-mode"]))
+print(parser.parse([program_name, "foo.txt", "420", "--ai-integration"]))
+print(parser.parse([program_name, "foo.txt", "420", "--boppity-mode", "--ai-integration"]))
+print(parser.parse([program_name, "foo.txt", "420", "-ab"]))
+print(parser.parse([program_name, "foo.txt", "420", "--named-arg", "420"]))
+print(parser.parse([program_name, "foo.txt", "420", "--named-arg", "420"]))
+
+# print an error
+parser.parse([program_name, "foo.txt", "420", "--named-arg", "abc"])

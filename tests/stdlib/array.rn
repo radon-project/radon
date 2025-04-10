@@ -1,0 +1,10 @@
+from array import Array
+
+var arr = Array([1, 2, 3, 4, 5]);
+print(arr.list)
+print(arr.map(str))
+print(arr.map(fun(x) -> x*x))
+arr.append(6)
+print(arr.list)
+print(arr.map(str))
+print(arr.map(fun(x) -> x*x))
