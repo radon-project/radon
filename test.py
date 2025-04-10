@@ -29,11 +29,17 @@ def run_test(test: str) -> Output:
     proc = subprocess.run(
         [sys.executable, "radon.py", "-s", test, "-A"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
-    return Output(
-        proc.returncode,
-        proc.stdout.decode("utf-8").replace("\r\n", "\n"),
-        proc.stderr.decode("utf-8").replace("\r\n", "\n"),
-    )
+    # Normalize path separators in output to forward slashes
+    stdout = proc.stdout.decode("utf-8").replace("\r\n", "\n")
+    stderr = proc.stderr.decode("utf-8").replace("\r\n", "\n")
+
+    # Replace Windows-style paths with Unix-style paths for consistent comparison
+    if os.name == "nt":  # Windows
+        stdout = stdout.replace("\\", "/")
+        stderr = stderr.replace("\\", "/")
+
+    return Output(proc.returncode, stdout, stderr)
+
 
 def run_tests_rec(tests: str, failed_tests: list[str]) -> None:
     if os.path.isdir(tests):
@@ -51,6 +57,7 @@ def run_tests_rec(tests: str, failed_tests: list[str]) -> None:
         print(f"Running test {tests!r}...", end="", flush=True)
         output = run_test(tests)
         expected_output = Output.from_file(json_file)
+
         if output != expected_output:
             print(f"\rTest {tests!r} failed!" + " " * 20)
             print(f"Expected: {expected_output!r}")
@@ -61,6 +68,7 @@ def run_tests_rec(tests: str, failed_tests: list[str]) -> None:
             print(f"\rTest {tests!r} passed!" + " " * 20)
     else:
         assert False, "unreachable"
+
 
 def run_tests(tests: str = "tests") -> int:
     failed_tests: list[str] = []
@@ -77,6 +85,7 @@ def run_tests(tests: str = "tests") -> int:
             print(f"    {test!r}")
         return 1
 
+
 def record_tests(tests: str = "tests") -> int:
     if os.path.isdir(tests):
         for test in os.listdir(tests):
@@ -89,9 +98,13 @@ def record_tests(tests: str = "tests") -> int:
             return 0
         print(f"Recording {tests!r}...", end="", flush=True)
         output = run_test(tests)
-        if os.getcwd() in (output.stdout + output.stderr):
+        cwd = os.getcwd().replace("\\", "/")
+
+        # Check if normalized path is in output
+        if cwd in (output.stdout + output.stderr):
             print(f"\nERROR: test {tests!r} accidentally depends on current directory")
             return 1
+
         json_file = f"{tests}.json"
         output.dump(json_file)
         print(f"\rRecorded {tests!r}" + " " * 20)
@@ -105,8 +118,8 @@ def usage(program_name: str, stream: IO[str]) -> None:
         f"""Usage: {program_name} <subcommand> [args]
 SUBCOMMANDS:
     help           - Print this help message to stdout and exit successfully
-    run [tests]    - Run tests in directory [tests] (default: "./tests/"). Can also be used to run only a single test
-    record [tests] - Record output of tests in directory [tests] (default: "./tests/"). Can also be used to record only a single test
+    run [tests]    - Run tests in directory [tests] (default: "tests/"). Can also be used to run only a single test
+    record [tests] - Record output of tests in directory [tests] (default: "tests/"). Can also be used to record only a single test
     diff <test.rn> - Show diff between expected and actual output
     full           - Same as `{program_name} run` + `make lint`
 """,
@@ -126,18 +139,21 @@ def main(argv: list[str]) -> int:
         case "help":
             usage(program_name, sys.stdout)
             return 0
+
         case "run":
             if len(argv) > 0:
                 tests_to_run = argv.pop(0)
             else:
-                tests_to_run = "./tests/"
+                tests_to_run = "tests"
             return run_tests(tests_to_run)
+
         case "record":
             if len(argv) > 0:
                 tests_to_record = argv.pop(0)
             else:
-                tests_to_record = "./tests/"
+                tests_to_record = "tests"
             return record_tests(tests_to_record)
+
         case "full":
             env = dict(**os.environ, FORCE_COLOR="1")
             ruff_format = subprocess.Popen(
@@ -153,34 +169,43 @@ def main(argv: list[str]) -> int:
                 env=dict(**os.environ, MYPY_FORCE_COLOR="1"),
             )
 
-            test_returncode = run_tests("./tests/")
+            test_returncode = run_tests("tests")
 
             print("----------------------")
             print("    mypy . --strict   ")
             print("----------------------")
+
             mypy.wait()
+
             assert mypy.stdout is not None
             assert mypy.stderr is not None
+
             sys.stdout.buffer.write(mypy.stdout.read())
             sys.stderr.buffer.write(mypy.stderr.read())
 
             if mypy.returncode == 0 and test_returncode == 0:
                 return 0
-            else:
-                return 1
+            # else:
+            #     return 1
+
             print("---------------------")
             print("ruff format --check .")
             print("---------------------")
 
             format_ret = ruff_format.wait()
             check_ret = ruff_check.wait()
+
             assert ruff_format.stdout is not None and ruff_format.stderr is not None
+
             sys.stdout.buffer.write(ruff_format.stdout.read())
             sys.stderr.buffer.write(ruff_format.stderr.read())
+
             print("---------------------")
             print("     ruff check .    ")
             print("---------------------")
+
             assert ruff_check.stdout is not None and ruff_check.stderr is not None
+
             sys.stdout.buffer.write(ruff_check.stdout.read())
             sys.stderr.buffer.write(ruff_check.stderr.read())
 
@@ -193,6 +218,7 @@ def main(argv: list[str]) -> int:
                 if check_ret != 0:
                     print("ERROR: ruff check failed", file=sys.stderr)
                 return 1
+
         case "diff":
             if len(argv) < 1:
                 usage(program_name, sys.stderr)
@@ -212,6 +238,7 @@ def main(argv: list[str]) -> int:
             if actual_output == expected_output:
                 print(f"Test {test!r} passes!")
                 return 0
+
             print("STDOUT DIFF")
             print("-----------")
             print(
@@ -226,6 +253,7 @@ def main(argv: list[str]) -> int:
             print("-----------")
             print("\n".join(unified_diff(expected_output.stderr.splitlines(), actual_output.stderr.splitlines())))
             return 0
+
         case unknown:
             usage(program_name, sys.stderr)
             print(f"ERROR: unknown subcommand '{unknown}'", file=sys.stderr)
