@@ -35,7 +35,7 @@ def run_test(test: str) -> Output:
         proc.stderr.decode("utf-8").replace("\r\n", "\n"),
     )
 
-def run_tests_rec(tests: str, failed_tests: list[str]):
+def run_tests_rec(tests: str, failed_tests: list[str]) -> None:
     if os.path.isdir(tests):
         for test in os.listdir(tests):
             run_tests_rec(os.path.join(tests, test), failed_tests)
@@ -83,6 +83,7 @@ def record_tests(tests: str = "tests") -> int:
             ret = record_tests(os.path.join(tests, test))
             if ret != 0:
                 return ret
+        return 0
     elif os.path.isfile(tests):
         if not tests.endswith(".rn"):
             return 0
@@ -154,16 +155,16 @@ def main(argv: list[str]) -> int:
 
             test_returncode = run_tests("./tests/")
 
-            print("--------------")
-            print("    mypy .    ")
-            print("--------------")
+            print("----------------------")
+            print("    mypy . --strict   ")
+            print("----------------------")
             mypy.wait()
             assert mypy.stdout is not None
             assert mypy.stderr is not None
             sys.stdout.buffer.write(mypy.stdout.read())
             sys.stderr.buffer.write(mypy.stderr.read())
 
-            if mypy.returncode == 0 and len(failed_tests) == 0:
+            if mypy.returncode == 0 and test_returncode == 0:
                 return 0
             else:
                 return 1
