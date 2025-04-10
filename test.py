@@ -41,38 +41,38 @@ def run_test(test: str) -> Output:
     return Output(proc.returncode, stdout, stderr)
 
 
-def run_tests_rec(tests: str, failed_tests: list[str]) -> None:
-    if os.path.isdir(tests):
-        for test in os.listdir(tests):
-            run_tests_rec(os.path.join(tests, test), failed_tests)
-    elif os.path.isfile(tests):
-        json_file = f"{tests}.json"
-        if not tests.endswith(".rn"):
+def run_tests_rec(test_path: str, failed_tests: list[str]) -> None:
+    if os.path.isdir(test_path):
+        for test in os.listdir(test_path):
+            run_tests_rec(os.path.join(test_path, test), failed_tests)
+    elif os.path.isfile(test_path):
+        json_file = f"{test_path}.json"
+        if not test_path.endswith(".rn"):
             return
         if not os.path.isfile(json_file):
             print(f"WARNING: file {json_file!r} not found, skipping...")
             print("NOTE: to create this file, run the `record` subcommand")
             return
 
-        print(f"Running test {tests!r}...", end="", flush=True)
-        output = run_test(tests)
+        print(f"Running test {test_path!r}...", end="", flush=True)
+        output = run_test(test_path)
         expected_output = Output.from_file(json_file)
 
         if output != expected_output:
-            print(f"\rTest {tests!r} failed!" + " " * 20)
+            print(f"\rTest {test_path!r} failed!" + " " * 20)
             print(f"Expected: {expected_output!r}")
             print(f"Got:      {output!r}")
-            print(f"NOTE: run `{sys.argv[0]} diff {tests}` for more information")
-            failed_tests.append(tests)
+            print(f"NOTE: run `{sys.argv[0]} diff {test_path}` for more information")
+            failed_tests.append(test_path)
         else:
-            print(f"\rTest {tests!r} passed!" + " " * 20)
+            print(f"\rTest {test_path!r} passed!" + " " * 20)
     else:
         assert False, "unreachable"
 
 
-def run_tests(tests: str = "tests") -> int:
+def run_tests(test_path: str = "tests") -> int:
     failed_tests: list[str] = []
-    run_tests_rec(tests, failed_tests)
+    run_tests_rec(test_path, failed_tests)
 
     print()
     print("TEST SUMMARY:")
@@ -86,28 +86,28 @@ def run_tests(tests: str = "tests") -> int:
         return 1
 
 
-def record_tests(tests: str = "tests") -> int:
-    if os.path.isdir(tests):
-        for test in os.listdir(tests):
-            ret = record_tests(os.path.join(tests, test))
+def record_tests(test_path: str = "tests") -> int:
+    if os.path.isdir(test_path):
+        for test in os.listdir(test_path):
+            ret = record_tests(os.path.join(test_path, test))
             if ret != 0:
                 return ret
         return 0
-    elif os.path.isfile(tests):
-        if not tests.endswith(".rn"):
+    elif os.path.isfile(test_path):
+        if not test_path.endswith(".rn"):
             return 0
-        print(f"Recording {tests!r}...", end="", flush=True)
-        output = run_test(tests)
+        print(f"Recording {test_path!r}...", end="", flush=True)
+        output = run_test(test_path)
         cwd = os.getcwd().replace("\\", "/")
 
         # Check if normalized path is in output
         if cwd in (output.stdout + output.stderr):
-            print(f"\nERROR: test {tests!r} accidentally depends on current directory")
+            print(f"\nERROR: test {test_path!r} accidentally depends on current directory")
             return 1
 
-        json_file = f"{tests}.json"
+        json_file = f"{test_path}.json"
         output.dump(json_file)
-        print(f"\rRecorded {tests!r}" + " " * 20)
+        print(f"\rRecorded {test_path!r}" + " " * 20)
         return 0
     else:
         assert False, "Unreachable"
