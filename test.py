@@ -175,18 +175,13 @@ def main(argv: list[str]) -> int:
             print("    mypy . --strict   ")
             print("----------------------")
 
-            mypy.wait()
+            mypy_ret = mypy.wait()
 
             assert mypy.stdout is not None
             assert mypy.stderr is not None
 
             sys.stdout.buffer.write(mypy.stdout.read())
             sys.stderr.buffer.write(mypy.stderr.read())
-
-            if mypy.returncode == 0 and test_returncode == 0:
-                return 0
-            # else:
-            #     return 1
 
             print("---------------------")
             print("ruff format --check .")
@@ -209,7 +204,7 @@ def main(argv: list[str]) -> int:
             sys.stdout.buffer.write(ruff_check.stdout.read())
             sys.stderr.buffer.write(ruff_check.stderr.read())
 
-            if test_returncode == 0 and format_ret == 0 and check_ret == 0:
+            if test_returncode == 0 and format_ret == 0 and check_ret == 0 and mypy_ret == 0:
                 print("Full test succeeded with no errors!")
                 return 0
             else:
@@ -217,6 +212,8 @@ def main(argv: list[str]) -> int:
                     print("ERROR: ruff format failed", file=sys.stderr)
                 if check_ret != 0:
                     print("ERROR: ruff check failed", file=sys.stderr)
+                if mypy_ret != 0:
+                    print("ERROR: mypy failed", file=sys.stderr)
                 return 1
 
         case "diff":
