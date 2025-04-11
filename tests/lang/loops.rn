@@ -19,4 +19,13 @@ for x in l {
     print(x)
 }
 
+print("----------------------")
+
+for x in l {
+    print(x)
+    if x == 2 {
+        break
+    }
+}
+
 print("END")
