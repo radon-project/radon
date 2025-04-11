@@ -18,14 +18,12 @@ for i in [1, 2, 3, 4, 5] {
     print(i)
 }
 
-#! Comment starts from here
 for i in [1, 2, 3, 4, 5] {
     if i == 3 {
         break # it is exiting the program; not just the loop it self.
     }
     print(i)
 }
-!#
 
 # While loop
 

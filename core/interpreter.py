@@ -745,6 +745,14 @@ class Interpreter:
 
         for it_res in it:
             element = res.register(it_res)
+            if res.should_return():
+                return res
+
+            assert element is not None
+
+            context.symbol_table.set(var_name, element)
+
+            value = res.register(self.visit(body, context))
             if res.should_return() and not res.loop_should_continue and not res.loop_should_break:
                 return res
 
@@ -753,16 +761,8 @@ class Interpreter:
 
             if res.loop_should_continue:
                 continue
-
-            assert element is not None
-
-            context.symbol_table.set(var_name, element)
-
-            element = res.register(self.visit(body, context))
-            if res.should_return():
-                return res
-            assert element is not None
-            elements.append(element)
+            assert value is not None
+            elements.append(value)
 
         if should_return_null:
             return res.success(Null.null())

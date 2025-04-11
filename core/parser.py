@@ -1746,6 +1746,12 @@ class RTResult(Generic[T]):
     U = TypeVar("U")
 
     def register(self, res: RTResult[U]) -> Optional[U]:
+        # The commented out code below was useful for debugging at some point, so I'm leaving it in
+        # just in case it's useful in the future
+        #
+        # import inspect
+        # caller = inspect.currentframe().f_back
+        # print(f"{caller.f_code.co_filename}:{caller.f_lineno}: {res!r}")
         self.error = res.error
         self.func_return_value = res.func_return_value
         self.loop_should_continue = res.loop_should_continue
@@ -1809,12 +1815,26 @@ class RTResult(Generic[T]):
         )
 
     def __repr__(self) -> str:
-        return (
-            f"RTResult(value={self.value}, "
-            f"error={self.error}, return={self.func_return_value}, "
-            f"continue={self.loop_should_continue}, break={self.loop_should_break}, "
-            f"exit={self.should_exit})"
-        )
+        ret = "RTResult("
+        if self.value is not None:
+            ret += f"value={repr(self.value)}"
+        elif self.error is not None:
+            ret += f"error={repr(self.error)}"
+        elif self.func_return_value is not None:
+            ret += f"return={repr(self.func_return_value)}"
+        elif self.loop_should_continue:
+            ret += "continue"
+        elif self.loop_should_break:
+            ret += "break"
+        elif self.should_exit:
+            ret += "exit"
+
+        if self.should_fallthrough:
+            ret += "; fallthrough"
+        elif self.should_fallout:
+            ret += "; fallout"
+        ret += ")"
+        return ret
 
     # Just to fix mypy issue; Not sure about this implementation right now.
     def __iter__(self): ...  # type: ignore
