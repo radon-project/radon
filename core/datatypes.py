@@ -1053,6 +1053,7 @@ class BaseFunction(Value):
     desc: str
     arg_names: list[str]
     va_name: Optional[str]
+    va_kw_name: Optional[str]
 
     def __init__(self, name: Optional[str], symbol_table: Optional[SymbolTable]) -> None:
         super().__init__()
@@ -1092,6 +1093,17 @@ class BaseFunction(Value):
                     self.pos_start,
                     self.pos_end,
                     f"{args_count - defaults_count} too few args passed into {self}",
+                    self.context,
+                )
+            )
+
+        kwargs_count = len(kwargs)
+        if self.va_kw_name is None and kwargs_count > 0:
+            return res.failure(
+                RTError(
+                    self.pos_start,
+                    self.pos_end,
+                    f"{kwargs_count} too many keyword args passed into {self}",
                     self.context,
                 )
             )
@@ -1139,6 +1151,14 @@ class BaseFunction(Value):
                 arg.set_context(exec_ctx)
                 va_list.append(arg)
             exec_ctx.symbol_table.set(self.va_name, Array(va_list))
+
+        if self.va_kw_name is not None:
+            kwarg_list: list[Value] = []
+            for kw in kwargs.keys():
+                kwarg = kwargs[kw]
+                kwarg.set_context(exec_ctx)
+                kwarg_list.append(kwarg)
+            exec_ctx.symbol_table.set(self.va_kw_name, Array(kwarg_list))
 
         for kw, kwarg in kwargs.items():
             kwarg.set_context(exec_ctx)
@@ -1448,6 +1468,7 @@ class Function(BaseFunction):
         should_auto_return: bool,
         desc: str,
         va_name: Optional[str],
+        va_kw_name: Optional[str] = None,
         max_pos_args: int,
     ) -> None:
         super().__init__(name, symbol_table)
@@ -1457,6 +1478,7 @@ class Function(BaseFunction):
         self.should_auto_return = should_auto_return
         self.desc = desc
         self.va_name = va_name
+        self.va_kw_name = va_kw_name
         self.max_pos_args = max_pos_args
 
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:

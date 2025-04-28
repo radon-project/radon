@@ -102,6 +102,7 @@ TT_SLICE = TokenType("SLICE")  # x[1:2:3]
 TT_PLUS_PLUS = TokenType("PLUS_PLUS")  # ++
 TT_MINUS_MINUS = TokenType("MINUS_MINUS")  # --
 TT_SPREAD = TokenType("SPREAD")  # ...
+TT_UNPACK = TokenType("UNPACK")  # ***
 
 KEYWORDS = [
     "and",

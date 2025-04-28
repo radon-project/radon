@@ -1,0 +1,20 @@
+fun f(a=23, b=34) {
+    print(a)
+    print(b)
+}
+
+g(c=45, ***kwargs) {
+    print(c)
+    print(kwargs)
+}
+
+f()
+f(1, 2)
+f(a=21, b=42)
+f(b=43, a=22)
+
+g()
+g(c=45)
+g(c=45, d=56)
+g(c=45, d=56, e=67)
+g(c=45, d=56, e=67, f=78)
