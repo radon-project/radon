@@ -1,3 +1,13 @@
+"""
+This utility module collected from the Rong project.
+
+GitHub: https://github.com/Almas-Ali/rong
+PyPI: https://pypi.org/project/rong/
+
+Author: Md. Almas Ali
+License: MIT License
+"""
+
 from __future__ import annotations
 
 from enum import Enum
@@ -196,3 +206,66 @@ class Log:
     @staticmethod
     def blink(text: str, bold: bool = False) -> str:
         return f"{Style.BLINK.value}{text}{Style.CLEAR.value}"
+
+
+class Text:
+    """Text a one line color manager for your terminal."""
+
+    def __init__(
+        self,
+        text: str,
+        fg: ForegroundColor = ForegroundColor.WHITE,
+        bg: BackgroundColor = BackgroundColor.TRANSPARENT,
+        styles: list[Style] = [],
+    ) -> None:
+        if not isinstance(fg, ForegroundColor):  # type: ignore
+            raise TypeError("Foreground color must be an instance of ForegroundColor enum type.")
+
+        if not isinstance(bg, BackgroundColor):  # type: ignore
+            raise TypeError("Background color must be an instance of BackgroundColor enum type.")
+
+        if (
+            not isinstance(styles, list)  # type: ignore
+            or styles != []
+            and not all(isinstance(style, Style) for style in styles)  # type: ignore
+        ):
+            raise TypeError("Styles must be a list of Style enum type.")
+
+        self.text = text
+        self.styles = self.style(styles)
+        self.fg = fg.value
+        self.bg = bg.value
+
+    def foreground(self, color: ForegroundColor) -> Text:
+        """Set or update foreground color"""
+
+        self.fg = color.value
+        return self
+
+    def background(self, color: BackgroundColor) -> Text:
+        """Set or update background color"""
+
+        self.bg = color.value
+        return self
+
+    def style(self, styles: list[Style]) -> str:
+        """Set or update styles"""
+
+        self._style: str = "".join([item.value for item in styles])
+        return self._style
+
+    def print(self, end: str = "\n") -> None:
+        """Print the text with color and style."""
+
+        print(self.fg + self.bg + self._style + self.text + Style.CLEAR.value, end=end)
+
+    def update(self, text: str) -> Text:
+        """Update the text."""
+
+        self.text = text
+        return self
+
+    def __str__(self) -> str:
+        """Return the text with color and style."""
+
+        return self.fg + self.bg + self._style + self.text + Style.CLEAR.value

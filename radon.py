@@ -9,7 +9,7 @@ from typing import IO, TYPE_CHECKING, Optional
 from core.datatypes import Value
 from core.errors import Error, RTError
 
-if not TYPE_CHECKING and sys.platform != "win32":
+if sys.platform != "win32" and not TYPE_CHECKING:
     try:
         import readline
 
@@ -25,17 +25,29 @@ import core as base_core
 from core.colortools import Log
 from core.parser import Context
 from core.tokens import Position
+from core.colortools import Text, ForegroundColor, Style
+
 
 documentation_link = "https://radon-project.github.io/docs/"
 
 
 def start_text() -> None:
-    print(
-        f"\033[1;34mRadon {base_core.__version__} on {platform.machine()} {platform.system()} ({sys.platform})\033[0m"
-    )
-    print(f"\033[1;33mDocumentation:\033[0m {documentation_link}")
-    print("\033[1;32mType \033[1;31mhelp(obj), copyright(), credits(), license()\033[1;32m for more info\033[0m")
-    print("\033[1;32mType \033[1;31mexit\033[1;32m to quit the shell.\033[0m")
+    Text(
+        f"Radon {base_core.__version__} on {platform.machine()} {platform.system()} ({sys.platform})",
+        ForegroundColor.BLUE,
+        styles=[Style.BOLD],
+    ).print()
+
+    Text("Documentation:", ForegroundColor.YELLOW, styles=[Style.BOLD]).print(end=" ")
+    Text(f"{documentation_link}").print()
+
+    Text("Type ", ForegroundColor.GREEN, styles=[Style.BOLD]).print(end="")
+    Text("help(obj), copyright(), credits(), license()", ForegroundColor.RED, styles=[Style.BOLD]).print(end="")
+    Text(" for more info", ForegroundColor.GREEN, styles=[Style.BOLD]).print()
+
+    Text("Type", ForegroundColor.GREEN, styles=[Style.BOLD]).print(end=" ")
+    Text("exit", ForegroundColor.RED, styles=[Style.BOLD]).print(end=" ")
+    Text("to quit the shell.", ForegroundColor.GREEN, styles=[Style.BOLD]).print()
 
 
 def shell() -> None:
