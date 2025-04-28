@@ -224,11 +224,7 @@ class Text:
         if not isinstance(bg, BackgroundColor):
             raise TypeError("Background color must be an instance of BackgroundColor enum type.")
 
-        if (
-            not isinstance(styles, list)
-            or styles != []
-            and not all(isinstance(style, Style) for style in styles)
-        ):
+        if not isinstance(styles, list) or styles != [] and not all(isinstance(style, Style) for style in styles):
             raise TypeError("Styles must be a list of Style enum type.")
 
         self.text = text
