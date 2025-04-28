@@ -218,16 +218,16 @@ class Text:
         bg: BackgroundColor = BackgroundColor.TRANSPARENT,
         styles: list[Style] = [],
     ) -> None:
-        if not isinstance(fg, ForegroundColor):  # type: ignore
+        if not isinstance(fg, ForegroundColor):
             raise TypeError("Foreground color must be an instance of ForegroundColor enum type.")
 
-        if not isinstance(bg, BackgroundColor):  # type: ignore
+        if not isinstance(bg, BackgroundColor):
             raise TypeError("Background color must be an instance of BackgroundColor enum type.")
 
         if (
-            not isinstance(styles, list)  # type: ignore
+            not isinstance(styles, list)
             or styles != []
-            and not all(isinstance(style, Style) for style in styles)  # type: ignore
+            and not all(isinstance(style, Style) for style in styles)
         ):
             raise TypeError("Styles must be a list of Style enum type.")
 
