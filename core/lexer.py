@@ -284,11 +284,12 @@ class Lexer:
             tok_type = TT_TE
             self.advance()
         
-        if self.current_char == "**":
-            tok_type = TT_UNPACK
+        if self.current_char == "*":
             self.advance()
-            self.advance()
-            
+            if self.current_char == "*":
+                tok_type = TT_UNPACK
+                self.advance()
+
         return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
 
     def make_divide_equals(self) -> Token:

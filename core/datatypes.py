@@ -1468,7 +1468,7 @@ class Function(BaseFunction):
         should_auto_return: bool,
         desc: str,
         va_name: Optional[str],
-        va_kw_name: Optional[str] = None,
+        va_kw_name: Optional[str],
         max_pos_args: int,
     ) -> None:
         super().__init__(name, symbol_table)
