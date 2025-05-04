@@ -656,6 +656,7 @@ class Interpreter:
                 node.should_auto_return,
                 func_desc,
                 va_name=node.va_name,
+                va_kw_arg_name=node.va_kwarg_name,
                 max_pos_args=node.max_pos_args,
             )
             .set_context(context)

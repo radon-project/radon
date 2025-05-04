@@ -45,6 +45,7 @@ from core.tokens import (
     TT_SPREAD,
     TT_STRING,
     TT_TE,
+    TT_UNPACK,
     VALID_IDENTIFIERS,
     Position,
     Token,
@@ -282,6 +283,13 @@ class Lexer:
         if self.current_char == "=":
             tok_type = TT_TE
             self.advance()
+        
+        if self.current_char == "*":
+            self.advance()
+            if self.current_char == "*":
+                tok_type = TT_UNPACK
+                self.advance()
+
         return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
 
     def make_divide_equals(self) -> Token:
