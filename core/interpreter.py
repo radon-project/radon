@@ -47,6 +47,7 @@ from core.nodes import (
     RaiseNode,
     ReturnNode,
     SliceGetNode,
+    SpreadNode,
     StringNode,
     SwitchNode,
     TryNode,
@@ -259,11 +260,22 @@ class Interpreter:
         elements: list[Value] = []
 
         for element_node in node.element_nodes:
-            elt = res.register(self.visit(element_node, context))
-            if res.should_return():
-                return res
-            assert elt is not None
-            elements.append(elt)
+            if isinstance(element_node, SpreadNode):
+                elt = res.register(self.visit(element_node.node_to_spread, context))
+                if res.should_return():
+                    return res
+                assert elt is not None
+                if not isinstance(elt, Array):
+                    return res.failure(
+                        RTError(element_node.pos_start, element_node.pos_end, f"Spread operator requires an array, got {type(elt).__name__}", context)
+                    )
+                elements.extend(elt.elements)
+            else:
+                elt = res.register(self.visit(element_node, context))
+                if res.should_return():
+                    return res
+                assert elt is not None
+                elements.append(elt)
 
         return res.success(Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end))
 
