@@ -1,0 +1,13 @@
+# Test static method access on built-in classes
+# Json.loads and Json.dumps should be callable without instantiation
+
+const json_string = Json.dumps([1, 2, 3])
+print(json_string)
+
+const loaded = Json.loads(json_string)
+print(loaded)
+
+# Instance access should still work
+var json = Json()
+print(json.dumps({"key": "value"}))
+print(json.loads("{\"key\": \"value\"}"))
