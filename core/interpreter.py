@@ -876,9 +876,7 @@ class Interpreter:
 
                 if not isinstance(key, String):
                     return res.failure(
-                        RTError(
-                            key_node.pos_start, key_node.pos_end, f"Non-string key for hashmap: '{key!r}'", context
-                        )
+                        RTError(key_node.pos_start, key_node.pos_end, f"Non-string key for hashmap: '{key!r}'", context)
                     )
 
                 value = res.register(self.visit(value_node, context))
