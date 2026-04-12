@@ -685,73 +685,132 @@ class Parser:
 
     def call(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
-        index = res.register(self.atom())
+        node = res.register(self.atom())
         if res.error:
             return res
-        assert index is not None
+        assert node is not None
 
-        while self.current_tok.type == TT_DOT:
-            self.advance(res)
-
-            if self.current_tok.type != TT_IDENTIFIER:
-                return res.failure(
-                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
-                )
-
-            index = AttrAccessNode(index, self.current_tok, index.pos_start, self.current_tok.pos_end)
-            self.advance(res)
-
-        if self.current_tok.type == TT_LPAREN:
-            self.advance(res)
-            arg_nodes: list[Node] = []
-            kwarg_nodes: dict[str, Node] = {}
-
-            if self.current_tok.type == TT_RPAREN:
+        while True:
+            if self.current_tok.type == TT_DOT:
                 self.advance(res)
-            else:
-                pair = res.register(self.func_arg())
-                if res.error:
-                    return res
-                assert pair is not None
-                kw, val = pair
-                if kw is None:
-                    arg_nodes.append(val)
-                else:
-                    kwarg_nodes[kw] = val
-                if res.error:
+
+                if self.current_tok.type != TT_IDENTIFIER:
                     return res.failure(
-                        RNSyntaxError(
-                            self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')' or expression"
-                        )
+                        RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier")
                     )
 
-                while self.current_tok.type == TT_COMMA:
-                    self.advance(res)
+                node = AttrAccessNode(node, self.current_tok, node.pos_start, self.current_tok.pos_end)
+                self.advance(res)
 
+            elif self.current_tok.type == TT_LPAREN:
+                self.advance(res)
+                arg_nodes: list[Node] = []
+                kwarg_nodes: dict[str, Node] = {}
+
+                if self.current_tok.type == TT_RPAREN:
+                    self.advance(res)
+                else:
                     pair = res.register(self.func_arg())
                     if res.error:
                         return res
                     assert pair is not None
                     kw, val = pair
-                    if kw is None and len(kwarg_nodes) == 0:
+                    if kw is None:
                         arg_nodes.append(val)
-                    elif kw is None:
-                        return res.failure(
-                            RNSyntaxError(
-                                val.pos_start, val.pos_end, "Positional arguments may not come after keyword arguments"
-                            )
-                        )
                     else:
                         kwarg_nodes[kw] = val
+                    if res.error:
+                        return res.failure(
+                            RNSyntaxError(
+                                self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')' or expression"
+                            )
+                        )
 
-                if self.current_tok.type != TT_RPAREN:
+                    while self.current_tok.type == TT_COMMA:
+                        self.advance(res)
+
+                        pair = res.register(self.func_arg())
+                        if res.error:
+                            return res
+                        assert pair is not None
+                        kw, val = pair
+                        if kw is None and len(kwarg_nodes) == 0:
+                            arg_nodes.append(val)
+                        elif kw is None:
+                            return res.failure(
+                                RNSyntaxError(
+                                    val.pos_start,
+                                    val.pos_end,
+                                    "Positional arguments may not come after keyword arguments",
+                                )
+                            )
+                        else:
+                            kwarg_nodes[kw] = val
+
+                    if self.current_tok.type != TT_RPAREN:
+                        return res.failure(
+                            RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ')'")
+                        )
+
+                    self.advance(res)
+                node = CallNode(node, arg_nodes, kwarg_nodes)
+
+            elif self.current_tok.type == TT_LSQUARE:
+                lsquare_tok = self.current_tok
+                self.advance(res)
+
+                if self.current_tok.type == TT_RSQUARE:
+                    rsquare_pos_end = self.current_tok.pos_end
+                    self.advance(res)
                     return res.failure(
-                        RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ')'")
+                        RNSyntaxError(lsquare_tok.pos_start, rsquare_pos_end, "Expected expression inside []")
                     )
 
+                index: list[Optional[Node]] = []
+                is_slice = False
+                while self.current_tok.type != TT_RSQUARE:
+                    if self.current_tok.type == TT_COLON:
+                        is_slice = True
+                        index.append(None)
+                        self.advance(res)
+                        continue
+                    idx_val = res.register(self.expr())
+                    if res.error:
+                        return res
+                    assert idx_val is not None
+                    index.append(idx_val)
+
+                    if self.current_tok.type == TT_COLON:
+                        is_slice = True
+                        self.advance(res)
+                    else:
+                        break
+
+                if self.current_tok.type != TT_RSQUARE:
+                    return res.failure(RNSyntaxError(lsquare_tok.pos_start, self.current_tok.pos_end, "Expected ']'"))
+
                 self.advance(res)
-            return res.success(CallNode(index, arg_nodes, kwarg_nodes))
-        return res.success(index)
+
+                if self.current_tok.type == TT_EQ:
+                    self.advance(res)
+
+                    set_value = res.register(self.expr())
+                    if res.error:
+                        return res
+                    assert set_value is not None
+
+                    assert index[0] is not None
+                    node = IndexSetNode(node, index[0], set_value, lsquare_tok.pos_start, self.current_tok.pos_end)
+                elif is_slice:
+                    node = SliceGetNode(lsquare_tok.pos_start, self.current_tok.pos_end, node, *index)  # type: ignore
+                else:
+                    assert index[0] is not None
+                    node = IndexGetNode(lsquare_tok.pos_start, self.current_tok.pos_end, node, index[0])
+
+            else:
+                break
+
+        return res.success(node)
 
     def func_arg(self) -> ParseResult[tuple[Optional[str], Node]]:
         res = ParseResult[tuple[Optional[str], Node]]()
@@ -866,62 +925,6 @@ class Parser:
 
         if node is None:
             return res.failure(RNSyntaxError(tok.pos_start, tok.pos_end, "Expected expression"))
-
-        while self.current_tok.type == TT_LSQUARE:
-            assert node is not None
-            self.advance(res)
-
-            # handle empty call [] errors here
-            if self.current_tok.type == TT_RSQUARE:
-                self.advance(res)
-                return res.failure(
-                    RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected expression inside []")
-                )
-
-            # [index_start:index_end:index_step] or [index_start:index_end] or [index_start]
-
-            index: list[Optional[Node]] = []
-            is_slice = False
-            while self.current_tok.type != TT_RSQUARE:
-                if self.current_tok.type == TT_COLON:
-                    is_slice = True
-                    index.append(None)
-                    self.advance(res)
-                    continue
-                val = res.register(self.expr())
-                if res.error:
-                    return res
-                assert val is not None
-                index.append(val)
-
-                if self.current_tok.type == TT_COLON:
-                    is_slice = True
-                    self.advance(res)
-                else:
-                    break
-
-            if self.current_tok.type != TT_RSQUARE:
-                return res.failure(RNSyntaxError(tok.pos_start, self.current_tok.pos_end, "Expected ']'"))
-
-            self.advance(res)
-
-            if self.current_tok.type == TT_EQ:
-                self.advance(res)
-
-                value = res.register(self.expr())
-                if res.error:
-                    return res
-                assert value is not None
-
-                assert index[0] is not None
-                node = IndexSetNode(node, index[0], value, tok.pos_start, self.current_tok.pos_end)
-            elif is_slice:
-                assert node is not None
-                node = SliceGetNode(tok.pos_start, self.current_tok.pos_end, node, *index)  # type: ignore
-            else:
-                assert node is not None
-                assert index[0] is not None
-                node = IndexGetNode(tok.pos_start, self.current_tok.pos_end, node, index[0])
 
         return res.success(node)
 
