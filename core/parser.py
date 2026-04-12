@@ -16,6 +16,7 @@ from core.nodes import (
     ClassNode,
     ContinueNode,
     DecNode,
+    DelNode,
     FalloutNode,
     FallthroughNode,
     ForInNode,
@@ -254,6 +255,56 @@ class Parser:
             if not isinstance(call, CallNode):
                 return res.success(UnitRaiseNode(call, call.pos_start, call.pos_end))
             return res.success(RaiseNode(call, call.pos_start, call.pos_end))
+
+        if self.current_tok.matches(TT_KEYWORD, "del"):
+            # syntax
+            # del identifier
+            # del identifier, identifier, ...
+            # del identifier[index]
+            # del identifier[index], identifier[index], ...
+
+            self.advance(res)
+            if self.current_tok.type != TT_IDENTIFIER:
+                return res.failure(
+                    RNSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after 'del'"
+                    )
+                )
+
+            def parse_del_target() -> ParseResult[Node]:
+                target = res.register(self.call())
+                if res.error:
+                    return res
+                assert target is not None
+                if not isinstance(target, (VarAccessNode, IndexGetNode)):
+                    return res.failure(
+                        RNSyntaxError(
+                            target.pos_start, target.pos_end, "Expected identifier or subscript expression after 'del'"
+                        )
+                    )
+                return res.success(target)
+
+            first = parse_del_target()
+            if res.error:
+                return res
+            assert first.node is not None
+            targets: list[Node] = [first.node]
+
+            while self.current_tok.type == TT_COMMA:
+                self.advance(res)
+                if self.current_tok.type != TT_IDENTIFIER:
+                    return res.failure(
+                        RNSyntaxError(
+                            self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after ','"
+                        )
+                    )
+                target_res = parse_del_target()
+                if res.error:
+                    return res
+                assert target_res.node is not None
+                targets.append(target_res.node)
+
+            return res.success(DelNode(targets, pos_start, targets[-1].pos_end))
 
         if self.current_tok.matches(TT_KEYWORD, "fallout"):
             if not self.in_case:

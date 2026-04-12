@@ -130,6 +130,9 @@ class Value:
     def set_index(self, index: Value, value: Value) -> ResultTuple:
         return None, self.illegal_operation(index, value)
 
+    def del_index(self, index: Value) -> ResultTuple:
+        return None, self.illegal_operation(index)
+
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         return RTResult[Value]().failure(self.illegal_operation())
 
@@ -698,6 +701,15 @@ class Array(Value):
             return None, RNIndexError(index.pos_start, index.pos_end, "Array index out of range", self.context)
         return self, None
 
+    def del_index(self, index: Value) -> ResultTuple:
+        if not isinstance(index, Number):
+            return None, self.illegal_operation(index)
+        try:
+            del self.elements[int(index.value)]
+        except IndexError:
+            return None, RNIndexError(index.pos_start, index.pos_end, "Array index out of range", self.context)
+        return self, None
+
     def contains(self, other: Value) -> ResultTuple:
         ret: Boolean = Boolean.false()
         for val in self.elements:
@@ -798,6 +810,16 @@ class HashMap(Value):
 
         self.values[index.value] = value
 
+        return self, None
+
+    def del_index(self, index: Value) -> ResultTuple:
+        if not isinstance(index, String):
+            return None, self.illegal_operation(index)
+        if index.value not in self.values:
+            return None, RNKeyError(
+                self.pos_start, self.pos_end, f"Key '{index.value}' not found in HashMap", self.context
+            )
+        del self.values[index.value]
         return self, None
 
     def contains(self, other: Value) -> ResultTuple:

@@ -320,6 +320,13 @@ class FalloutNode:
 
 
 @dataclass
+class DelNode:
+    targets: list[Node]
+    pos_start: Position
+    pos_end: Position
+
+
+@dataclass
 class TryNode:
     try_block: Node
     exc_iden: Token

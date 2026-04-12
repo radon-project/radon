@@ -30,6 +30,7 @@ from core.nodes import (
     ClassNode,
     ContinueNode,
     DecNode,
+    DelNode,
     FalloutNode,
     FallthroughNode,
     ForInNode,
@@ -720,6 +721,43 @@ class Interpreter:
 
     def visit_BreakNode(self, node: BreakNode, context: Context) -> RTResult[Value]:
         return RTResult[Value]().success_break()
+
+    def visit_DelNode(self, node: DelNode, context: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
+
+        for target in node.targets:
+            if isinstance(target, VarAccessNode):
+                var_name = target.var_name_tok.value
+                assert isinstance(var_name, str)
+
+                if context.symbol_table.get(var_name) is None:
+                    return res.failure(
+                        RNNameError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context)
+                    )
+
+                table: Optional[SymbolTable] = context.symbol_table
+                while table is not None:
+                    if var_name in table.symbols:
+                        del table.symbols[var_name]
+                        break
+                    table = table.parent
+
+            elif isinstance(target, IndexGetNode):
+                indexee = res.register(self.visit(target.indexee, context))
+                if res.should_return():
+                    return res
+                assert indexee is not None
+
+                index = res.register(self.visit(target.index, context))
+                if res.should_return():
+                    return res
+                assert index is not None
+
+                _, error = indexee.del_index(index)
+                if error is not None:
+                    return res.failure(error)
+
+        return res.success(Null.null())
 
     def visit_TryNode(self, node: TryNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
