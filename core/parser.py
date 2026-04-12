@@ -739,7 +739,9 @@ class Parser:
                         elif kw is None:
                             return res.failure(
                                 RNSyntaxError(
-                                    val.pos_start, val.pos_end, "Positional arguments may not come after keyword arguments"
+                                    val.pos_start,
+                                    val.pos_end,
+                                    "Positional arguments may not come after keyword arguments",
                                 )
                             )
                         else:
