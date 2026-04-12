@@ -1,6 +1,6 @@
 import json
 
-from core.builtin_classes.base_classes import BuiltInObject, check, method, operator
+from core.builtin_classes.base_classes import BuiltInObject, check, operator, static_method
 from core.builtin_funcs import args
 from core.datatypes import Null, String, Value, deradonify, radonify
 from core.errors import RTError
@@ -16,8 +16,8 @@ class JSONObject(BuiltInObject):
         return RTResult[Value]().success(Null.null())
 
     @args(["radon_object"])
-    @method
-    def dumps(self, ctx: Context) -> RTResult[Value]:
+    @static_method
+    def dumps(ctx: Context) -> RTResult[Value]:  # type: ignore[misc]
         res = RTResult[Value]()
         radon_object = ctx.symbol_table.get("radon_object")
         assert radon_object is not None
@@ -29,8 +29,8 @@ class JSONObject(BuiltInObject):
             )
 
     @args(["radon_string"])
-    @method
-    def loads(self, ctx: Context) -> RTResult[Value]:
+    @static_method
+    def loads(ctx: Context) -> RTResult[Value]:  # type: ignore[misc]
         res = RTResult[Value]()
         radon_string = ctx.symbol_table.get("radon_string")
         assert radon_string is not None

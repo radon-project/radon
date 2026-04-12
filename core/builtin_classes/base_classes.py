@@ -53,6 +53,9 @@ class BuiltInInstance(BaseInstance):
         assert isinstance(method, BuiltInFunction)
         assert method.func is not None
 
+        if getattr(method.func, "__is_static__", False):
+            return RTResult[BaseFunction]().success(method)
+
         @args(method.func.arg_names, method.func.defaults)
         def new_func(ctx: Context) -> RTResult[Value]:
             assert method.func is not None
@@ -137,6 +140,13 @@ def operator(dunder: str) -> Callable[[C], C]:
 def method(f: C) -> C:
     """Convert to method."""
     f.__is_method__ = True  # type: ignore
+    return f
+
+
+def static_method(f: C) -> C:
+    """Convert to static method (no self/obj injection)."""
+    f.__is_method__ = True  # type: ignore
+    f.__is_static__ = True  # type: ignore
     return f
 
 
