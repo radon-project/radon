@@ -725,19 +725,37 @@ class Interpreter:
     def visit_DelNode(self, node: DelNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
-        for var_name_tok in node.var_name_toks:
-            var_name = var_name_tok.value
-            assert isinstance(var_name, str)
+        for target in node.targets:
+            if isinstance(target, VarAccessNode):
+                var_name = target.var_name_tok.value
+                assert isinstance(var_name, str)
 
-            if context.symbol_table.get(var_name) is None:
-                return res.failure(RNNameError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
+                if context.symbol_table.get(var_name) is None:
+                    return res.failure(
+                        RNNameError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context)
+                    )
 
-            table: Optional[SymbolTable] = context.symbol_table
-            while table is not None:
-                if var_name in table.symbols:
-                    del table.symbols[var_name]
-                    break
-                table = table.parent
+                table: Optional[SymbolTable] = context.symbol_table
+                while table is not None:
+                    if var_name in table.symbols:
+                        del table.symbols[var_name]
+                        break
+                    table = table.parent
+
+            elif isinstance(target, IndexGetNode):
+                indexee = res.register(self.visit(target.indexee, context))
+                if res.should_return():
+                    return res
+                assert indexee is not None
+
+                index = res.register(self.visit(target.index, context))
+                if res.should_return():
+                    return res
+                assert index is not None
+
+                _, error = indexee.del_index(index)
+                if error is not None:
+                    return res.failure(error)
 
         return res.success(Null.null())
 

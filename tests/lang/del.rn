@@ -125,6 +125,42 @@ try {
     assert e == "'mixed_arr' is not defined", "mixed_arr should be deleted"
 }
 
+# Complex: delete an item from an array by index
+var idx_arr = [10, 20, 30, 40, 50]
+assert idx_arr[0] == 10, "idx_arr[0] should be 10"
+del idx_arr[0]
+assert idx_arr[0] == 20, "idx_arr[0] should be 20 after del"
+assert idx_arr == [20, 30, 40, 50], "idx_arr should be [20, 30, 40, 50]"
+
+# Complex: delete a key from a hashmap
+var hm = {"name": "Alice", "age": 30, "city": "NY"}
+assert hm["name"] == "Alice", "name should be Alice"
+del hm["name"]
+assert hm == {"age": 30, "city": "NY"}, "name key should be removed from hashmap"
+
+# Complex: delete array item and hashmap key in one statement
+var combo_arr = [1, 2, 3]
+var combo_hm = {"a": 1, "b": 2}
+del combo_arr[0], combo_hm["b"]
+assert combo_arr == [2, 3], "first element removed from array"
+assert combo_hm == {"a": 1}, "key b removed from hashmap"
+
+# Complex: out-of-bounds array index del raises error
+var bound_arr = [1, 2, 3]
+try {
+    del bound_arr[999]
+} catch as e {
+    assert e == "Array index out of range", "out of range del should raise error"
+}
+
+# Complex: missing hashmap key del raises error
+var sparse_hm = {"x": 1}
+try {
+    del sparse_hm["missing"]
+} catch as e {
+    assert e == "Key 'missing' not found in HashMap", "missing key del should raise error"
+}
+
 # Complex: delete inside a loop (temp variable cleaned up each iteration)
 var total = 0
 for i in [1, 2, 3] {

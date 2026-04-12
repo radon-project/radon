@@ -321,7 +321,7 @@ class FalloutNode:
 
 @dataclass
 class DelNode:
-    var_name_toks: list[Token]
+    targets: list[Node]
     pos_start: Position
     pos_end: Position
 
