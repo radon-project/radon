@@ -32,12 +32,21 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
         col_start = pos_start.col if i == 0 else 0
         col_end = pos_end.col if i == line_count - 1 else len(line) - 1
 
-        col_start_color = col_start + 1
-        col_end_color = col_end + 1
+        # Strip the leading newline character (present for lines 2+)
+        line_content = line.lstrip("\n")
+
+        # Strip original leading whitespace and adjust column positions
+        leading_ws = len(line_content) - len(line_content.lstrip())
+        stripped_line = line_content.lstrip()
+        adj_col_start = max(0, col_start - leading_ws)
+        adj_col_end = max(adj_col_start, col_end - leading_ws)
+
+        # Fixed 4-space indentation (like Python)
+        fixed_indent = "    "
 
         # Append to result
-        result += f"{line[:col_start_color]}{Log.deep_error(line[col_start_color:col_end_color], bold=True)}{line[col_end_color:]}\n"
-        result += " " * col_start + Log.deep_error("^" * (col_end - col_start), bold=True)
+        result += f"{fixed_indent}{stripped_line[:adj_col_start]}{Log.deep_error(stripped_line[adj_col_start:adj_col_end], bold=True)}{stripped_line[adj_col_end:]}\n"
+        result += f"{fixed_indent}{' ' * adj_col_start}{Log.deep_error('^' * (adj_col_end - adj_col_start), bold=True)}"
 
         # Re-calculate indices
         idx_start = idx_end
@@ -62,7 +71,7 @@ class Error:
         """Return error as string"""
         result = Log.light_purple("Radiation (most recent call last):\n")
         result += f"  File {Log.light_info(self.pos_start.fn)}, line {Log.light_info(str(self.pos_start.ln + 1))}"
-        result += string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
+        result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         result += "\n" + f"{Log.deep_error(self.error_name, bold=True)}"
         if self.details is not None:
             result += f": {Log.light_error(self.details)}"
@@ -120,10 +129,11 @@ class RTError(Error):
     def as_string(self) -> str:
         """Return error as string"""
         result = self.generate_radiation()
+        result += string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
+        result += "\n"
         result += f"{Log.deep_error(self.error_name, bold=True)}"
         if self.details is not None:
             result += f": {Log.light_error(self.details)}"
-        result += "\n" + string_with_arrows(self.pos_start.ftxt, self.pos_start, self.pos_end)
         return result
 
     def generate_radiation(self) -> str:
