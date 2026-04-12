@@ -372,8 +372,16 @@ class IndexSetNode:
 
 
 @dataclass
+class HashMapUnpackNode:
+    node: Node
+
+    pos_start: Position
+    pos_end: Position
+
+
+@dataclass
 class HashMapNode:
-    pairs: list[tuple[Node, Node]]
+    pairs: list[tuple[Node, Node] | HashMapUnpackNode]
 
     pos_start: Position
     pos_end: Position

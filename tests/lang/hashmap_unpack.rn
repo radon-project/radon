@@ -1,0 +1,36 @@
+# HashMap unpacking with ***
+
+# Basic unpacking of two hashmaps
+const merged = {***{"key": "value"}, ***{"key2": "value2"}}
+assert merged["key"] == "value", "Expected 'value'"
+assert merged["key2"] == "value2", "Expected 'value2'"
+
+# Unpacking variables
+const a = {"x": 1, "y": 2}
+const b = {"z": 3}
+const c = {***a, ***b, "w": 4}
+assert c["x"] == 1, "Expected 1"
+assert c["y"] == 2, "Expected 2"
+assert c["z"] == 3, "Expected 3"
+assert c["w"] == 4, "Expected 4"
+
+# Later keys override earlier keys
+const d = {"key": "original"}
+const e = {"key": "override"}
+const overridden = {***d, ***e}
+assert overridden["key"] == "override", "Expected 'override'"
+
+# Mixing regular pairs and unpacking
+const base = {"a": 1, "b": 2}
+const result = {"prefix": "hello", ***base, "suffix": "world"}
+assert result["prefix"] == "hello", "Expected 'hello'"
+assert result["a"] == 1, "Expected 1"
+assert result["b"] == 2, "Expected 2"
+assert result["suffix"] == "world", "Expected 'world'"
+
+# Error: unpacking a non-HashMap
+try {
+    var unused = {***[1, 2, 3]}
+} catch as err {
+    assert err == "Can only unpack HashMap, not 'Array'", "Unexpected error message"
+}

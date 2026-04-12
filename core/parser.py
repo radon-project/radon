@@ -23,6 +23,7 @@ from core.nodes import (
     FromImportNode,
     FuncDefNode,
     HashMapNode,
+    HashMapUnpackNode,
     IfNode,
     ImportNode,
     IncNode,
@@ -1005,7 +1006,7 @@ class Parser:
 
     def hashmap_expr(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
-        pairs: list[tuple[Node, Node]] = []
+        pairs: list[tuple[Node, Node] | HashMapUnpackNode] = []
         pos_start = self.current_tok.pos_start.copy()
 
         if self.current_tok.type != TT_LBRACE:
@@ -1018,29 +1019,17 @@ class Parser:
             self.advance(res)
             return res.success(HashMapNode(pairs, pos_start, self.current_tok.pos_end.copy()))
         else:
-            key = res.register(self.expr())
-            if res.error:
-                return res
-            assert key is not None
-
-            if self.current_tok.type != TT_COLON:
-                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ':'"))
-
-            self.advance(res)
-
-            value = res.register(self.expr())
-            if res.error:
-                return res
-            assert value is not None
-
-            pairs.append((key, value))
-
-            while self.current_tok.type == TT_COMMA:
+            if self.current_tok.type == TT_UNPACK:
+                unpack_pos_start = self.current_tok.pos_start.copy()
                 self.advance(res)
+                unpack_expr = res.register(self.expr())
                 self.skip_newlines()
-
+                if res.error:
+                    return res
+                assert unpack_expr is not None
+                pairs.append(HashMapUnpackNode(unpack_expr, unpack_pos_start, unpack_expr.pos_end))
+            else:
                 key = res.register(self.expr())
-                self.skip_newlines()
                 if res.error:
                     return res
                 assert key is not None
@@ -1051,15 +1040,49 @@ class Parser:
                     )
 
                 self.advance(res)
-                self.skip_newlines()
 
                 value = res.register(self.expr())
-                self.skip_newlines()
                 if res.error:
                     return res
                 assert value is not None
 
                 pairs.append((key, value))
+
+            while self.current_tok.type == TT_COMMA:
+                self.advance(res)
+                self.skip_newlines()
+
+                if self.current_tok.type == TT_UNPACK:
+                    unpack_pos_start = self.current_tok.pos_start.copy()
+                    self.advance(res)
+                    unpack_expr = res.register(self.expr())
+                    self.skip_newlines()
+                    if res.error:
+                        return res
+                    assert unpack_expr is not None
+                    pairs.append(HashMapUnpackNode(unpack_expr, unpack_pos_start, unpack_expr.pos_end))
+                else:
+                    key = res.register(self.expr())
+                    self.skip_newlines()
+                    if res.error:
+                        return res
+                    assert key is not None
+
+                    if self.current_tok.type != TT_COLON:
+                        return res.failure(
+                            RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ':'")
+                        )
+
+                    self.advance(res)
+                    self.skip_newlines()
+
+                    value = res.register(self.expr())
+                    self.skip_newlines()
+                    if res.error:
+                        return res
+                    assert value is not None
+
+                    pairs.append((key, value))
 
             self.skip_newlines()
             if self.current_tok.type != TT_RBRACE:
