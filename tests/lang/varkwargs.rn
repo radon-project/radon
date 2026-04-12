@@ -3,7 +3,7 @@ fun f(a=23, b=34) {
     print(b)
 }
 
-g(c=45, ***kwargs) {
+fun g(c=45, ***kwargs) {
     print(c)
     print(kwargs)
 }

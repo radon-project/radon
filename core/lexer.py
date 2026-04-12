@@ -283,7 +283,7 @@ class Lexer:
         if self.current_char == "=":
             tok_type = TT_TE
             self.advance()
-        
+
         if self.current_char == "*":
             self.advance()
             if self.current_char == "*":

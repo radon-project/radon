@@ -1398,12 +1398,12 @@ class Parser:
         is_kw_va = False
         max_pos_args = 0
         va_name: Optional[str] = None
-        va_kw_name: Optional[HashMapNode] = None
+        va_kw_name: Optional[str] = None
 
         if self.current_tok.type == TT_SPREAD:
             is_va = True
             self.advance(res)
-        
+
         if self.current_tok.type == TT_UNPACK:
             is_kw_va = True
             self.advance(res)
@@ -1415,7 +1415,7 @@ class Parser:
             arg_name_tok = self.current_tok
             assert isinstance(arg_name_tok.value, str)
             self.advance(res)
-            if not is_va:
+            if not is_va and not is_kw_va:
                 arg_name_toks.append(arg_name_tok)
                 if va_name is None:
                     max_pos_args += 1
@@ -1423,6 +1423,9 @@ class Parser:
             if is_va:
                 va_name = arg_name_tok.value
                 is_va = False
+            elif is_kw_va:
+                va_kw_name = arg_name_tok.value
+                is_kw_va = False
             elif self.current_tok.type == TT_EQ:
                 self.advance(res)
                 default = res.register(self.expr())
@@ -1442,6 +1445,9 @@ class Parser:
                 if self.current_tok.type == TT_SPREAD:
                     is_va = True
                     self.advance(res)
+                elif self.current_tok.type == TT_UNPACK:
+                    is_kw_va = True
+                    self.advance(res)
 
                 if self.current_tok.type != TT_IDENTIFIER:
                     return res.failure(
@@ -1453,22 +1459,23 @@ class Parser:
 
                 arg_name_tok = self.current_tok
                 assert isinstance(arg_name_tok.value, str)
-                if not is_va:
-                    arg_name_toks.append(arg_name_tok)
-                    if va_name is None:
-                        max_pos_args += 1
-
-                if not is_kw_va:
-                    if arg_name_tok.value in arg_name_toks:
+                if not is_va and not is_kw_va:
+                    if arg_name_tok.value in [t.value for t in arg_name_toks]:
                         return res.failure(
                             RNSyntaxError(pos_start, pos_end, f"Duplicate argument name '{arg_name_tok.value}'")
                         )
+                    arg_name_toks.append(arg_name_tok)
+                    if va_name is None:
+                        max_pos_args += 1
 
                 self.advance(res)
 
                 if is_va:
                     va_name = arg_name_tok.value
                     is_va = False
+                elif is_kw_va:
+                    va_kw_name = arg_name_tok.value
+                    is_kw_va = False
                 elif self.current_tok.type == TT_EQ:
                     self.advance(res)
                     default = res.register(self.expr())

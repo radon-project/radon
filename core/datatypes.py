@@ -1075,7 +1075,9 @@ class BaseFunction(Value):
     ) -> RTResult[None]:
         res = RTResult[None]()
 
-        args_count = len(args) + len(kwargs)
+        # Only count kwargs that map to named args; extra kwargs go into ***kwargs if available
+        named_kwargs_count = sum(1 for kw in kwargs if kw in arg_names) if self.va_kw_name is not None else len(kwargs)
+        args_count = len(args) + named_kwargs_count
         if self.va_name is None and (args_count > len(arg_names) or len(args) > max_pos_args):
             return res.failure(
                 RTError(
@@ -1097,27 +1099,17 @@ class BaseFunction(Value):
                 )
             )
 
-        kwargs_count = len(kwargs)
-        if self.va_kw_name is None and kwargs_count > 0:
-            return res.failure(
-                RTError(
-                    self.pos_start,
-                    self.pos_end,
-                    f"{kwargs_count} too many keyword args passed into {self}",
-                    self.context,
-                )
-            )
-
         for kw in kwargs.keys():
             if kw not in arg_names:
-                return res.failure(
-                    RTError(
-                        self.pos_start,
-                        self.pos_end,
-                        f"{kw} is not a valid keyword arg passed into {self}",
-                        self.context,
+                if self.va_kw_name is None:
+                    return res.failure(
+                        RTError(
+                            self.pos_start,
+                            self.pos_end,
+                            f"{kw} is not a valid keyword arg passed into {self}",
+                            self.context,
+                        )
                     )
-                )
 
         return res.success(None)
 
@@ -1153,16 +1145,17 @@ class BaseFunction(Value):
             exec_ctx.symbol_table.set(self.va_name, Array(va_list))
 
         if self.va_kw_name is not None:
-            kwarg_list: list[Value] = []
-            for kw in kwargs.keys():
-                kwarg = kwargs[kw]
-                kwarg.set_context(exec_ctx)
-                kwarg_list.append(kwarg)
-            exec_ctx.symbol_table.set(self.va_kw_name, Array(kwarg_list))
+            extra_kwargs: dict[str, Value] = {}
+            for kw, kwarg in kwargs.items():
+                if kw not in arg_names:
+                    kwarg.set_context(exec_ctx)
+                    extra_kwargs[kw] = kwarg
+            exec_ctx.symbol_table.set(self.va_kw_name, HashMap(extra_kwargs))
 
         for kw, kwarg in kwargs.items():
-            kwarg.set_context(exec_ctx)
-            exec_ctx.symbol_table.set(kw, kwarg)
+            if kw in arg_names:
+                kwarg.set_context(exec_ctx)
+                exec_ctx.symbol_table.set(kw, kwarg)
 
     def check_and_populate_args(
         self,
@@ -1414,7 +1407,7 @@ class Class(BaseClass):
         # if constructor is not defined, create a default one
         method = inst.symbol_table.symbols.get(
             "__constructor__",
-            Function("__constructor__", inst.symbol_table, NullNode(None, None), [], [], True, "", "", 0),  # type: ignore
+            Function("__constructor__", inst.symbol_table, NullNode(None, None), [], [], True, "", None, None, 0),  # type: ignore
         )
 
         if method.symbol_table is None:  # type: ignore
@@ -1516,6 +1509,7 @@ class Function(BaseFunction):
             self.should_auto_return,
             self.desc,
             self.va_name,
+            self.va_kw_name,
             self.max_pos_args,
         )
         copy.set_context(self.context)
