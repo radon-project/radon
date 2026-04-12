@@ -279,9 +279,7 @@ class Parser:
                 if not isinstance(target, (VarAccessNode, IndexGetNode)):
                     return res.failure(
                         RNSyntaxError(
-                            target.pos_start,
-                            target.pos_end,
-                            "Expected identifier or subscript expression after 'del'",
+                            target.pos_start, target.pos_end, "Expected identifier or subscript expression after 'del'"
                         )
                     )
                 return res.success(target)
