@@ -1,0 +1,1 @@
+{"code": 0, "stdout": "{'key': \"value\", 'key2': \"value2\"}\n{'x': 1, 'y': 2, 'z': 3, 'w': 4}\n{'key': \"override\"}\n{'prefix': \"hello\", 'a': 1, 'b': 2, 'suffix': \"world\"}\nCan only unpack HashMap, not 'Array'\n", "stderr": ""}

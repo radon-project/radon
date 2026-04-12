@@ -1,0 +1,27 @@
+# HashMap unpacking with ***
+
+# Basic unpacking of two hashmaps
+print({***{"key": "value"}, ***{"key2": "value2"}})
+
+# Unpacking variables
+const a = {"x": 1, "y": 2}
+const b = {"z": 3}
+const c = {***a, ***b, "w": 4}
+print(c)
+
+# Later keys override earlier keys
+const d = {"key": "original"}
+const e = {"key": "override"}
+print({***d, ***e})
+
+# Mixing regular pairs and unpacking
+const base = {"a": 1, "b": 2}
+const result = {"prefix": "hello", ***base, "suffix": "world"}
+print(result)
+
+# Error: unpacking a non-HashMap
+try {
+    print({***[1, 2, 3]})
+} catch as err {
+    print(err)
+}

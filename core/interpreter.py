@@ -37,6 +37,7 @@ from core.nodes import (
     FromImportNode,
     FuncDefNode,
     HashMapNode,
+    HashMapUnpackNode,
     IfNode,
     ImportNode,
     IncNode,
@@ -848,22 +849,44 @@ class Interpreter:
         res = RTResult[Value]()
         values: dict[str, Value] = {}
 
-        for key_node, value_node in node.pairs:
-            key = res.register(self.visit(key_node, context))
-            if res.should_return():
-                return res
+        for entry in node.pairs:
+            if isinstance(entry, HashMapUnpackNode):
+                unpack_val = res.register(self.visit(entry.node, context))
+                if res.should_return():
+                    return res
+                assert unpack_val is not None
 
-            if not isinstance(key, String):
-                return res.failure(
-                    RTError(key_node.pos_start, key_node.pos_end, f"Non-string key for hashmap: '{key!r}'", context)
-                )
+                if not isinstance(unpack_val, HashMap):
+                    return res.failure(
+                        RTError(
+                            entry.pos_start,
+                            entry.pos_end,
+                            f"Can only unpack HashMap, not '{type(unpack_val).__name__}'",
+                            context,
+                        )
+                    )
 
-            value = res.register(self.visit(value_node, context))
-            if res.should_return():
-                return res
-            assert value is not None
+                for k, v in unpack_val.values.items():
+                    values[k] = v
+            else:
+                key_node, value_node = entry
+                key = res.register(self.visit(key_node, context))
+                if res.should_return():
+                    return res
 
-            values[key.value] = value
+                if not isinstance(key, String):
+                    return res.failure(
+                        RTError(
+                            key_node.pos_start, key_node.pos_end, f"Non-string key for hashmap: '{key!r}'", context
+                        )
+                    )
+
+                value = res.register(self.visit(value_node, context))
+                if res.should_return():
+                    return res
+                assert value is not None
+
+                values[key.value] = value
 
         return res.success(HashMap(values))
 
