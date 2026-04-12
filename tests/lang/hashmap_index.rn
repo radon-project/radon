@@ -1,0 +1,22 @@
+# Test chained subscript access on function return values (HashMap issue fix)
+
+fun get_map() {
+    return {"id": 101, "name": "test"}
+}
+
+fun get_array() {
+    return [10, 20, 30]
+}
+
+# Direct subscript on function return value
+assert get_map()["id"] == 101
+assert get_map()["name"] == "test"
+assert get_array()[1] == 20
+
+# Chained method call then subscript
+const json = Json()
+const json_string = json.dumps({"id": 42, "value": "hello"})
+assert json.loads(json_string)["id"] == 42
+assert json.loads(json_string)["value"] == "hello"
+
+print("All hashmap index tests passed!")
