@@ -1,3 +1,4 @@
+# Basic: delete a simple variable
 var x = 10
 assert x == 10, "x should be 10"
 del x
@@ -7,6 +8,7 @@ try {
     assert e == "'x' is not defined", "wrong error for x"
 }
 
+# Basic: delete multiple variables in one statement (numbers)
 var a = 1
 var b = 2
 var c = 3
@@ -27,6 +29,7 @@ try {
     assert e == "'c' is not defined", "wrong error for c"
 }
 
+# Basic: delete an array
 var arr = [1, 2, 3]
 del arr
 try {
@@ -35,8 +38,110 @@ try {
     assert e == "'arr' is not defined", "wrong error for arr"
 }
 
+# Basic: deleting undefined variable raises NameError
 try {
     del undefined_var
 } catch as e {
     assert e == "'undefined_var' is not defined", "wrong error for undefined_var"
+}
+
+# Complex: re-assign after delete works fine
+var counter = 1
+assert counter == 1, "counter should be 1 before del"
+del counter
+var counter = 99
+assert counter == 99, "re-assign after del should work"
+
+# Complex: delete a function
+fun greet(name) {
+    return "Hello, " + name
+}
+assert greet("World") == "Hello, World", "greet should work before del"
+del greet
+try {
+    greet("World")
+} catch as e {
+    assert e == "'greet' is not defined", "greet should be deleted"
+}
+
+# Complex: delete a class instance
+class Point {
+    fun __constructor__(px, py) {
+        this.px = px
+        this.py = py
+    }
+    fun sum() {
+        return this.px + this.py
+    }
+}
+var p = Point(3, 4)
+assert p.sum() == 7, "point sum should be 7"
+del p
+try {
+    p.sum()
+} catch as e {
+    assert e == "'p' is not defined", "class instance p should be deleted"
+}
+
+# Complex: delete a hashmap
+var info = {"name": "Alice", "age": 30}
+assert info["name"] == "Alice", "hashmap should have name"
+del info
+try {
+    print(info)
+} catch as e {
+    assert e == "'info' is not defined", "hashmap info should be deleted"
+}
+
+# Complex: del inner variable; outer variable remains visible
+var outer = 42
+fun del_inner() {
+    var outer = 999
+    assert outer == 999, "inner outer should be 999"
+    del outer
+    assert outer == 42, "outer variable visible after inner del"
+}
+del_inner()
+assert outer == 42, "outer should still be 42 after function returns"
+
+# Complex: delete multiple variables of mixed types in one statement
+var num = 10
+var text = "hello"
+var mixed_arr = [1, 2, 3]
+del num, text, mixed_arr
+try {
+    print(num)
+} catch as e {
+    assert e == "'num' is not defined", "num should be deleted"
+}
+try {
+    print(text)
+} catch as e {
+    assert e == "'text' is not defined", "text should be deleted"
+}
+try {
+    print(mixed_arr)
+} catch as e {
+    assert e == "'mixed_arr' is not defined", "mixed_arr should be deleted"
+}
+
+# Complex: delete inside a loop (temp variable cleaned up each iteration)
+var total = 0
+for i in [1, 2, 3] {
+    var temp = i * 2
+    total = total + temp
+    del temp
+}
+assert total == 12, "total should be 12 (2+4+6)"
+
+# Complex: conditional delete
+var flag = true
+var cond_val = 55
+if flag {
+    del cond_val
+}
+try {
+    print(cond_val)
+} catch as e {
+    assert e == "'cond_val' is not defined", "cond_val should be deleted by conditional del"
 }
