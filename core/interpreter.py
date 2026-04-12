@@ -267,7 +267,12 @@ class Interpreter:
                 assert elt is not None
                 if not isinstance(elt, Array):
                     return res.failure(
-                        RTError(element_node.pos_start, element_node.pos_end, f"Spread operator requires an array, got {type(elt).__name__}", context)
+                        RTError(
+                            element_node.pos_start,
+                            element_node.pos_end,
+                            f"Spread operator requires an array, got {type(elt).__name__}",
+                            context,
+                        )
                     )
                 elements.extend(elt.elements)
             else:
