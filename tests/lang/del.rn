@@ -1,10 +1,10 @@
 var x = 10
-print(x)
+assert x == 10, "x should be 10"
 del x
 try {
     print(x)
 } catch as e {
-    print(e)
+    assert e == "'x' is not defined", "wrong error for x"
 }
 
 var a = 1
@@ -14,17 +14,17 @@ del a, b, c
 try {
     print(a)
 } catch as e {
-    print(e)
+    assert e == "'a' is not defined", "wrong error for a"
 }
 try {
     print(b)
 } catch as e {
-    print(e)
+    assert e == "'b' is not defined", "wrong error for b"
 }
 try {
     print(c)
 } catch as e {
-    print(e)
+    assert e == "'c' is not defined", "wrong error for c"
 }
 
 var arr = [1, 2, 3]
@@ -32,11 +32,11 @@ del arr
 try {
     print(arr)
 } catch as e {
-    print(e)
+    assert e == "'arr' is not defined", "wrong error for arr"
 }
 
 try {
     del undefined_var
 } catch as e {
-    print(e)
+    assert e == "'undefined_var' is not defined", "wrong error for undefined_var"
 }
