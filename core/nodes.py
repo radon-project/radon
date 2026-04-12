@@ -437,3 +437,11 @@ class AttrAccessNode:
 
     pos_start: Position
     pos_end: Position
+
+
+@dataclass
+class SpreadNode:
+    node_to_spread: Node
+
+    pos_start: Position
+    pos_end: Position

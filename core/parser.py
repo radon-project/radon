@@ -33,6 +33,7 @@ from core.nodes import (
     RaiseNode,
     ReturnNode,
     SliceGetNode,
+    SpreadNode,
     StringNode,
     SwitchNode,
     TryNode,
@@ -943,6 +944,22 @@ class Parser:
 
         return res.success(AssertNode(condition, message, self.current_tok.pos_start, self.current_tok.pos_end))
 
+    def array_element(self) -> ParseResult[Node]:
+        res = ParseResult[Node]()
+        if self.current_tok.type == TT_SPREAD:
+            spread_pos_start = self.current_tok.pos_start.copy()
+            self.advance(res)
+            elt = res.register(self.expr())
+            if res.error:
+                return res
+            assert elt is not None
+            return res.success(SpreadNode(elt, spread_pos_start, elt.pos_end))
+        elt = res.register(self.expr())
+        if res.error:
+            return res
+        assert elt is not None
+        return res.success(elt)
+
     def array_expr(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
         element_nodes: list[Node] = []
@@ -957,7 +974,7 @@ class Parser:
         if self.current_tok.type == TT_RSQUARE:
             self.advance(res)
         else:
-            elt = res.register(self.expr())
+            elt = res.register(self.array_element())
             self.skip_newlines()
             if res.error:
                 return res.failure(
@@ -970,7 +987,7 @@ class Parser:
                 self.advance(res)
                 self.skip_newlines()
 
-                elt = res.register(self.expr())
+                elt = res.register(self.array_element())
                 self.skip_newlines()
                 if res.error:
                     return res

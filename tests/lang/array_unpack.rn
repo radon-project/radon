@@ -1,0 +1,81 @@
+
+# Basic spread: two arrays
+var a = [1, 2, 3]
+var b = [4, 5, 6]
+
+assert [...a, ...b] == [1, 2, 3, 4, 5, 6], "basic spread of two vars failed"
+assert [...[1, 2, 3], ...[5, 6, 7]] == [1, 2, 3, 5, 6, 7], "spread of inline literals failed"
+assert [0, ...a, ...b, 7] == [0, 1, 2, 3, 4, 5, 6, 7], "spread with surrounding elements failed"
+assert [...a] == [1, 2, 3], "spread of single array failed"
+
+# Spread with empty array
+var empty = []
+assert [...empty, ...a] == [1, 2, 3], "spreading empty on left failed"
+assert [...a, ...empty] == [1, 2, 3], "spreading empty on right failed"
+
+# Spread with single-element arrays
+var one = [42]
+var two = [99]
+assert [...one, ...two] == [42, 99], "single-element spread failed"
+
+# Spread preserves duplicates
+var dupes = [1, 1, 2, 2]
+assert [...dupes, ...dupes] == [1, 1, 2, 2, 1, 1, 2, 2], "duplicate preservation failed"
+
+# Multi-level spread: spread a spread result
+var level1 = [...a, 4]
+var level2 = [...level1, 5]
+assert level1 == [1, 2, 3, 4], "level1 spread failed"
+assert level2 == [1, 2, 3, 4, 5], "level2 spread failed"
+
+# Spread with function return value
+fun get_nums() {
+    return [10, 20, 30]
+}
+assert [...get_nums(), 40, 50] == [10, 20, 30, 40, 50], "spread of function return value failed"
+
+# Spread inside a helper function (concat)
+fun concat_arrays(arr1, arr2) {
+    return [...arr1, ...arr2]
+}
+assert concat_arrays([1, 2], [3, 4]) == [1, 2, 3, 4], "concat_arrays failed"
+assert concat_arrays([], [5, 6, 7]) == [5, 6, 7], "concat_arrays with empty first arg failed"
+
+# Flatten a matrix (3 rows spread into one)
+var row1 = [1, 2, 3]
+var row2 = [4, 5, 6]
+var row3 = [7, 8, 9]
+var flat_matrix = [...row1, ...row2, ...row3]
+assert flat_matrix == [1, 2, 3, 4, 5, 6, 7, 8, 9], "matrix flattening failed"
+assert len(flat_matrix) == 9, "flattened matrix length failed"
+
+# Build arrays inside a loop and spread-combine them
+var evens = []
+var odds = []
+for i = 0 to 5 {
+    if i % 2 == 0 {
+        evens = [...evens, i * 2]
+    } else {
+        odds = [...odds, i * 2 + 1]
+    }
+}
+assert evens == [0, 4, 8], "loop-built evens array failed"
+assert odds == [3, 7], "loop-built odds array failed"
+assert [...evens, ...odds] == [0, 4, 8, 3, 7], "spread of loop-built arrays failed"
+
+# Spread a nested array literal inline
+var inner = [2, 3, 4]
+var outer = [1, [...inner, 5], 6]
+assert outer == [1, [2, 3, 4, 5], 6], "spread inside nested array literal failed"
+
+# Error: spread non-array should raise RuntimeError
+var error_caught = false
+try {
+    var s = "hello"
+    var bad = [...s]
+} catch as err {
+    error_caught = true
+    assert err == "Spread operator requires an array, got String", "wrong error message for non-array spread"
+}
+assert error_caught, "expected RuntimeError for spreading a non-array"
+
