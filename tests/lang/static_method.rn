@@ -2,12 +2,15 @@
 # Json.loads and Json.dumps should be callable without instantiation
 
 const json_string = Json.dumps([1, 2, 3])
-print(json_string)
+assert type(json_string) == type(""), "Json.dumps should return a string"
 
 const loaded = Json.loads(json_string)
-print(loaded)
+assert type(loaded) == type([1]), "Json.loads should return an array"
 
 # Instance access should still work
 var json = Json()
-print(json.dumps({"key": "value"}))
-print(json.loads("{\"key\": \"value\"}"))
+const inst_dumped = json.dumps({"key": "value"})
+assert type(inst_dumped) == type(""), "Instance dumps should return a string"
+
+const inst_loaded = json.loads("{\"key\": \"value\"}")
+assert type(inst_loaded) == type({}), "Instance loads should return a hashmap"
