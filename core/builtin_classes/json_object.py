@@ -17,7 +17,7 @@ class JSONObject(BuiltInObject):
 
     @args(["radon_object"])
     @static_method
-    def dumps(ctx: Context) -> RTResult[Value]:
+    def dumps(ctx: Context) -> RTResult[Value]:  # type: ignore[misc]
         res = RTResult[Value]()
         radon_object = ctx.symbol_table.get("radon_object")
         assert radon_object is not None
@@ -30,7 +30,7 @@ class JSONObject(BuiltInObject):
 
     @args(["radon_string"])
     @static_method
-    def loads(ctx: Context) -> RTResult[Value]:
+    def loads(ctx: Context) -> RTResult[Value]:  # type: ignore[misc]
         res = RTResult[Value]()
         radon_string = ctx.symbol_table.get("radon_string")
         assert radon_string is not None
