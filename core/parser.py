@@ -1392,6 +1392,7 @@ class Parser:
 
         self.advance(res)
         arg_name_toks: list[Token] = []
+        arg_name_set: set[str] = set()
         defaults: list[Optional[Node]] = []
         has_optionals = False
         is_va = False
@@ -1417,6 +1418,7 @@ class Parser:
             self.advance(res)
             if not is_va and not is_kw_va:
                 arg_name_toks.append(arg_name_tok)
+                arg_name_set.add(arg_name_tok.value)
                 if va_name is None:
                     max_pos_args += 1
 
@@ -1460,11 +1462,12 @@ class Parser:
                 arg_name_tok = self.current_tok
                 assert isinstance(arg_name_tok.value, str)
                 if not is_va and not is_kw_va:
-                    if arg_name_tok.value in [t.value for t in arg_name_toks]:
+                    if arg_name_tok.value in arg_name_set:
                         return res.failure(
                             RNSyntaxError(pos_start, pos_end, f"Duplicate argument name '{arg_name_tok.value}'")
                         )
                     arg_name_toks.append(arg_name_tok)
+                    arg_name_set.add(arg_name_tok.value)
                     if va_name is None:
                         max_pos_args += 1
 
