@@ -44,9 +44,9 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
         # Fixed 4-space indentation (like Python)
         fixed_indent = "    "
 
-        # Append to result
-        result += f"{fixed_indent}{stripped_line[:adj_col_start]}{Log.deep_error(stripped_line[adj_col_start:adj_col_end], bold=True)}{stripped_line[adj_col_end:]}\n"
-        result += f"{fixed_indent}{' ' * adj_col_start}{Log.deep_error('^' * (adj_col_end - adj_col_start), bold=True)}"
+        # Append to result (use adj_col_end + 1 to include the character at adj_col_end)
+        result += f"{fixed_indent}{stripped_line[:adj_col_start]}{Log.deep_error(stripped_line[adj_col_start:adj_col_end + 1], bold=True)}{stripped_line[adj_col_end + 1:]}\n"
+        result += f"{fixed_indent}{' ' * adj_col_start}{Log.deep_error('^' * (adj_col_end - adj_col_start + 1), bold=True)}"
 
         # Re-calculate indices
         idx_start = idx_end
