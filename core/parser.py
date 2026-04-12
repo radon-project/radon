@@ -16,6 +16,7 @@ from core.nodes import (
     ClassNode,
     ContinueNode,
     DecNode,
+    DelNode,
     FalloutNode,
     FallthroughNode,
     ForInNode,
@@ -254,6 +255,34 @@ class Parser:
             if not isinstance(call, CallNode):
                 return res.success(UnitRaiseNode(call, call.pos_start, call.pos_end))
             return res.success(RaiseNode(call, call.pos_start, call.pos_end))
+
+        if self.current_tok.matches(TT_KEYWORD, "del"):
+            # syntax
+            # del identifier
+            # del identifier, identifier, ...
+
+            self.advance(res)
+            if self.current_tok.type != TT_IDENTIFIER:
+                return res.failure(
+                    RNSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after 'del'"
+                    )
+                )
+            var_name_toks = [self.current_tok]
+            self.advance(res)
+
+            while self.current_tok.type == TT_COMMA:
+                self.advance(res)
+                if self.current_tok.type != TT_IDENTIFIER:
+                    return res.failure(
+                        RNSyntaxError(
+                            self.current_tok.pos_start, self.current_tok.pos_end, "Expected identifier after ','"
+                        )
+                    )
+                var_name_toks.append(self.current_tok)
+                self.advance(res)
+
+            return res.success(DelNode(var_name_toks, pos_start, var_name_toks[-1].pos_end))
 
         if self.current_tok.matches(TT_KEYWORD, "fallout"):
             if not self.in_case:

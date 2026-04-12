@@ -30,6 +30,7 @@ from core.nodes import (
     ClassNode,
     ContinueNode,
     DecNode,
+    DelNode,
     FalloutNode,
     FallthroughNode,
     ForInNode,
@@ -720,6 +721,25 @@ class Interpreter:
 
     def visit_BreakNode(self, node: BreakNode, context: Context) -> RTResult[Value]:
         return RTResult[Value]().success_break()
+
+    def visit_DelNode(self, node: DelNode, context: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
+
+        for var_name_tok in node.var_name_toks:
+            var_name = var_name_tok.value
+            assert isinstance(var_name, str)
+
+            if context.symbol_table.get(var_name) is None:
+                return res.failure(RNNameError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
+
+            table: Optional[SymbolTable] = context.symbol_table
+            while table is not None:
+                if var_name in table.symbols:
+                    del table.symbols[var_name]
+                    break
+                table = table.parent
+
+        return res.success(Null.null())
 
     def visit_TryNode(self, node: TryNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()

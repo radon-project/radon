@@ -1,0 +1,42 @@
+var x = 10
+print(x)
+del x
+try {
+    print(x)
+} catch as e {
+    print(e)
+}
+
+var a = 1
+var b = 2
+var c = 3
+del a, b, c
+try {
+    print(a)
+} catch as e {
+    print(e)
+}
+try {
+    print(b)
+} catch as e {
+    print(e)
+}
+try {
+    print(c)
+} catch as e {
+    print(e)
+}
+
+var arr = [1, 2, 3]
+del arr
+try {
+    print(arr)
+} catch as e {
+    print(e)
+}
+
+try {
+    del undefined_var
+} catch as e {
+    print(e)
+}

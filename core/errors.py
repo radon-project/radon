@@ -45,7 +45,7 @@ def string_with_arrows(text: str, pos_start: Position, pos_end: Position) -> str
         fixed_indent = "    "
 
         # Append to result (use adj_col_end + 1 to include the character at adj_col_end)
-        result += f"{fixed_indent}{stripped_line[:adj_col_start]}{Log.deep_error(stripped_line[adj_col_start:adj_col_end + 1], bold=True)}{stripped_line[adj_col_end + 1:]}\n"
+        result += f"{fixed_indent}{stripped_line[:adj_col_start]}{Log.deep_error(stripped_line[adj_col_start : adj_col_end + 1], bold=True)}{stripped_line[adj_col_end + 1 :]}\n"
         result += (
             f"{fixed_indent}{' ' * adj_col_start}{Log.deep_error('^' * (adj_col_end - adj_col_start + 1), bold=True)}"
         )

@@ -136,6 +136,7 @@ KEYWORDS = [
     "fallout",
     "var",
     "from",
+    "del",
 ]
 
 TokenValue: TypeAlias = Optional[str | int | float]
