@@ -37,8 +37,8 @@ cd radon
 # To run the repl
 python radon.py
 
-# To run a .rn file use the -s flag and pass the filename
-python radon.py -s <filename>
+# To run a .rn file
+python radon.py <filename>
 ```
 
 Read the [documentation](https://radon-project.github.io/docs) to learn more about the language.

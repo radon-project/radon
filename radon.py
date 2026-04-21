@@ -26,6 +26,7 @@ from core.colortools import Log
 from core.parser import Context
 from core.tokens import Position
 from core.colortools import Text, ForegroundColor, Style
+from core.syntax import pt_input
 
 
 documentation_link = "https://radon-project.github.io/docs/"
@@ -56,7 +57,7 @@ def shell() -> None:
 
     while True:
         try:
-            text = input(">>> ")
+            text = pt_input(">>> ")
             if text.strip() == "":
                 continue
 
@@ -66,7 +67,7 @@ def shell() -> None:
             if text.strip()[-1] == "{":
                 brace_count += 1
                 while True:
-                    text += "\n" + input("... ")
+                    text += "\n" + pt_input("... ")
                     if text.strip()[-1] == "{":
                         brace_count += 1
                     elif text.strip()[-1] == "}" or text.strip()[0] == "}":
@@ -98,13 +99,13 @@ def shell() -> None:
 
 def usage(program_name: str, stream: IO[str]) -> None:
     print(
-        f"Usage: {program_name} [--source | -s] [--command | -c] [source_file] [--version | -v] [--help | -h]",
+        f"Usage: {program_name} [source_file] [--command | -c <cmd>] [--version | -v] [--help | -h]",
         file=stream,
     )
     print(
         """
 Options and arguments:
-    --source | -s    Run a source file
+    source_file      Run a source file
     --command | -c   Run a command
     --version | -v   Print the version
     --help | -h      Print this help message
@@ -118,7 +119,7 @@ Permission Modes (for testing purposes only):
     --allow-network | -W Allow network access
 
 Example:
-    radon --source source_file.rn
+    radon source_file.rn
     radon --command 'print("Hello, World!")'
     radon --version
     radon --help
@@ -138,12 +139,6 @@ def main(argv: list[str]) -> None:
             case "--help" | "-h":
                 usage(program_name, sys.stdout)
                 exit(0)
-            case "--source" | "-s":
-                if len(argv) == 0:
-                    usage(program_name, sys.stderr)
-                    print(f"ERROR: {arg} requires an argument", file=sys.stderr)
-                    exit(1)
-                source_file = argv.pop(0)
             case "--version" | "-v":
                 print(base_core.__version__)
                 exit(0)
@@ -163,6 +158,9 @@ def main(argv: list[str]) -> None:
             case "--allow-network" | "-W":
                 base_core.security.allowed["network_access"] = True
             case _:
+                if source_file is None and command is None and not arg.startswith("-"):
+                    source_file = arg
+                    break
                 usage(program_name, sys.stderr)
                 print(f"ERROR: Unknown argument '{arg}'", file=sys.stderr)
                 exit(1)
