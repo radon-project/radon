@@ -1,0 +1,181 @@
+# Test objective method access on built-in types
+
+# ==========================
+# Array Methods
+# ==========================
+
+# Test append
+var arr = [1, 2, 3]
+arr.append(4)
+assert arr == [1, 2, 3, 4]
+
+# Test pop (default last)
+var arr2 = [1, 2, 3]
+var popped = arr2.pop()
+assert popped == 3
+assert arr2 == [1, 2]
+
+# Test pop with index
+var arr3 = [1, 2, 3]
+var popped2 = arr3.pop(0)
+assert popped2 == 1
+assert arr3 == [2, 3]
+
+# Test extend
+var arr4 = [1, 2]
+arr4.extend([3, 4])
+assert arr4 == [1, 2, 3, 4]
+
+# Test find
+var arr5 = [10, 20, 30]
+assert arr5.find(20) == 1
+assert arr5.find(99) == -1
+
+# Test is_empty
+assert [].is_empty() == true
+assert [1].is_empty() == false
+
+# Test length
+assert [1, 2, 3].length() == 3
+assert [].length() == 0
+
+# Test map
+var arr6 = [1, 2, 3]
+var doubled = arr6.map(fun(x) -> x * 2)
+assert doubled == [2, 4, 6]
+
+# Test reverse
+var arr7 = [1, 2, 3]
+arr7.reverse()
+assert arr7 == [3, 2, 1]
+
+# Test clear
+var arr8 = [1, 2, 3]
+arr8.clear()
+assert arr8 == []
+
+# ==========================
+# String Methods
+# ==========================
+
+# Test upper/lower
+assert "hello".upper() == "HELLO"
+assert "HELLO".lower() == "hello"
+assert "hello".title() == "Hello"
+assert "hello".capitalize() == "Hello"
+assert "HeLLo".swapcase() == "hEllO"
+
+# Test length
+assert "hello".length() == 5
+assert "".length() == 0
+
+# Test split
+assert "hello world".split() == ["hello", "world"]
+assert "a,b,c".split(",") == ["a", "b", "c"]
+
+# Test find
+assert "hello".find("l") == 2
+assert "hello".find("x") == -1
+
+# Test replace
+assert "hello world".replace("world", "radon") == "hello radon"
+
+# Test strip
+assert "  hello  ".strip() == "hello"
+assert "xxhelloxx".strip("x") == "hello"
+
+# Test startswith/endswith
+assert "hello".startswith("he") == true
+assert "hello".startswith("lo") == false
+assert "hello".endswith("lo") == true
+assert "hello".endswith("he") == false
+
+# Test count
+assert "hello".count("l") == 2
+assert "hello".count("x") == 0
+
+# Test join
+assert ", ".join(["a", "b", "c"]) == "a, b, c"
+
+# Test is_digit/is_alpha
+assert "123".is_digit() == true
+assert "abc".is_digit() == false
+assert "abc".is_alpha() == true
+assert "123".is_alpha() == false
+assert "abc123".is_alnum() == true
+assert "   ".is_space() == true
+
+# ==========================
+# Number Methods
+# ==========================
+
+# Test to_string
+assert (42).to_string() == "42"
+assert (3.14).to_string() == "3.14"
+
+# Test abs
+assert (-5).abs() == 5
+assert (5).abs() == 5
+
+# Test round
+assert (3.14159).round(2) == 3.14
+assert (3.5).round() == 4
+
+# Test floor/ceil
+assert (3.7).floor() == 3
+assert (3.2).ceil() == 4
+
+# Test is_int
+assert (5).is_int() == true
+assert (5.5).is_int() == false
+
+# ==========================
+# Boolean Methods
+# ==========================
+
+# Test to_string
+assert true.to_string() == "true"
+assert false.to_string() == "false"
+
+# Test to_number
+assert true.to_number() == 1
+assert false.to_number() == 0
+
+# ==========================
+# HashMap Methods
+# ==========================
+
+# Test keys/values/items
+var hm = {"a": 1, "b": 2}
+assert hm.keys() == ["a", "b"]
+assert hm.values() == [1, 2]
+assert hm.items() == [["a", 1], ["b", 2]]
+
+# Test get
+assert hm.get("a") == 1
+assert hm.get("c") == null
+assert hm.get("c", 0) == 0
+
+# Test set
+var hm2 = {}
+hm2.set("x", 10)
+assert hm2.get("x") == 10
+
+# Test has
+assert hm.has("a") == true
+assert hm.has("z") == false
+
+# Test length
+assert hm.length() == 2
+
+# Test remove
+var hm3 = {"a": 1, "b": 2}
+hm3.remove("a")
+assert hm3.has("a") == false
+
+# Test clear
+var hm4 = {"a": 1}
+hm4.clear()
+assert hm4.length() == 0
+
+print("All value method tests passed!")

@@ -2,7 +2,8 @@ import os
 import sys
 from typing import Callable, NoReturn, Optional
 
-from core.builtin_funcs import create_global_symbol_table, run
+from core.builtin_funcs import BuiltInFunction, args, create_global_symbol_table, run
+from core.value_methods import get_value_method
 from core.colortools import Log
 from core.datatypes import (
     Array,
@@ -1103,33 +1104,49 @@ class Interpreter:
         value = res.register(self.visit(node.node_to_access, context))
         if res.should_return():
             return res
-
-        if not isinstance(value, (BaseClass, BaseInstance, Module)):
-            return res.failure(
-                RTError(
-                    node.pos_start,
-                    node.pos_end,
-                    "Dotted attribute access may only be used on classes, instances and modules for now",
-                    context,
-                )
-            )
+        assert value is not None
 
         attr_name = node.attr_name_tok.value
         assert isinstance(attr_name, str), "This could be a bug in the lexer"
-        orig_value = value
-        value = value.symbol_table.get(attr_name)
-        if value is None:
-            return res.failure(
-                RTError(node.pos_start, node.pos_end, f"Attribute '{attr_name}' does not exist", context)
+
+        # Handle classes, instances, and modules as before
+        if isinstance(value, (BaseClass, BaseInstance, Module)):
+            orig_value = value
+            attr_value = value.symbol_table.get(attr_name)
+            if attr_value is None:
+                return res.failure(
+                    RTError(node.pos_start, node.pos_end, f"Attribute '{attr_name}' does not exist", context)
+                )
+
+            if isinstance(orig_value, BaseInstance) and isinstance(attr_value, BaseFunction):
+                attr_value = res.register(orig_value.bind_method(attr_value))
+                if res.should_return():
+                    return res
+            else:
+                attr_value = attr_value.copy()
+            assert attr_value is not None
+            attr_value.set_pos(node.pos_start, node.pos_end).set_context(context)
+            return res.success(attr_value)
+
+        # Handle method access on built-in value types (Array, String, Number, Boolean, HashMap)
+        method_func = get_value_method(value, attr_name)
+        if method_func is not None:
+            # Create a bound method that captures the value
+            bound_value = value
+
+            @args(method_func.arg_names, method_func.defaults)
+            def bound_method(ctx: Context) -> RTResult[Value]:
+                return method_func(bound_value, ctx)
+
+            builtin_func = BuiltInFunction(attr_name, bound_method)
+            builtin_func.set_pos(node.pos_start, node.pos_end).set_context(context)
+            return res.success(builtin_func)
+
+        return res.failure(
+            RTError(
+                node.pos_start,
+                node.pos_end,
+                f"'{type(value).__name__}' object has no attribute '{attr_name}'",
+                context,
             )
-
-        if isinstance(orig_value, BaseInstance) and isinstance(value, BaseFunction):
-            value = res.register(orig_value.bind_method(value))
-            if res.should_return():
-                return res
-        else:
-            value = value.copy()
-        assert value is not None
-        value.set_pos(node.pos_start, node.pos_end).set_context(context)
-
-        return res.success(value)
+        )
