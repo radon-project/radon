@@ -98,10 +98,7 @@ def shell() -> None:
 
 
 def usage(program_name: str, stream: IO[str]) -> None:
-    print(
-        f"Usage: {program_name} [source_file] [--command | -c <cmd>] [--version | -v] [--help | -h]",
-        file=stream,
-    )
+    print(f"Usage: {program_name} [source_file] [--command | -c <cmd>] [--version | -v] [--help | -h]", file=stream)
     print(
         """
 Options and arguments:

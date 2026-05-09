@@ -81,14 +81,14 @@ class ForegroundColor(Enum):
     TRANSPARENT = "\033[0m"
 
     # Syntax highlight palette — matches radon-project.github.io token colors
-    SYNTAX_KEYWORD    = "\033[38;2;125;211;252m"  # #7dd3fc  light sky blue
-    SYNTAX_STRING     = "\033[38;2;253;230;138m"  # #fde68a  warm amber
-    SYNTAX_BUILTIN    = "\033[38;2;52;211;153m"   # #34d399  emerald
-    SYNTAX_NUMBER     = "\033[38;2;251;146;60m"   # #fb923c  orange
-    SYNTAX_OPERATOR   = "\033[38;2;248;113;113m"  # #f87171  salmon
-    SYNTAX_COMMENT    = "\033[38;2;107;114;128m"  # #6b7280  muted gray
-    SYNTAX_PUNCTUATION= "\033[38;2;148;163;184m"  # #94a3b8  slate gray
-    SYNTAX_FUNCTION   = "\033[38;2;192;132;252m"  # #c084fc  violet
+    SYNTAX_KEYWORD = "\033[38;2;125;211;252m"  # #7dd3fc  light sky blue
+    SYNTAX_STRING = "\033[38;2;253;230;138m"  # #fde68a  warm amber
+    SYNTAX_BUILTIN = "\033[38;2;52;211;153m"  # #34d399  emerald
+    SYNTAX_NUMBER = "\033[38;2;251;146;60m"  # #fb923c  orange
+    SYNTAX_OPERATOR = "\033[38;2;248;113;113m"  # #f87171  salmon
+    SYNTAX_COMMENT = "\033[38;2;107;114;128m"  # #6b7280  muted gray
+    SYNTAX_PUNCTUATION = "\033[38;2;148;163;184m"  # #94a3b8  slate gray
+    SYNTAX_FUNCTION = "\033[38;2;192;132;252m"  # #c084fc  violet
 
 
 class Style(Enum):
@@ -217,6 +217,7 @@ class Log:
     def blink(text: str, bold: bool = False) -> str:
         return f"{Style.BLINK.value}{text}{Style.CLEAR.value}"
 
+
 class SyntaxColor:
     """Terminal syntax highlighting using the radon-project.github.io color palette."""
 
@@ -251,6 +252,7 @@ class SyntaxColor:
     @staticmethod
     def function(text: str) -> str:
         return f"{ForegroundColor.SYNTAX_FUNCTION.value}{text}{Style.CLEAR.value}"
+
 
 class Text:
     """Text a one line color manager for your terminal."""

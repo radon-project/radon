@@ -10,7 +10,9 @@ the input when the ANSI codes are stripped.
 
 from __future__ import annotations
 
-from core.colortools import ForegroundColor, Style, SyntaxColor
+from typing import Any, Callable
+
+from core.colortools import Style, SyntaxColor
 from core.lexer import Lexer
 from core.tokens import (
     TT_EOF,
@@ -68,20 +70,45 @@ def _get_builtins() -> frozenset[str]:
     global _BUILTINS
     if not _BUILTINS:
         from core.builtin_funcs import global_symbol_table
+
         _BUILTINS = frozenset(global_symbol_table.symbols.keys())
     return _BUILTINS
 
-_OPERATOR_TYPES: frozenset[str] = frozenset({
-    TT_PLUS, TT_MINUS, TT_MUL, TT_DIV, TT_MOD, TT_POW,
-    TT_EQ, TT_EE, TT_NE, TT_LT, TT_GT, TT_LTE, TT_GTE,
-    TT_PE, TT_ME, TT_TE, TT_DE, TT_IDIV, TT_MDE, TT_POWE, TT_IDE,
-    TT_ARROW, TT_PLUS_PLUS, TT_MINUS_MINUS, TT_SPREAD, TT_UNPACK,
-})
 
-_PUNCTUATION_TYPES: frozenset[str] = frozenset({
-    TT_LPAREN, TT_RPAREN, TT_LBRACE, TT_RBRACE,
-    TT_LSQUARE, TT_RSQUARE, TT_COMMA, TT_COLON, TT_DOT,
-})
+_OPERATOR_TYPES: frozenset[str] = frozenset(
+    {
+        TT_PLUS,
+        TT_MINUS,
+        TT_MUL,
+        TT_DIV,
+        TT_MOD,
+        TT_POW,
+        TT_EQ,
+        TT_EE,
+        TT_NE,
+        TT_LT,
+        TT_GT,
+        TT_LTE,
+        TT_GTE,
+        TT_PE,
+        TT_ME,
+        TT_TE,
+        TT_DE,
+        TT_IDIV,
+        TT_MDE,
+        TT_POWE,
+        TT_IDE,
+        TT_ARROW,
+        TT_PLUS_PLUS,
+        TT_MINUS_MINUS,
+        TT_SPREAD,
+        TT_UNPACK,
+    }
+)
+
+_PUNCTUATION_TYPES: frozenset[str] = frozenset(
+    {TT_LPAREN, TT_RPAREN, TT_LBRACE, TT_RBRACE, TT_LSQUARE, TT_RSQUARE, TT_COMMA, TT_COLON, TT_DOT}
+)
 
 
 def _color_span(text: str, tok_type: str, tok_value: object, next_tok_type: str) -> str:
@@ -190,29 +217,30 @@ def highlight(source: str) -> str:
 # prompt_toolkit integration
 # ---------------------------------------------------------------------------
 
-def _make_pt_lexer():
+
+def _make_pt_lexer() -> Any:
     """
     Return a prompt_toolkit Lexer that highlights Radon source live as the
     user types.  The import is deferred so prompt_toolkit stays optional —
     if it is not installed the REPL falls back to plain input().
     """
-    from prompt_toolkit.lexers import Lexer as PTLexer
-    from prompt_toolkit.document import Document
-    from prompt_toolkit.formatted_text import ANSI
+    from prompt_toolkit.lexers import Lexer as PTLexer  # type: ignore[import-not-found]
+    from prompt_toolkit.document import Document  # type: ignore[import-not-found]
+    from prompt_toolkit.formatted_text import ANSI  # type: ignore[import-not-found]
 
-    class _RadonLexer(PTLexer):
-        def lex_document(self, document: Document):
+    class _RadonLexer(PTLexer):  # type: ignore[misc]
+        def lex_document(self, document: Document) -> Callable[[int], list[tuple[str, str]]]:
             lines = document.lines
 
-            def get_line(lineno: int):
+            def get_line(lineno: int) -> list[tuple[str, str]]:
                 if lineno >= len(lines):
                     return []
-                return [("", lines[lineno])]   # fallback: plain text per line
+                return [("", lines[lineno])]  # fallback: plain text per line
 
             # Build one highlighted string per line up-front
             highlighted = [ANSI(highlight(line)) for line in lines]
 
-            def get_line_highlighted(lineno: int):
+            def get_line_highlighted(lineno: int) -> list[tuple[str, str]]:
                 if lineno >= len(highlighted):
                     return []
                 return highlighted[lineno].__pt_formatted_text__()
@@ -223,27 +251,26 @@ def _make_pt_lexer():
 
 
 # Lazy initialization for PromptSession to avoid issues in subprocess/non-console environments
-_pt_session = None
-_PT_AVAILABLE = False
+_pt_session: Any = None
+_PT_AVAILABLE: bool = False
 
 try:
-    from prompt_toolkit import PromptSession
-    from prompt_toolkit.history import InMemoryHistory
-    from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+    from prompt_toolkit import PromptSession  # type: ignore[import-not-found]
+    from prompt_toolkit.history import InMemoryHistory  # type: ignore[import-not-found]
+    from prompt_toolkit.auto_suggest import AutoSuggestFromHistory  # type: ignore[import-not-found]
+
     _PT_AVAILABLE = True
 except ImportError:
     _PT_AVAILABLE = False
 
 
-def _get_pt_session():
+def _get_pt_session() -> Any:
     """Lazily initialize PromptSession only when needed (REPL mode)."""
     global _pt_session
     if _pt_session is None and _PT_AVAILABLE:
         try:
             _pt_session = PromptSession(
-                lexer=_make_pt_lexer(),
-                history=InMemoryHistory(),
-                auto_suggest=AutoSuggestFromHistory(),
+                lexer=_make_pt_lexer(), history=InMemoryHistory(), auto_suggest=AutoSuggestFromHistory()
             )
         except Exception:
             # Fails in non-console environments (subprocess, etc.)
