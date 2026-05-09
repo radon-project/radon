@@ -6,6 +6,7 @@ objective syntax like `arr.append(1)` instead of `arr_append(arr, 1)`.
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Callable, Optional, Protocol
 
 if TYPE_CHECKING:
@@ -418,14 +419,12 @@ class NumberMethods:
     @method([])
     def floor(n: Number, ctx: Context) -> RTResult["Value"]:
         """Return the floor of the number."""
-        import math
         return RTResult["Value"]().success(Number(math.floor(n.value)))
 
     @staticmethod
     @method([])
     def ceil(n: Number, ctx: Context) -> RTResult["Value"]:
         """Return the ceiling of the number."""
-        import math
         return RTResult["Value"]().success(Number(math.ceil(n.value)))
 
     @staticmethod
