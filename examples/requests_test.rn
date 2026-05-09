@@ -13,7 +13,7 @@ var json = Json()
 # var radon_object = json.loads(response_get)
 
 # print(type(radon_object))
-# print(arr_len(radon_object))
+# print(radon_object.length())
 
 # for post in radon_object {
 #     print(post["title"])

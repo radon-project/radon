@@ -22,7 +22,7 @@ fun main() {
     var i = 0
     for line in lines {
         if args["query"] in line {
-            arr_append(matched_lines, [i, line])
+            matched_lines.append([i, line])
         }
         i++
     }

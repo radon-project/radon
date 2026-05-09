@@ -18,7 +18,7 @@ print("Type 'exit' to stop.")
 
 while val != "exit" {
     val = input("Enter a value: ")
-    arr_append(vals, val)
+    vals.append(val)
 }
 
 print("unpacking is not implemented yet.")
