@@ -222,20 +222,33 @@ def _make_pt_lexer():
     return _RadonLexer()
 
 
+# Lazy initialization for PromptSession to avoid issues in subprocess/non-console environments
+_pt_session = None
+_PT_AVAILABLE = False
+
 try:
     from prompt_toolkit import PromptSession
     from prompt_toolkit.history import InMemoryHistory
     from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-
-    _pt_session: PromptSession = PromptSession(
-        lexer=_make_pt_lexer(),
-        history=InMemoryHistory(),
-        auto_suggest=AutoSuggestFromHistory(),
-    )
     _PT_AVAILABLE = True
 except ImportError:
     _PT_AVAILABLE = False
-    _pt_session = None  # type: ignore
+
+
+def _get_pt_session():
+    """Lazily initialize PromptSession only when needed (REPL mode)."""
+    global _pt_session
+    if _pt_session is None and _PT_AVAILABLE:
+        try:
+            _pt_session = PromptSession(
+                lexer=_make_pt_lexer(),
+                history=InMemoryHistory(),
+                auto_suggest=AutoSuggestFromHistory(),
+            )
+        except Exception:
+            # Fails in non-console environments (subprocess, etc.)
+            pass
+    return _pt_session
 
 
 def pt_input(prompt: str) -> str:
@@ -244,6 +257,7 @@ def pt_input(prompt: str) -> str:
     as the user types.  Falls back to plain input() if prompt_toolkit is
     not installed.
     """
-    if _PT_AVAILABLE and _pt_session is not None:
-        return _pt_session.prompt(prompt)
+    session = _get_pt_session()
+    if session is not None:
+        return session.prompt(prompt)
     return input(prompt)
