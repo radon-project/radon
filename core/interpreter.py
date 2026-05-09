@@ -3,7 +3,7 @@ import sys
 from typing import Callable, NoReturn, Optional, Type
 
 import core.builtin_classes as bic
-from core.builtin_funcs import BuiltInFunction, args, create_global_symbol_table, run
+from core.builtin_funcs import BuiltInFunction, create_global_symbol_table, run
 from core.colortools import Log
 from core.datatypes import (
     Array,

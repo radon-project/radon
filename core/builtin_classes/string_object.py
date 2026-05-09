@@ -359,6 +359,7 @@ class StringObject(BuiltInObject):
         if isinstance(end, Null):
             return res.success(String(self.value[start_idx:]))
         if not isinstance(end, Number):
+            assert end is not None
             return res.failure(RTError(end.pos_start, end.pos_end, "End must be a number", ctx))
         end_idx = int(end.value)
         return res.success(String(self.value[start_idx:end_idx]))

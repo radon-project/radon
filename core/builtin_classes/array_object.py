@@ -291,6 +291,7 @@ class ArrayObject(BuiltInObject):
         if isinstance(end, Null):
             return res.success(Array(self.elements[start_idx:]))
         if not isinstance(end, Number):
+            assert end is not None
             return res.failure(
                 RTError(end.pos_start, end.pos_end, "End must be a number", ctx)
             )
@@ -357,7 +358,17 @@ class ArrayObject(BuiltInObject):
     @method
     def index_of(self, ctx: Context) -> RTResult[Value]:
         """Find the index of an element (alias for find)."""
-        return self.find(ctx)
+        res = RTResult[Value]()
+        element = ctx.symbol_table.get("element")
+        assert element is not None
+        for i, val in enumerate(self.elements):
+            cmp, err = val.get_comparison_eq(element)
+            if err is not None:
+                return res.failure(err)
+            assert cmp is not None
+            if cmp.is_true():
+                return res.success(Number(i))
+        return res.success(Number(-1))
 
     @args([])
     @method

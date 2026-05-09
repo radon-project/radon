@@ -103,6 +103,7 @@ class HashMapObject(BuiltInObject):
         key = ctx.symbol_table.get("key")
         default = ctx.symbol_table.get("default")
         if not isinstance(key, String):
+            assert key is not None
             return res.failure(
                 RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
             )
@@ -120,6 +121,7 @@ class HashMapObject(BuiltInObject):
         key = ctx.symbol_table.get("key")
         value = ctx.symbol_table.get("value")
         if not isinstance(key, String):
+            assert key is not None
             return res.failure(
                 RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
             )
@@ -134,6 +136,7 @@ class HashMapObject(BuiltInObject):
         res = RTResult[Value]()
         key = ctx.symbol_table.get("key")
         if not isinstance(key, String):
+            assert key is not None
             return res.failure(
                 RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
             )
@@ -146,6 +149,7 @@ class HashMapObject(BuiltInObject):
         res = RTResult[Value]()
         key = ctx.symbol_table.get("key")
         if not isinstance(key, String):
+            assert key is not None
             return res.failure(
                 RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
             )
@@ -210,6 +214,7 @@ class HashMapObject(BuiltInObject):
         key = ctx.symbol_table.get("key")
         default = ctx.symbol_table.get("default")
         if not isinstance(key, String):
+            assert key is not None
             return res.failure(
                 RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
             )
@@ -225,8 +230,8 @@ class HashMapObject(BuiltInObject):
         """Update the hashmap with key-value pairs from another hashmap."""
         res = RTResult[Value]()
         other = ctx.symbol_table.get("other")
-        assert other is not None
         if not isinstance(other, HashMap):
+            assert other is not None
             return res.failure(
                 RTError(other.pos_start, other.pos_end, "Argument must be a hashmap", ctx)
             )
@@ -241,6 +246,7 @@ class HashMapObject(BuiltInObject):
         key = ctx.symbol_table.get("key")
         default = ctx.symbol_table.get("default")
         if not isinstance(key, String):
+            assert key is not None
             return res.failure(
                 RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
             )

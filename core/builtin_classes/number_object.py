@@ -104,6 +104,7 @@ class NumberObject(BuiltInObject):
         res = RTResult[Value]()
         digits = ctx.symbol_table.get("digits")
         if not isinstance(digits, Number):
+            assert digits is not None
             return res.failure(
                 RTError(digits.pos_start, digits.pos_end, "Digits must be a number", ctx)
             )
