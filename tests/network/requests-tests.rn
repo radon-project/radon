@@ -5,7 +5,7 @@ const json = Json()
 
 # get request testing
 const response_get = requests.get("https://jsonplaceholder.typicode.com/posts")
-assert arr_len(json.loads(response_get)) == 100
+assert json.loads(response_get).length() == 100
 
 # post request testing
 const response_post = requests.post("https://jsonplaceholder.typicode.com/posts", {"title": "foo", "body": "bar", "userId": 1})
