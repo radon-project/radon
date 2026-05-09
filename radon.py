@@ -50,9 +50,156 @@ def start_text() -> None:
     Text("to quit the shell.", ForegroundColor.GREEN, styles=[Style.BOLD]).print()
 
 
+def count_braces(line: str) -> int:
+    """Count unmatched braces in a line, ignoring braces inside strings and comments.
+
+    Returns the net brace count change for this line:
+    - Positive value means more opening braces than closing braces
+    - Negative value means more closing braces than opening braces
+    - Zero means braces are balanced
+    """
+    count = 0
+    in_string = False
+    escape_next = False
+    i = 0
+
+    while i < len(line):
+        char = line[i]
+
+        if escape_next:
+            escape_next = False
+            i += 1
+            continue
+
+        if char == "\\":
+            escape_next = True
+            i += 1
+            continue
+
+        if char == '"':
+            in_string = not in_string
+            i += 1
+            continue
+
+        if in_string:
+            i += 1
+            continue
+
+        # Check for comments (# to end of line)
+        if char == "#":
+            break
+
+        if char == "{":
+            count += 1
+        elif char == "}":
+            count -= 1
+
+        i += 1
+
+    return count
+
+
+# Keywords that can start a block with braces
+BLOCK_KEYWORDS = {"fun", "class", "if", "elif", "else", "while", "for", "try", "catch", "switch", "case", "default"}
+
+
+def expects_block(text: str) -> bool:
+    """Check if the text looks like it expects a block (has a block keyword but no opening brace).
+
+    This handles cases like:
+    - fun anything()   (no brace yet, expects block)
+    - if condition     (no brace yet, expects block)
+    - else             (no brace yet, expects block)
+    """
+    # Remove comments first
+    comment_idx = -1
+    in_string = False
+    escape_next = False
+    for i, char in enumerate(text):
+        if escape_next:
+            escape_next = False
+            continue
+        if char == "\\":
+            escape_next = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if not in_string and char == "#":
+            comment_idx = i
+            break
+
+    if comment_idx >= 0:
+        text = text[:comment_idx]
+
+    stripped = text.strip()
+    if not stripped:
+        return False
+
+    # Check if there are ANY braces in the line (outside strings)
+    # If there's at least one opening brace, the block has started
+    has_opening_brace = False
+    in_string = False
+    escape_next = False
+    for char in text:
+        if escape_next:
+            escape_next = False
+            continue
+        if char == "\\":
+            escape_next = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if char == "{":
+            has_opening_brace = True
+            break
+
+    # If there's already an opening brace, the block has started - don't expect more
+    if has_opening_brace:
+        return False
+
+    # Check if the line contains a block keyword
+    # We need to find actual keywords, not parts of identifiers
+    words = []
+    current_word = ""
+    in_string = False
+    escape_next = False
+
+    for char in stripped:
+        if escape_next:
+            escape_next = False
+            continue
+        if char == "\\":
+            escape_next = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            current_word = ""
+            continue
+        if in_string:
+            continue
+
+        if char.isalnum() or char == "_":
+            current_word += char
+        else:
+            if current_word:
+                words.append(current_word)
+            current_word = ""
+
+    if current_word:
+        words.append(current_word)
+
+    # Check if any word is a block keyword
+    has_block_keyword = any(word in BLOCK_KEYWORDS for word in words)
+
+    return has_block_keyword
+
+
 def shell() -> None:
     start_text()
-    brace_count = 0
 
     while True:
         try:
@@ -63,17 +210,29 @@ def shell() -> None:
             if text.strip() == "exit":
                 break
 
-            if text.strip()[-1] == "{":
-                brace_count += 1
-                while True:
-                    text += "\n" + pt_input("... ")
-                    if text.strip()[-1] == "{":
-                        brace_count += 1
-                    elif text.strip()[-1] == "}" or text.strip()[0] == "}":
-                        brace_count -= 1
+            # Count braces in the initial line
+            brace_count = count_braces(text)
 
-                    if brace_count == 0:
-                        break
+            # Check if the line expects a block but doesn't have one
+            # This handles cases like "fun anything()" on its own line
+            awaiting_block = brace_count == 0 and expects_block(text)
+
+            # Continue reading lines while braces are unbalanced or we're awaiting a block
+            while brace_count > 0 or awaiting_block:
+                new_line = pt_input("... ")
+                text += "\n" + new_line
+                line_brace_count = count_braces(new_line)
+                brace_count += line_brace_count
+
+                # If we were awaiting a block and got an opening brace, we're no longer awaiting
+                if awaiting_block and line_brace_count > 0:
+                    awaiting_block = False
+                # If we're still at brace_count 0 and no braces found, check if this line also expects a block
+                elif awaiting_block and line_brace_count == 0:
+                    # Continue awaiting if the line is not empty (user might be adding more to the statement)
+                    # or stop if user entered an empty line (to allow them to submit incomplete code for error)
+                    if new_line.strip() == "":
+                        awaiting_block = False
 
             result: list[Optional[Value]]
             error: Error | RTError | None
