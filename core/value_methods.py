@@ -26,14 +26,16 @@ class ValueMethod(Protocol):
     def __call__(self, value: "Value", ctx: Context) -> RTResult["Value"]: ...
 
 
-def method(arg_names: list[str], defaults: Optional[list[Optional["Value"]]] = None) -> Callable:
+def method(
+    arg_names: list[str], defaults: Optional[list[Optional["Value"]]] = None
+) -> Callable[[Callable[..., RTResult["Value"]]], Callable[..., RTResult["Value"]]]:
     """Decorator to define method arguments and defaults."""
     if defaults is None:
         defaults = [None] * len(arg_names)
 
-    def decorator(func: Callable) -> Callable:
-        func.arg_names = arg_names  # type: ignore
-        func.defaults = defaults  # type: ignore
+    def decorator(func: Callable[..., RTResult["Value"]]) -> Callable[..., RTResult["Value"]]:
+        func.arg_names = arg_names  # type: ignore[attr-defined]
+        func.defaults = defaults  # type: ignore[attr-defined]
         return func
 
     return decorator
@@ -64,20 +66,11 @@ class ArrayMethods:
         res = RTResult["Value"]()
         index = ctx.symbol_table.get("index")
         if not isinstance(index, Number):
-            return res.failure(
-                RTError(arr.pos_start, arr.pos_end, "Index must be a number", ctx)
-            )
+            return res.failure(RTError(arr.pos_start, arr.pos_end, "Index must be a number", ctx))
         try:
             element = arr.elements.pop(int(index.value))
         except IndexError:
-            return res.failure(
-                RTError(
-                    arr.pos_start,
-                    arr.pos_end,
-                    "Pop index out of range",
-                    ctx,
-                )
-            )
+            return res.failure(RTError(arr.pos_start, arr.pos_end, "Pop index out of range", ctx))
         return res.success(element)
 
     @staticmethod
@@ -87,9 +80,7 @@ class ArrayMethods:
         res = RTResult["Value"]()
         other = ctx.symbol_table.get("array")
         if not isinstance(other, Array):
-            return res.failure(
-                RTError(arr.pos_start, arr.pos_end, "Argument must be an array", ctx)
-            )
+            return res.failure(RTError(arr.pos_start, arr.pos_end, "Argument must be an array", ctx))
         arr.elements.extend(other.elements)
         return res.success(Null.null())
 
@@ -131,9 +122,7 @@ class ArrayMethods:
     @method([])
     def is_empty(arr: Array, ctx: Context) -> RTResult["Value"]:
         """Check if the array is empty."""
-        return RTResult["Value"]().success(
-            Boolean.true() if len(arr.elements) == 0 else Boolean.false()
-        )
+        return RTResult["Value"]().success(Boolean.true() if len(arr.elements) == 0 else Boolean.false())
 
     @staticmethod
     @method([])
@@ -219,9 +208,7 @@ class StringMethods:
         res = RTResult["Value"]()
         sep = ctx.symbol_table.get("separator")
         if not isinstance(sep, String):
-            return res.failure(
-                RTError(s.pos_start, s.pos_end, "Separator must be a string", ctx)
-            )
+            return res.failure(RTError(s.pos_start, s.pos_end, "Separator must be a string", ctx))
         parts = s.value.split(sep.value) if sep.value else list(s.value)
         return res.success(Array([String(p) for p in parts]))
 
@@ -232,9 +219,7 @@ class StringMethods:
         res = RTResult["Value"]()
         sub = ctx.symbol_table.get("substring")
         if not isinstance(sub, String):
-            return res.failure(
-                RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx)
-            )
+            return res.failure(RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx))
         return res.success(Number(s.value.find(sub.value)))
 
     @staticmethod
@@ -245,9 +230,7 @@ class StringMethods:
         old = ctx.symbol_table.get("old")
         new = ctx.symbol_table.get("new")
         if not isinstance(old, String) or not isinstance(new, String):
-            return res.failure(
-                RTError(s.pos_start, s.pos_end, "Arguments must be strings", ctx)
-            )
+            return res.failure(RTError(s.pos_start, s.pos_end, "Arguments must be strings", ctx))
         return res.success(String(s.value.replace(old.value, new.value)))
 
     @staticmethod
@@ -257,9 +240,7 @@ class StringMethods:
         res = RTResult["Value"]()
         chars = ctx.symbol_table.get("chars")
         if not isinstance(chars, String):
-            return res.failure(
-                RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx)
-            )
+            return res.failure(RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx))
         if chars.value:
             return res.success(String(s.value.strip(chars.value)))
         return res.success(String(s.value.strip()))
@@ -271,9 +252,7 @@ class StringMethods:
         res = RTResult["Value"]()
         chars = ctx.symbol_table.get("chars")
         if not isinstance(chars, String):
-            return res.failure(
-                RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx)
-            )
+            return res.failure(RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx))
         if chars.value:
             return res.success(String(s.value.lstrip(chars.value)))
         return res.success(String(s.value.lstrip()))
@@ -285,9 +264,7 @@ class StringMethods:
         res = RTResult["Value"]()
         chars = ctx.symbol_table.get("chars")
         if not isinstance(chars, String):
-            return res.failure(
-                RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx)
-            )
+            return res.failure(RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx))
         if chars.value:
             return res.success(String(s.value.rstrip(chars.value)))
         return res.success(String(s.value.rstrip()))
@@ -299,9 +276,7 @@ class StringMethods:
         res = RTResult["Value"]()
         prefix = ctx.symbol_table.get("prefix")
         if not isinstance(prefix, String):
-            return res.failure(
-                RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx)
-            )
+            return res.failure(RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx))
         return res.success(Boolean(s.value.startswith(prefix.value)))
 
     @staticmethod
@@ -311,9 +286,7 @@ class StringMethods:
         res = RTResult["Value"]()
         suffix = ctx.symbol_table.get("suffix")
         if not isinstance(suffix, String):
-            return res.failure(
-                RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx)
-            )
+            return res.failure(RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx))
         return res.success(Boolean(s.value.endswith(suffix.value)))
 
     @staticmethod
@@ -323,13 +296,9 @@ class StringMethods:
         res = RTResult["Value"]()
         sub = ctx.symbol_table.get("substring")
         if not isinstance(sub, String):
-            return res.failure(
-                RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx)
-            )
+            return res.failure(RTError(s.pos_start, s.pos_end, "Argument must be a string", ctx))
         if not sub.value:
-            return res.failure(
-                RTError(s.pos_start, s.pos_end, "Cannot count empty string", ctx)
-            )
+            return res.failure(RTError(s.pos_start, s.pos_end, "Cannot count empty string", ctx))
         return res.success(Number(s.value.count(sub.value)))
 
     @staticmethod
@@ -339,9 +308,7 @@ class StringMethods:
         res = RTResult["Value"]()
         arr = ctx.symbol_table.get("array")
         if not isinstance(arr, Array):
-            return res.failure(
-                RTError(s.pos_start, s.pos_end, "Argument must be an array", ctx)
-            )
+            return res.failure(RTError(s.pos_start, s.pos_end, "Argument must be an array", ctx))
         str_parts = []
         for elem in arr.elements:
             if isinstance(elem, String):
@@ -410,9 +377,7 @@ class NumberMethods:
         res = RTResult["Value"]()
         digits = ctx.symbol_table.get("digits")
         if not isinstance(digits, Number):
-            return res.failure(
-                RTError(n.pos_start, n.pos_end, "Digits must be a number", ctx)
-            )
+            return res.failure(RTError(n.pos_start, n.pos_end, "Digits must be a number", ctx))
         return res.success(Number(round(n.value, int(digits.value))))
 
     @staticmethod
@@ -467,9 +432,7 @@ class HashMapMethods:
     @method([])
     def keys(hm: HashMap, ctx: Context) -> RTResult["Value"]:
         """Return array of keys."""
-        return RTResult["Value"]().success(
-            Array([String(k) for k in hm.values.keys()])
-        )
+        return RTResult["Value"]().success(Array([String(k) for k in hm.values.keys()]))
 
     @staticmethod
     @method([])
@@ -494,9 +457,7 @@ class HashMapMethods:
         key = ctx.symbol_table.get("key")
         default = ctx.symbol_table.get("default")
         if not isinstance(key, String):
-            return res.failure(
-                RTError(hm.pos_start, hm.pos_end, "Key must be a string", ctx)
-            )
+            return res.failure(RTError(hm.pos_start, hm.pos_end, "Key must be a string", ctx))
         value = hm.values.get(key.value)
         if value is None:
             assert default is not None
@@ -511,9 +472,7 @@ class HashMapMethods:
         key = ctx.symbol_table.get("key")
         value = ctx.symbol_table.get("value")
         if not isinstance(key, String):
-            return res.failure(
-                RTError(hm.pos_start, hm.pos_end, "Key must be a string", ctx)
-            )
+            return res.failure(RTError(hm.pos_start, hm.pos_end, "Key must be a string", ctx))
         assert value is not None
         hm.values[key.value] = value
         return res.success(Null.null())
@@ -525,9 +484,7 @@ class HashMapMethods:
         res = RTResult["Value"]()
         key = ctx.symbol_table.get("key")
         if not isinstance(key, String):
-            return res.failure(
-                RTError(hm.pos_start, hm.pos_end, "Key must be a string", ctx)
-            )
+            return res.failure(RTError(hm.pos_start, hm.pos_end, "Key must be a string", ctx))
         return res.success(Boolean(key.value in hm.values))
 
     @staticmethod
@@ -537,13 +494,9 @@ class HashMapMethods:
         res = RTResult["Value"]()
         key = ctx.symbol_table.get("key")
         if not isinstance(key, String):
-            return res.failure(
-                RTError(hm.pos_start, hm.pos_end, "Key must be a string", ctx)
-            )
+            return res.failure(RTError(hm.pos_start, hm.pos_end, "Key must be a string", ctx))
         if key.value not in hm.values:
-            return res.failure(
-                RTError(hm.pos_start, hm.pos_end, f"Key '{key.value}' not found", ctx)
-            )
+            return res.failure(RTError(hm.pos_start, hm.pos_end, f"Key '{key.value}' not found", ctx))
         del hm.values[key.value]
         return res.success(Null.null())
 
@@ -593,4 +546,4 @@ def get_value_method(value: "Value", method_name: str) -> Optional[ValueMethod]:
     method_func = getattr(method_class, method_name, None)
     if method_func is None or not hasattr(method_func, "arg_names"):
         return None
-    return method_func  # type: ignore[return-value]
+    return method_func  # type: ignore[no-any-return]

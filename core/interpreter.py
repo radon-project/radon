@@ -1144,9 +1144,6 @@ class Interpreter:
 
         return res.failure(
             RTError(
-                node.pos_start,
-                node.pos_end,
-                f"'{type(value).__name__}' object has no attribute '{attr_name}'",
-                context,
+                node.pos_start, node.pos_end, f"'{type(value).__name__}' object has no attribute '{attr_name}'", context
             )
         )
