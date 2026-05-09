@@ -6,10 +6,10 @@ const FULLNAME_NAMED = _i++
 _i = 0
 
 fun str_starts_with(s, prefix) {
-    if str_len(s) < str_len(prefix) {
+    if s.length() < prefix.length() {
         return false
     }
-    for i = 0 to str_len(prefix) {
+    for i = 0 to prefix.length() {
         if s[i] != prefix[i] {
             return false
         }
@@ -32,7 +32,7 @@ class Argparser {
         if is_null(conversor) {
             conversor = fun(x) -> x
         }
-        arr_append(this.pos_opts, {"name": name, "desc": desc, "default": default_, "required": required, "conversor": conversor})
+        this.pos_opts.append({"name": name, "desc": desc, "default": default_, "required": required, "conversor": conversor})
         return this
     }
 
@@ -40,7 +40,7 @@ class Argparser {
         assert str_starts_with(fullname, "--"), "Flags must start with '--'"
         assert str_starts_with(shortname, "-"), "Flag shortnames must start with '-'"
         assert not str_starts_with(shortname, "--"), "Flag shortnames must not start with '--'"
-        arr_append(this.flags, {"fullname": fullname, "shortname": shortname[1:], "desc": desc})
+        this.flags.append({"fullname": fullname, "shortname": shortname[1:], "desc": desc})
         return this
     }
 
@@ -49,7 +49,7 @@ class Argparser {
         if is_null(conversor) {
             conversor = fun(x) -> x
         }
-        arr_append(this.named, {"name": name, "desc": desc, "default": default_, "conversor": conversor})
+        this.named.append({"name": name, "desc": desc, "default": default_, "conversor": conversor})
         return this
     }
 
@@ -114,7 +114,7 @@ class Argparser {
         var pos_opts = this.pos_opts
         var flags = this.flags
 
-        var program_name = arr_pop(args, 0)
+        var program_name = args.pop(0)
         var parsed = {}
         var required_opts = {}
         for pos_opt in pos_opts {
@@ -130,18 +130,18 @@ class Argparser {
             parsed[named["name"]] = named["default"]
         }
         var pos_opts_idx = 0
-        while arr_len(args) > 0 {
-            var arg = arr_pop(args, 0)
+        while args.length() > 0 {
+            var arg = args.pop(0)
             if str_starts_with(arg, "-") {
                 if str_starts_with(arg, "--") {
                     switch this.fullname_type(arg) {
                         case FULLNAME_INVALID -> this.report_error(program_name, "unknown flag: '"+arg+"'")
                         case FULLNAME_FLAG -> parsed[arg] = true
                         case FULLNAME_NAMED {
-                            if arr_len(args) == 0 {
+                            if args.length() == 0 {
                                 this.report_error(program_name, "missing value for flag: '"+arg+"'")
                             }
-                            const value = arr_pop(args, 0)
+                            const value = args.pop(0)
                             const conversor = this.get_named_conversor(arg)
                             try {
                                 parsed[arg] = conversor(value)
@@ -162,7 +162,7 @@ class Argparser {
                     }
                 }
             } else {
-                if pos_opts_idx >= arr_len(pos_opts) {
+                if pos_opts_idx >= pos_opts.length() {
                     this.report_error(program_name, "unexpected positional argument: '" + arg + "'")
                 }
                 const arg_name = pos_opts[pos_opts_idx]["name"]
