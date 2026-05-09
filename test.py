@@ -41,8 +41,15 @@ def run_test(test: str) -> Output:
     return Output(proc.returncode, stdout, stderr)
 
 
+# Directories to skip during test discovery (contain tests requiring external resources)
+SKIP_DIRS = {"network"}
+
+
 def run_tests_rec(test_path: str, failed_tests: list[str]) -> None:
     if os.path.isdir(test_path):
+        # Skip directories that require external resources (e.g., network)
+        if os.path.basename(test_path) in SKIP_DIRS:
+            return
         for test in os.listdir(test_path):
             run_tests_rec(os.path.join(test_path, test), failed_tests)
     elif os.path.isfile(test_path):
@@ -88,6 +95,9 @@ def run_tests(test_path: str = "tests") -> int:
 
 def record_tests(test_path: str = "tests") -> int:
     if os.path.isdir(test_path):
+        # Skip directories that require external resources (e.g., network)
+        if os.path.basename(test_path) in SKIP_DIRS:
+            return 0
         for test in os.listdir(test_path):
             ret = record_tests(os.path.join(test_path, test))
             if ret != 0:
