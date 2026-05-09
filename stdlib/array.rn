@@ -18,7 +18,7 @@ class Array {
         const new_elements = []
 
         for elt in this.list {
-            arr_append(new_elements, func(elt))
+            new_elements.append(func(elt))
         }
 
         return new_elements
@@ -26,15 +26,15 @@ class Array {
 
     fun append(item) {
         "Append any item to this array."
-        return arr_append(this.list, item)
+        return this.list.append(item)
     }
     fun pop(index) {
         "Pop out item by index number."
-        return arr_pop(this.list, index)
+        return this.list.pop(index)
     }
     fun extend(list) {
         "Extend current array with new."
-        return arr_extend(this.list, list)
+        return this.list.extend(list)
     }
     fun find(index) {
         "Find any item in array."
