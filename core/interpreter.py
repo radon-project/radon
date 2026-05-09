@@ -1,14 +1,16 @@
 import os
 import sys
-from typing import Callable, NoReturn, Optional
+from typing import Callable, NoReturn, Optional, Type
 
-from core.builtin_funcs import create_global_symbol_table, run
+import core.builtin_classes as bic
+from core.builtin_funcs import BuiltInFunction, create_global_symbol_table, run
 from core.colortools import Log
 from core.datatypes import (
     Array,
     BaseClass,
     BaseFunction,
     BaseInstance,
+    Boolean,
     Class,
     Function,
     HashMap,
@@ -1103,33 +1105,77 @@ class Interpreter:
         value = res.register(self.visit(node.node_to_access, context))
         if res.should_return():
             return res
-
-        if not isinstance(value, (BaseClass, BaseInstance, Module)):
-            return res.failure(
-                RTError(
-                    node.pos_start,
-                    node.pos_end,
-                    "Dotted attribute access may only be used on classes, instances and modules for now",
-                    context,
-                )
-            )
+        assert value is not None
 
         attr_name = node.attr_name_tok.value
         assert isinstance(attr_name, str), "This could be a bug in the lexer"
-        orig_value = value
-        value = value.symbol_table.get(attr_name)
-        if value is None:
-            return res.failure(
-                RTError(node.pos_start, node.pos_end, f"Attribute '{attr_name}' does not exist", context)
-            )
 
-        if isinstance(orig_value, BaseInstance) and isinstance(value, BaseFunction):
-            value = res.register(orig_value.bind_method(value))
+        # Handle classes, instances, and modules as before
+        if isinstance(value, (BaseClass, BaseInstance, Module)):
+            orig_value = value
+            attr_value = value.symbol_table.get(attr_name)
+            if attr_value is None:
+                return res.failure(
+                    RTError(node.pos_start, node.pos_end, f"Attribute '{attr_name}' does not exist", context)
+                )
+
+            if isinstance(orig_value, BaseInstance) and isinstance(attr_value, BaseFunction):
+                attr_value = res.register(orig_value.bind_method(attr_value))
+                if res.should_return():
+                    return res
+            else:
+                attr_value = attr_value.copy()
+            assert attr_value is not None
+            attr_value.set_pos(node.pos_start, node.pos_end).set_context(context)
+            return res.success(attr_value)
+
+        # Handle method access on built-in value types using BuiltIn wrapper classes
+        wrapper_class = _get_value_wrapper_class(value)
+        if wrapper_class is not None:
+            # Create a BuiltInClass for the wrapper
+            builtin_class = bic.BuiltInClass(type(value).__name__, wrapper_class.__doc__, wrapper_class)
+            builtin_class.set_pos(node.pos_start, node.pos_end).set_context(context)
+
+            # Create an instance that wraps the primitive value
+            inst_res = builtin_class.create([value])
+            inst = res.register(inst_res)
             if res.should_return():
                 return res
-        else:
-            value = value.copy()
-        assert value is not None
-        value.set_pos(node.pos_start, node.pos_end).set_context(context)
+            assert inst is not None
 
-        return res.success(value)
+            # Initialize the instance with the primitive value
+            init_res = builtin_class.init(inst, [value], {})
+            if init_res.error:
+                return res.failure(init_res.error)
+
+            # Look up the method in the wrapper's symbol table
+            method = wrapper_class.__symbol_table__.get(attr_name)
+            if method is not None and isinstance(method, BuiltInFunction):
+                # Bind the method to the instance
+                bound_method = res.register(inst.bind_method(method))
+                if res.should_return():
+                    return res
+                assert bound_method is not None
+                bound_method.set_pos(node.pos_start, node.pos_end).set_context(context)
+                return res.success(bound_method)
+
+        return res.failure(
+            RTError(
+                node.pos_start, node.pos_end, f"'{type(value).__name__}' object has no attribute '{attr_name}'", context
+            )
+        )
+
+
+# Registry mapping primitive types to their BuiltIn wrapper classes
+_VALUE_WRAPPER_REGISTRY: dict[Type[Value], Type[bic.BuiltInObject]] = {
+    Array: bic.ArrayObject,
+    String: bic.StringObject,
+    Number: bic.NumberObject,
+    Boolean: bic.BooleanObject,
+    HashMap: bic.HashMapObject,
+}
+
+
+def _get_value_wrapper_class(value: Value) -> Optional[Type[bic.BuiltInObject]]:
+    """Get the BuiltIn wrapper class for a primitive value type."""
+    return _VALUE_WRAPPER_REGISTRY.get(type(value))

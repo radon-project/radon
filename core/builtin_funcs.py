@@ -217,168 +217,6 @@ class BuiltInFunction(BaseFunction):
         is_func = isinstance(exec_ctx.symbol_table.get("value"), BaseFunction)
         return RTResult[Value]().success(Boolean.true() if is_func else Boolean.false())
 
-    @args(["array", "value"])
-    def execute_arr_append(self, exec_ctx: Context) -> RTResult[Value]:
-        array = exec_ctx.symbol_table.get("array")
-        value = exec_ctx.symbol_table.get("value")
-        assert value is not None
-
-        if not isinstance(array, Array):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx)
-            )
-
-        array.elements.append(value)
-        return RTResult[Value]().success(Null.null())
-
-    @args(["array", "index"], [None, Number(-1)])
-    def execute_arr_pop(self, exec_ctx: Context) -> RTResult[Value]:
-        array = exec_ctx.symbol_table.get("array")
-        index = exec_ctx.symbol_table.get("index")
-
-        if not isinstance(array, Array):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx)
-            )
-
-        if not isinstance(index, Number):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "Second argument must be number", exec_ctx)
-            )
-
-        try:
-            element = array.elements.pop(int(index.value))
-        except Exception:
-            return RTResult[Value]().failure(
-                RTError(
-                    self.pos_start,
-                    self.pos_end,
-                    "Element at this index could not be removed from array because index is out of bounds",
-                    exec_ctx,
-                )
-            )
-        return RTResult[Value]().success(element)
-
-    @args(["arrayA", "arrayB"])
-    def execute_arr_extend(self, exec_ctx: Context) -> RTResult[Value]:
-        arrayA = exec_ctx.symbol_table.get("arrayA")
-        arrayB = exec_ctx.symbol_table.get("arrayB")
-
-        if not isinstance(arrayA, Array):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx)
-            )
-
-        if not isinstance(arrayB, Array):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "Second argument must be array", exec_ctx)
-            )
-
-        arrayA.elements.extend(arrayB.elements)
-        return RTResult[Value]().success(Null.null())
-
-    @args(["array", "value"])
-    def execute_arr_chunk(self, exec_ctx: Context) -> RTResult[Value]:
-        array = exec_ctx.symbol_table.get("array")
-        value = exec_ctx.symbol_table.get("value")
-
-        if not isinstance(array, Array):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "First argument must be array", exec_ctx)
-            )
-
-        if not isinstance(value, Number):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "Second argument must be number", exec_ctx)
-            )
-
-        val = int(value.value)
-
-        try:
-            _list = Array([Array(array[i : i + val]) for i in range(0, len(array), val)])  # type: ignore
-        except IndexError:
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "Could't not complete chunk", exec_ctx)
-            )
-        return RTResult[Value]().success(_list)
-
-    @args(["array", "index"])
-    def execute_arr_get(self, exec_ctx: Context) -> RTResult[Value]:
-        array = exec_ctx.symbol_table.get("array")
-        index = exec_ctx.symbol_table.get("index")
-
-        if not isinstance(array, Array):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "First argument must be an array", exec_ctx)
-            )
-        if not isinstance(index, Number):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "Second argument must be a number", exec_ctx)
-            )
-        try:
-            element = array.elements[int(index.value)]
-            return RTResult[Value]().success(element)
-        except Exception as exe:
-            return RTResult[Value]().failure(RTError(self.pos_start, self.pos_end, str(exe), exec_ctx))
-
-    @args(["array"])
-    def execute_arr_len(self, exec_ctx: Context) -> RTResult[Value]:
-        array_ = exec_ctx.symbol_table.get("array")
-
-        if not isinstance(array_, Array):
-            return RTResult[Value]().failure(RTError(self.pos_start, self.pos_end, "Argument must be array", exec_ctx))
-
-        return RTResult[Value]().success(Number(len(array_.elements)))
-
-    @args(["string"])
-    def execute_str_len(self, exec_ctx: Context) -> RTResult[Value]:
-        string = exec_ctx.symbol_table.get("string")
-
-        if not isinstance(string, String):
-            return RTResult[Value]().failure(RTError(self.pos_start, self.pos_end, "Argument must be string", exec_ctx))
-
-        return RTResult[Value]().success(Number(len(string.value)))
-
-    @args(["string", "value"])
-    def execute_str_find(self, exec_ctx: Context) -> RTResult[Value]:
-        string = exec_ctx.symbol_table.get("string")
-        value = exec_ctx.symbol_table.get("value")
-
-        if not isinstance(string, String):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "First argument must be string", exec_ctx)
-            )
-
-        if not isinstance(value, String):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "Second argument must be string", exec_ctx)
-            )
-
-        try:
-            return RTResult[Value]().success(Number(string.value.find(value.value)))
-        except Exception:
-            return RTResult[Value]().failure(RTError(self.pos_start, self.pos_end, "Could't find that index", exec_ctx))
-
-    @args(["string", "index"])
-    def execute_str_get(self, exec_ctx: Context) -> RTResult[Value]:
-        string = exec_ctx.symbol_table.get("string")
-        index = exec_ctx.symbol_table.get("index")
-
-        if not isinstance(string, String):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "First argument must be string", exec_ctx)
-            )
-
-        if not isinstance(index, Number):
-            return RTResult[Value]().failure(
-                RTError(self.pos_start, self.pos_end, "Second argument must be number", exec_ctx)
-            )
-
-        try:
-            return RTResult[Value]().success(String(string.value[int(index.value)]))
-        except IndexError:
-            return RTResult[Value]().failure(RTError(self.pos_start, self.pos_end, "Could't find that index", exec_ctx))
-
     @args(["value"])
     def execute_int(self, exec_ctx: Context) -> RTResult[Value]:
         """Convert to Integer value."""
@@ -456,6 +294,7 @@ class BuiltInFunction(BaseFunction):
     @args(["obj"])
     def execute_dir(self, exec_ctx: Context) -> RTResult[Value]:
         from core.builtin_classes.base_classes import BuiltInInstance
+        from core.interpreter import _VALUE_WRAPPER_REGISTRY
 
         obj: Module = exec_ctx.symbol_table.get("obj")  # type: ignore
 
@@ -475,11 +314,20 @@ class BuiltInFunction(BaseFunction):
                 return True
             return False
 
-        # TODO: Datatypes will be supported after fixing OOP implementation.
+        # Support primitives by returning their available methods
         if variable_check(obj):
-            return RTResult[Value]().failure(
-                Error(self.pos_start, self.pos_end, "TypeError", "Argument is must be Modules or Classes.")
-            )
+            # Look up the wrapper class for this primitive type
+            wrapper_class = _VALUE_WRAPPER_REGISTRY.get(type(obj))
+            if wrapper_class is not None:
+                # Get methods marked with @method decorator
+                methods: list[str] = []
+                for name in dir(wrapper_class):
+                    attr = getattr(wrapper_class, name, None)
+                    if callable(attr) and hasattr(attr, "_is_method") and attr._is_method:
+                        methods.append(name)
+                return RTResult[Value]().success(Array([String(m) for m in sorted(methods)]))
+            # If no wrapper class, return empty array
+            return RTResult[Value]().success(Array([]))
 
         variables: set[str] = set()
         functions: set[str] = set()
@@ -705,17 +553,6 @@ def create_global_symbol_table() -> SymbolTable:
     ret.set("is_array", BuiltInFunction("is_array"))
     ret.set("is_fun", BuiltInFunction("is_fun"))
     ret.set("is_null", BuiltInFunction("is_null"))
-    # Internal array methods
-    ret.set("arr_append", BuiltInFunction("arr_append"))
-    ret.set("arr_pop", BuiltInFunction("arr_pop"))
-    ret.set("arr_extend", BuiltInFunction("arr_extend"))
-    ret.set("arr_len", BuiltInFunction("arr_len"))
-    ret.set("arr_chunk", BuiltInFunction("arr_chunk"))
-    ret.set("arr_get", BuiltInFunction("arr_get"))
-    # String methods
-    ret.set("str_len", BuiltInFunction("str_len"))
-    ret.set("str_find", BuiltInFunction("str_find"))
-    ret.set("str_get", BuiltInFunction("str_get"))
     # Typecase methods
     ret.set("int", BuiltInFunction("int"))
     ret.set("float", BuiltInFunction("float"))
