@@ -1,0 +1,150 @@
+# Node class for circular linked list
+class Node {
+    fun __constructor__(value) {
+        this.value = value
+        # Initialize next to self for standalone circular node
+        this.next = this
+    }
+
+    fun __eq__(value) {
+        return this.value == value
+    }
+}
+
+# CircularLinkedList with various methods
+class CircularLinkedList {
+    fun __constructor__() {
+        this.head = null
+    }
+
+    # Append a node to the end of the list
+    fun append(value) {
+        var node = Node(value)
+        if this.head == null {
+            this.head = node
+        } else {
+            var temp = this.head
+            # Traverse to last node
+            while temp.next != this.head {
+                temp = temp.next
+            }
+            temp.next = node
+            node.next = this.head
+        }
+    }
+
+    # Insert a node at the beginning
+    fun prepend(value) {
+        var node = Node(value)
+        if this.head == null {
+            this.head = node
+        } else {
+            var temp = this.head
+            while temp.next != this.head {
+                temp = temp.next
+            }
+            temp.next = node
+            node.next = this.head
+            this.head = node
+        }
+    }
+
+    # Delete first occurrence of value
+    fun delete(value) {
+        if this.head == null {
+            print("List is empty")
+            return
+        }
+        curr = this.head
+
+        # If head needs deletion
+        if curr.value == value {
+            if curr.next == this.head {
+                this.head = null
+            } else {
+                temp = this.head
+                while temp.next != this.head {
+                    temp = temp.next
+                }
+                temp.next = this.head.next
+                this.head = this.head.next
+            }
+            return
+        }
+
+        prev = curr
+        curr = curr.next
+        while curr != this.head {
+            if curr.value == value {
+                prev.next = curr.next
+                return
+            }
+            prev = curr
+            curr = curr.next
+        }
+        print("Value not found")
+    }
+
+    # Display list contents
+    fun display() {
+        if this.head == null {
+            print("List is empty")
+            return
+        }
+        temp = this.head
+        output = ""
+        while True {
+            output += str(temp.value) + " -> "
+            temp = temp.next
+            if temp == this.head {
+                break
+            }
+        }
+        output += "(head)"
+        print(output)
+    }
+
+    # Search for a value
+    fun search(value) {
+        if this.head == null {
+            return false
+        }
+        temp = this.head
+        while True {
+            if temp.value == value {
+                return true
+            }
+            temp = temp.next
+            if temp == this.head {
+                break
+            }
+        }
+        return false
+    }
+
+    # Return number of nodes
+    fun length() {
+        if this.head == null {
+            return 0
+        }
+        count = 1
+        temp = this.head.next
+        while temp != this.head {
+            count += 1
+            temp = temp.next
+        }
+        return count
+    }
+}
+
+# Example usage
+var cll = CircularLinkedList()
+cll.append(10)
+cll.append(20)
+cll.prepend(5)
+cll.display()                  # Expected: 5 -> 10 -> 20 -> (head)
+print("Length:", cll.length()) # Expected: Length: 3
+print("Search 10:", cll.search(10))
+cll.delete(10)
+cll.display()                  # Expected: 5 -> 20 -> (head)
+print("Search 10:", cll.search(10))

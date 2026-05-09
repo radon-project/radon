@@ -1,15 +1,16 @@
 import os
 import sys
-from typing import Callable, NoReturn, Optional
+from typing import Callable, NoReturn, Optional, Type
 
+import core.builtin_classes as bic
 from core.builtin_funcs import BuiltInFunction, args, create_global_symbol_table, run
-from core.value_methods import get_value_method
 from core.colortools import Log
 from core.datatypes import (
     Array,
     BaseClass,
     BaseFunction,
     BaseInstance,
+    Boolean,
     Class,
     Function,
     HashMap,
@@ -1128,22 +1129,53 @@ class Interpreter:
             attr_value.set_pos(node.pos_start, node.pos_end).set_context(context)
             return res.success(attr_value)
 
-        # Handle method access on built-in value types (Array, String, Number, Boolean, HashMap)
-        method_func = get_value_method(value, attr_name)
-        if method_func is not None:
-            # Create a bound method that captures the value
-            bound_value = value
+        # Handle method access on built-in value types using BuiltIn wrapper classes
+        wrapper_class = _get_value_wrapper_class(value)
+        if wrapper_class is not None:
+            # Create a BuiltInClass for the wrapper
+            builtin_class = bic.BuiltInClass(type(value).__name__, wrapper_class.__doc__, wrapper_class)
+            builtin_class.set_pos(node.pos_start, node.pos_end).set_context(context)
 
-            @args(method_func.arg_names, method_func.defaults)
-            def bound_method(ctx: Context) -> RTResult[Value]:
-                return method_func(bound_value, ctx)
+            # Create an instance that wraps the primitive value
+            inst_res = builtin_class.create([value])
+            inst = res.register(inst_res)
+            if res.should_return():
+                return res
+            assert inst is not None
 
-            builtin_func = BuiltInFunction(attr_name, bound_method)
-            builtin_func.set_pos(node.pos_start, node.pos_end).set_context(context)
-            return res.success(builtin_func)
+            # Initialize the instance with the primitive value
+            init_res = builtin_class.init(inst, [value], {})
+            if init_res.error:
+                return res.failure(init_res.error)
+
+            # Look up the method in the wrapper's symbol table
+            method = wrapper_class.__symbol_table__.get(attr_name)
+            if method is not None and isinstance(method, BuiltInFunction):
+                # Bind the method to the instance
+                bound_method = res.register(inst.bind_method(method))
+                if res.should_return():
+                    return res
+                assert bound_method is not None
+                bound_method.set_pos(node.pos_start, node.pos_end).set_context(context)
+                return res.success(bound_method)
 
         return res.failure(
             RTError(
                 node.pos_start, node.pos_end, f"'{type(value).__name__}' object has no attribute '{attr_name}'", context
             )
         )
+
+
+# Registry mapping primitive types to their BuiltIn wrapper classes
+_VALUE_WRAPPER_REGISTRY: dict[Type[Value], Type[bic.BuiltInObject]] = {
+    Array: bic.ArrayObject,
+    String: bic.StringObject,
+    Number: bic.NumberObject,
+    Boolean: bic.BooleanObject,
+    HashMap: bic.HashMapObject,
+}
+
+
+def _get_value_wrapper_class(value: Value) -> Optional[Type[bic.BuiltInObject]]:
+    """Get the BuiltIn wrapper class for a primitive value type."""
+    return _VALUE_WRAPPER_REGISTRY.get(type(value))
