@@ -316,7 +316,9 @@ class StringObject(BuiltInObject):
             return res.success(Number(int(self.value)))
         except ValueError:
             return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, f"Cannot convert '{self.value}' to int", ctx)
+                RTError(
+                    self.parent_class.pos_start, self.parent_class.pos_end, f"Cannot convert '{self.value}' to int", ctx
+                )
             )
 
     @args([])
@@ -328,7 +330,12 @@ class StringObject(BuiltInObject):
             return res.success(Number(float(self.value)))
         except ValueError:
             return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, f"Cannot convert '{self.value}' to float", ctx)
+                RTError(
+                    self.parent_class.pos_start,
+                    self.parent_class.pos_end,
+                    f"Cannot convert '{self.value}' to float",
+                    ctx,
+                )
             )
 
     @args(["index"])

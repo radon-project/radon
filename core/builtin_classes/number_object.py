@@ -105,9 +105,7 @@ class NumberObject(BuiltInObject):
         digits = ctx.symbol_table.get("digits")
         if not isinstance(digits, Number):
             assert digits is not None
-            return res.failure(
-                RTError(digits.pos_start, digits.pos_end, "Digits must be a number", ctx)
-            )
+            return res.failure(RTError(digits.pos_start, digits.pos_end, "Digits must be a number", ctx))
         return res.success(Number(round(self.value, int(digits.value))))
 
     @args([])
@@ -181,7 +179,12 @@ class NumberObject(BuiltInObject):
         res = RTResult[Value]()
         if self.value < 0:
             return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Cannot take square root of negative number", ctx)
+                RTError(
+                    self.parent_class.pos_start,
+                    self.parent_class.pos_end,
+                    "Cannot take square root of negative number",
+                    ctx,
+                )
             )
         return res.success(Number(math.sqrt(self.value)))
 
@@ -193,15 +196,11 @@ class NumberObject(BuiltInObject):
         exp = ctx.symbol_table.get("exp")
         assert exp is not None
         if not isinstance(exp, Number):
-            return res.failure(
-                RTError(exp.pos_start, exp.pos_end, "Exponent must be a number", ctx)
-            )
+            return res.failure(RTError(exp.pos_start, exp.pos_end, "Exponent must be a number", ctx))
         try:
             return res.success(Number(math.pow(self.value, exp.value)))
         except ValueError as e:
-            return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, str(e), ctx)
-            )
+            return res.failure(RTError(self.parent_class.pos_start, self.parent_class.pos_end, str(e), ctx))
 
     @args(["base"], [Null.null()])
     @method
@@ -210,20 +209,21 @@ class NumberObject(BuiltInObject):
         res = RTResult[Value]()
         if self.value <= 0:
             return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Cannot take logarithm of non-positive number", ctx)
+                RTError(
+                    self.parent_class.pos_start,
+                    self.parent_class.pos_end,
+                    "Cannot take logarithm of non-positive number",
+                    ctx,
+                )
             )
         base = ctx.symbol_table.get("base")
         assert base is not None
         if isinstance(base, Null):
             return res.success(Number(math.log(self.value)))
         if not isinstance(base, Number):
-            return res.failure(
-                RTError(base.pos_start, base.pos_end, "Base must be a number", ctx)
-            )
+            return res.failure(RTError(base.pos_start, base.pos_end, "Base must be a number", ctx))
         if base.value <= 0 or base.value == 1:
-            return res.failure(
-                RTError(base.pos_start, base.pos_end, "Base must be positive and not equal to 1", ctx)
-            )
+            return res.failure(RTError(base.pos_start, base.pos_end, "Base must be positive and not equal to 1", ctx))
         return res.success(Number(math.log(self.value, base.value)))
 
     @args([])
@@ -233,7 +233,12 @@ class NumberObject(BuiltInObject):
         res = RTResult[Value]()
         if self.value <= 0:
             return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Cannot take logarithm of non-positive number", ctx)
+                RTError(
+                    self.parent_class.pos_start,
+                    self.parent_class.pos_end,
+                    "Cannot take logarithm of non-positive number",
+                    ctx,
+                )
             )
         return res.success(Number(math.log10(self.value)))
 
@@ -244,7 +249,12 @@ class NumberObject(BuiltInObject):
         res = RTResult[Value]()
         if self.value <= 0:
             return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Cannot take logarithm of non-positive number", ctx)
+                RTError(
+                    self.parent_class.pos_start,
+                    self.parent_class.pos_end,
+                    "Cannot take logarithm of non-positive number",
+                    ctx,
+                )
             )
         return res.success(Number(math.log2(self.value)))
 
@@ -279,7 +289,12 @@ class NumberObject(BuiltInObject):
         res = RTResult[Value]()
         if self.value < -1 or self.value > 1:
             return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, "asin() argument must be in range [-1, 1]", ctx)
+                RTError(
+                    self.parent_class.pos_start,
+                    self.parent_class.pos_end,
+                    "asin() argument must be in range [-1, 1]",
+                    ctx,
+                )
             )
         return res.success(Number(math.asin(self.value)))
 
@@ -290,7 +305,12 @@ class NumberObject(BuiltInObject):
         res = RTResult[Value]()
         if self.value < -1 or self.value > 1:
             return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, "acos() argument must be in range [-1, 1]", ctx)
+                RTError(
+                    self.parent_class.pos_start,
+                    self.parent_class.pos_end,
+                    "acos() argument must be in range [-1, 1]",
+                    ctx,
+                )
             )
         return res.success(Number(math.acos(self.value)))
 
@@ -350,13 +370,9 @@ class NumberObject(BuiltInObject):
         max_val = ctx.symbol_table.get("max_val")
         assert min_val is not None and max_val is not None
         if not isinstance(min_val, Number):
-            return res.failure(
-                RTError(min_val.pos_start, min_val.pos_end, "Min must be a number", ctx)
-            )
+            return res.failure(RTError(min_val.pos_start, min_val.pos_end, "Min must be a number", ctx))
         if not isinstance(max_val, Number):
-            return res.failure(
-                RTError(max_val.pos_start, max_val.pos_end, "Max must be a number", ctx)
-            )
+            return res.failure(RTError(max_val.pos_start, max_val.pos_end, "Max must be a number", ctx))
         clamped = max(min_val.value, min(self.value, max_val.value))
         return res.success(Number(clamped))
 
@@ -368,13 +384,9 @@ class NumberObject(BuiltInObject):
         divisor = ctx.symbol_table.get("divisor")
         assert divisor is not None
         if not isinstance(divisor, Number):
-            return res.failure(
-                RTError(divisor.pos_start, divisor.pos_end, "Divisor must be a number", ctx)
-            )
+            return res.failure(RTError(divisor.pos_start, divisor.pos_end, "Divisor must be a number", ctx))
         if divisor.value == 0:
-            return res.failure(
-                RTError(divisor.pos_start, divisor.pos_end, "Division by zero", ctx)
-            )
+            return res.failure(RTError(divisor.pos_start, divisor.pos_end, "Division by zero", ctx))
         return res.success(Number(self.value % divisor.value))
 
     @args(["divisor"])
@@ -385,11 +397,7 @@ class NumberObject(BuiltInObject):
         divisor = ctx.symbol_table.get("divisor")
         assert divisor is not None
         if not isinstance(divisor, Number):
-            return res.failure(
-                RTError(divisor.pos_start, divisor.pos_end, "Divisor must be a number", ctx)
-            )
+            return res.failure(RTError(divisor.pos_start, divisor.pos_end, "Divisor must be a number", ctx))
         if divisor.value == 0:
-            return res.failure(
-                RTError(divisor.pos_start, divisor.pos_end, "Division by zero", ctx)
-            )
+            return res.failure(RTError(divisor.pos_start, divisor.pos_end, "Division by zero", ctx))
         return res.success(Number(int(self.value // divisor.value)))

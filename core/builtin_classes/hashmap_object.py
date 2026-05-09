@@ -104,9 +104,7 @@ class HashMapObject(BuiltInObject):
         default = ctx.symbol_table.get("default")
         if not isinstance(key, String):
             assert key is not None
-            return res.failure(
-                RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
-            )
+            return res.failure(RTError(key.pos_start, key.pos_end, "Key must be a string", ctx))
         value = self._data.get(key.value)
         if value is None:
             assert default is not None
@@ -122,9 +120,7 @@ class HashMapObject(BuiltInObject):
         value = ctx.symbol_table.get("value")
         if not isinstance(key, String):
             assert key is not None
-            return res.failure(
-                RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
-            )
+            return res.failure(RTError(key.pos_start, key.pos_end, "Key must be a string", ctx))
         assert value is not None
         self._data[key.value] = value
         return res.success(Null.null())
@@ -137,9 +133,7 @@ class HashMapObject(BuiltInObject):
         key = ctx.symbol_table.get("key")
         if not isinstance(key, String):
             assert key is not None
-            return res.failure(
-                RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
-            )
+            return res.failure(RTError(key.pos_start, key.pos_end, "Key must be a string", ctx))
         return res.success(Boolean(key.value in self._data))
 
     @args(["key"])
@@ -150,13 +144,9 @@ class HashMapObject(BuiltInObject):
         key = ctx.symbol_table.get("key")
         if not isinstance(key, String):
             assert key is not None
-            return res.failure(
-                RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
-            )
+            return res.failure(RTError(key.pos_start, key.pos_end, "Key must be a string", ctx))
         if key.value not in self._data:
-            return res.failure(
-                RTError(key.pos_start, key.pos_end, f"Key '{key.value}' not found", ctx)
-            )
+            return res.failure(RTError(key.pos_start, key.pos_end, f"Key '{key.value}' not found", ctx))
         del self._data[key.value]
         return res.success(Null.null())
 
@@ -199,9 +189,7 @@ class HashMapObject(BuiltInObject):
         other = ctx.symbol_table.get("other")
         assert other is not None
         if not isinstance(other, HashMap):
-            return res.failure(
-                RTError(other.pos_start, other.pos_end, "Argument must be a hashmap", ctx)
-            )
+            return res.failure(RTError(other.pos_start, other.pos_end, "Argument must be a hashmap", ctx))
         merged = dict(self._data)
         merged.update(other.values)
         return res.success(HashMap(merged))
@@ -215,9 +203,7 @@ class HashMapObject(BuiltInObject):
         default = ctx.symbol_table.get("default")
         if not isinstance(key, String):
             assert key is not None
-            return res.failure(
-                RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
-            )
+            return res.failure(RTError(key.pos_start, key.pos_end, "Key must be a string", ctx))
         assert default is not None
         if key.value in self._data:
             value = self._data.pop(key.value)
@@ -232,9 +218,7 @@ class HashMapObject(BuiltInObject):
         other = ctx.symbol_table.get("other")
         if not isinstance(other, HashMap):
             assert other is not None
-            return res.failure(
-                RTError(other.pos_start, other.pos_end, "Argument must be a hashmap", ctx)
-            )
+            return res.failure(RTError(other.pos_start, other.pos_end, "Argument must be a hashmap", ctx))
         self._data.update(other.values)
         return res.success(Null.null())
 
@@ -247,9 +231,7 @@ class HashMapObject(BuiltInObject):
         default = ctx.symbol_table.get("default")
         if not isinstance(key, String):
             assert key is not None
-            return res.failure(
-                RTError(key.pos_start, key.pos_end, "Key must be a string", ctx)
-            )
+            return res.failure(RTError(key.pos_start, key.pos_end, "Key must be a string", ctx))
         assert default is not None
         if key.value in self._data:
             return res.success(self._data[key.value])

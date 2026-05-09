@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING, Any, Generator, Optional, TypeAlias, TypeVar
 from typing import Iterator as PyIterator
-from typing import Optional, TypeAlias, TypeVar
 
 from core.colortools import Log
 from core.errors import Error, RNIndexError, RNKeyError, RNNameError, RTError
@@ -990,8 +989,10 @@ def radonify(value: object, pos_start: Position, pos_end: Position, context: Con
             case None:
                 return Null.null()
             case _ if inspect.isfunction(value):
-                from core.builtin_funcs import BuiltInFunction  # Lazy import
-                from core.builtin_funcs import args
+                from core.builtin_funcs import (
+                    BuiltInFunction,  # Lazy import
+                    args,
+                )
 
                 signature = inspect.signature(value)
                 params = list(signature.parameters.keys())

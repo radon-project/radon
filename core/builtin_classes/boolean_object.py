@@ -123,7 +123,5 @@ class BooleanObject(BuiltInObject):
         other = ctx.symbol_table.get("other")
         assert other is not None
         if not isinstance(other, Boolean):
-            return res.failure(
-                RTError(other.pos_start, other.pos_end, "Can only compare with another boolean", ctx)
-            )
+            return res.failure(RTError(other.pos_start, other.pos_end, "Can only compare with another boolean", ctx))
         return res.success(Boolean(self.value == other.value))

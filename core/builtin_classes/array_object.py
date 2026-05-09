@@ -103,15 +103,11 @@ class ArrayObject(BuiltInObject):
         index = ctx.symbol_table.get("index")
         assert index is not None
         if not isinstance(index, Number):
-            return res.failure(
-                RTError(index.pos_start, index.pos_end, "Index must be a number", ctx)
-            )
+            return res.failure(RTError(index.pos_start, index.pos_end, "Index must be a number", ctx))
         try:
             element = self.elements.pop(int(index.value))
         except IndexError:
-            return res.failure(
-                RTError(index.pos_start, index.pos_end, "Pop index out of range", ctx)
-            )
+            return res.failure(RTError(index.pos_start, index.pos_end, "Pop index out of range", ctx))
         return res.success(element)
 
     @args(["array"])
@@ -122,9 +118,7 @@ class ArrayObject(BuiltInObject):
         other = ctx.symbol_table.get("array")
         assert other is not None
         if not isinstance(other, Array):
-            return res.failure(
-                RTError(other.pos_start, other.pos_end, "Argument must be an array", ctx)
-            )
+            return res.failure(RTError(other.pos_start, other.pos_end, "Argument must be an array", ctx))
         self.elements.extend(other.elements)
         return res.success(Null.null())
 
@@ -166,9 +160,7 @@ class ArrayObject(BuiltInObject):
     @method
     def is_empty(self, _ctx: Context) -> RTResult[Value]:
         """Check if the array is empty."""
-        return RTResult[Value]().success(
-            Boolean.true() if len(self.elements) == 0 else Boolean.false()
-        )
+        return RTResult[Value]().success(Boolean.true() if len(self.elements) == 0 else Boolean.false())
 
     @args([])
     @method
@@ -210,16 +202,12 @@ class ArrayObject(BuiltInObject):
         index = ctx.symbol_table.get("index")
         assert index is not None
         if not isinstance(index, Number):
-            return res.failure(
-                RTError(index.pos_start, index.pos_end, "Index must be a number", ctx)
-            )
+            return res.failure(RTError(index.pos_start, index.pos_end, "Index must be a number", ctx))
         try:
             element = self.elements[int(index.value)]
             return res.success(element)
         except IndexError:
-            return res.failure(
-                RTError(index.pos_start, index.pos_end, "Index out of range", ctx)
-            )
+            return res.failure(RTError(index.pos_start, index.pos_end, "Index out of range", ctx))
 
     @args(["index", "value"])
     @method
@@ -230,16 +218,12 @@ class ArrayObject(BuiltInObject):
         value = ctx.symbol_table.get("value")
         assert index is not None and value is not None
         if not isinstance(index, Number):
-            return res.failure(
-                RTError(index.pos_start, index.pos_end, "Index must be a number", ctx)
-            )
+            return res.failure(RTError(index.pos_start, index.pos_end, "Index must be a number", ctx))
         try:
             self.elements[int(index.value)] = value
             return res.success(Null.null())
         except IndexError:
-            return res.failure(
-                RTError(index.pos_start, index.pos_end, "Index out of range", ctx)
-            )
+            return res.failure(RTError(index.pos_start, index.pos_end, "Index out of range", ctx))
 
     @args(["index", "value"])
     @method
@@ -250,9 +234,7 @@ class ArrayObject(BuiltInObject):
         value = ctx.symbol_table.get("value")
         assert index is not None and value is not None
         if not isinstance(index, Number):
-            return res.failure(
-                RTError(index.pos_start, index.pos_end, "Index must be a number", ctx)
-            )
+            return res.failure(RTError(index.pos_start, index.pos_end, "Index must be a number", ctx))
         self.elements.insert(int(index.value), value)
         return res.success(Null.null())
 
@@ -271,9 +253,7 @@ class ArrayObject(BuiltInObject):
             if cmp.is_true():
                 self.elements.pop(i)
                 return res.success(Null.null())
-        return res.failure(
-            RTError(value.pos_start, value.pos_end, "Value not found in array", ctx)
-        )
+        return res.failure(RTError(value.pos_start, value.pos_end, "Value not found in array", ctx))
 
     @args(["start", "end"], [None, Null.null()])
     @method
@@ -284,17 +264,13 @@ class ArrayObject(BuiltInObject):
         end = ctx.symbol_table.get("end")
         assert start is not None
         if not isinstance(start, Number):
-            return res.failure(
-                RTError(start.pos_start, start.pos_end, "Start must be a number", ctx)
-            )
+            return res.failure(RTError(start.pos_start, start.pos_end, "Start must be a number", ctx))
         start_idx = int(start.value)
         if isinstance(end, Null):
             return res.success(Array(self.elements[start_idx:]))
         if not isinstance(end, Number):
             assert end is not None
-            return res.failure(
-                RTError(end.pos_start, end.pos_end, "End must be a number", ctx)
-            )
+            return res.failure(RTError(end.pos_start, end.pos_end, "End must be a number", ctx))
         end_idx = int(end.value)
         return res.success(Array(self.elements[start_idx:end_idx]))
 
@@ -306,14 +282,10 @@ class ArrayObject(BuiltInObject):
         size = ctx.symbol_table.get("size")
         assert size is not None
         if not isinstance(size, Number):
-            return res.failure(
-                RTError(size.pos_start, size.pos_end, "Size must be a number", ctx)
-            )
+            return res.failure(RTError(size.pos_start, size.pos_end, "Size must be a number", ctx))
         chunk_size = int(size.value)
         if chunk_size <= 0:
-            return res.failure(
-                RTError(size.pos_start, size.pos_end, "Size must be positive", ctx)
-            )
+            return res.failure(RTError(size.pos_start, size.pos_end, "Size must be positive", ctx))
         chunks: list[Value] = []
         for i in range(0, len(self.elements), chunk_size):
             chunks.append(Array(self.elements[i : i + chunk_size]))
@@ -327,9 +299,7 @@ class ArrayObject(BuiltInObject):
         separator = ctx.symbol_table.get("separator")
         assert separator is not None
         if not isinstance(separator, String):
-            return res.failure(
-                RTError(separator.pos_start, separator.pos_end, "Separator must be a string", ctx)
-            )
+            return res.failure(RTError(separator.pos_start, separator.pos_end, "Separator must be a string", ctx))
         parts: list[str] = []
         for elem in self.elements:
             if isinstance(elem, String):
@@ -376,9 +346,7 @@ class ArrayObject(BuiltInObject):
         """Get the first element of the array."""
         res = RTResult[Value]()
         if len(self.elements) == 0:
-            return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Array is empty", ctx)
-            )
+            return res.failure(RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Array is empty", ctx))
         return res.success(self.elements[0])
 
     @args([])
@@ -387,9 +355,7 @@ class ArrayObject(BuiltInObject):
         """Get the last element of the array."""
         res = RTResult[Value]()
         if len(self.elements) == 0:
-            return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Array is empty", ctx)
-            )
+            return res.failure(RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Array is empty", ctx))
         return res.success(self.elements[-1])
 
     @args(["element"])
@@ -419,9 +385,7 @@ class ArrayObject(BuiltInObject):
             if isinstance(elem, Number):
                 total += elem.value
             else:
-                return res.failure(
-                    RTError(elem.pos_start, elem.pos_end, "All elements must be numbers for sum()", ctx)
-                )
+                return res.failure(RTError(elem.pos_start, elem.pos_end, "All elements must be numbers for sum()", ctx))
         return res.success(Number(total))
 
     @args([])
@@ -430,9 +394,7 @@ class ArrayObject(BuiltInObject):
         """Get the minimum element in the array."""
         res = RTResult[Value]()
         if len(self.elements) == 0:
-            return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Array is empty", ctx)
-            )
+            return res.failure(RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Array is empty", ctx))
         min_val = self.elements[0]
         for elem in self.elements[1:]:
             cmp, err = elem.get_comparison_lt(min_val)
@@ -449,9 +411,7 @@ class ArrayObject(BuiltInObject):
         """Get the maximum element in the array."""
         res = RTResult[Value]()
         if len(self.elements) == 0:
-            return res.failure(
-                RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Array is empty", ctx)
-            )
+            return res.failure(RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Array is empty", ctx))
         max_val = self.elements[0]
         for elem in self.elements[1:]:
             cmp, err = elem.get_comparison_gt(max_val)
