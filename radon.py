@@ -224,13 +224,13 @@ def shell() -> None:
                 line_brace_count = count_braces(new_line)
                 brace_count += line_brace_count
 
-                # If we were awaiting a block and got an opening brace, we're no longer awaiting
-                if awaiting_block and line_brace_count > 0:
+                # If we were awaiting a block and got any braces, we're no longer awaiting
+                # (either we got the opening brace we expected, or a closing brace which will cause an error)
+                if awaiting_block and line_brace_count != 0:
                     awaiting_block = False
-                # If we're still at brace_count 0 and no braces found, check if this line also expects a block
+                # If no braces found on this line and we're still awaiting, check if user wants to stop
                 elif awaiting_block and line_brace_count == 0:
-                    # Continue awaiting if the line is not empty (user might be adding more to the statement)
-                    # or stop if user entered an empty line (to allow them to submit incomplete code for error)
+                    # Stop awaiting if user entered an empty line (to allow them to submit incomplete code for error)
                     if new_line.strip() == "":
                         awaiting_block = False
 
