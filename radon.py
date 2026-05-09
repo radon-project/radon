@@ -22,10 +22,9 @@ if sys.platform != "win32" and not TYPE_CHECKING:
         pass
 
 import core as base_core
-from core.colortools import Log
+from core.colortools import ForegroundColor, Log, Style, Text
 from core.parser import Context
 from core.tokens import Position
-from core.colortools import Text, ForegroundColor, Style
 from core.syntax import pt_input
 
 

@@ -13,7 +13,7 @@ print(2 in arr)
 
 # with while loop
 while 3 in arr {
-    print(arr_pop(arr))
+    print(arr.pop())
 }
 
 # this should also work for HashMap as well.
@@ -33,8 +33,8 @@ class Person {
     }
 
     fun befriend(other) {
-        arr_append(this.friends, other)
-        arr_append(other.friends, this)
+        this.friends.append(other)
+        other.friends.append(this)
     }
 
     fun dump() {

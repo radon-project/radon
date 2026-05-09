@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING, Any, Generator, Optional, TypeAlias, TypeVar
 from typing import Iterator as PyIterator
-from typing import Optional, TypeAlias, TypeVar
 
 from core.colortools import Log
 from core.errors import Error, RNIndexError, RNKeyError, RNNameError, RTError
@@ -554,12 +553,31 @@ String
 
 A String is a sequence of characters.
 
-Methods:
-    len(str)       -> Returns the length of the string.
+Built-in methods (objective style):
+    str.upper()            -> Return uppercase string
+    str.lower()            -> Return lowercase string
+    str.title()            -> Return title case string
+    str.capitalize()       -> Capitalize first character
+    str.swapcase()         -> Swap case of characters
+    str.length()           -> Get string length
+    str.split(sep=" ")     -> Split by separator
+    str.find(sub)          -> Find index of substring (-1 if not found)
+    str.replace(old, new)  -> Replace occurrences
+    str.strip(chars="")    -> Strip whitespace/chars from both ends
+    str.lstrip(chars="")   -> Strip from left
+    str.rstrip(chars="")   -> Strip from right
+    str.startswith(prefix) -> Check if starts with prefix
+    str.endswith(suffix)   -> Check if ends with suffix
+    str.count(sub)         -> Count occurrences
+    str.join(arr)          -> Join array with this string as separator
+    str.is_digit()         -> Check if all digits
+    str.is_alpha()         -> Check if all alphabetic
+    str.is_alnum()         -> Check if alphanumeric
+    str.is_space()         -> Check if all whitespace
+    str.to_string()        -> Return string (identity)
 
-String standard library methods:
-    find(str)   -> Find a character in a string and return its index (-1 if not found)
-    to_int()    -> Magic method to convert string to int if possible
+Global functions:
+    len(str)               -> Returns the length of the string.
 
 Example: "Hello World!"
 """
@@ -743,21 +761,23 @@ Array
 
 An Array is an ordered collection of elements.
 
-Methods:
-    len(arr)       -> Returns the number of elements in the array.
+Built-in methods (objective style):
+    arr.append(item)   -> Append an element
+    arr.pop(index=-1)  -> Remove and return element at index
+    arr.extend(arr2)   -> Extend by another array
+    arr.find(element)  -> Get index of element (-1 if not found)
+    arr.map(func)      -> Map a function over elements
+    arr.is_empty()     -> Check if array is empty
+    arr.length()       -> Get array length
+    arr.to_string()    -> Convert to string
+    arr.copy()         -> Return shallow copy
+    arr.reverse()      -> Reverse in place
+    arr.clear()        -> Remove all elements
 
-Array standard library methods:
-    map(func)      -> Map an array with a function
-    append(item)   -> Append an element from the right
-    pop(index)     -> Removes and returns the last element of the array.
-    extend(arr)    -> Extend by another array
-    find(element)  -> Get the index of an element in the array (-1 if not found)
+Global functions:
+    len(arr)           -> Returns the number of elements in the array.
 
-    is_empty()     -> Returns boolean indicating if the array is empty or not
-    to_string()    -> Convert to string
-    is_array()     -> returns true
-
-Example: [1,2,3,true,"Hello World!"]
+Example: [1, 2, 3, true, "Hello World!"]
 """
 
     def __iter__(self) -> PyIterator[Value]:
@@ -892,7 +912,19 @@ HashMap
 
 A HashMap is a collection of key-value pairs.
 
-Example: {"key":"value"}
+Built-in methods (objective style):
+    hm.keys()              -> Return array of keys
+    hm.values()            -> Return array of values
+    hm.items()             -> Return array of [key, value] pairs
+    hm.get(key, default)   -> Get value by key with optional default
+    hm.set(key, value)     -> Set a key-value pair
+    hm.has(key)            -> Check if key exists
+    hm.remove(key)         -> Remove key-value pair
+    hm.length()            -> Get number of pairs
+    hm.clear()             -> Remove all pairs
+    hm.to_string()         -> Convert to string
+
+Example: {"key": "value", "number": 42}
 """
 
     def __repr__(self) -> str:
@@ -957,8 +989,10 @@ def radonify(value: object, pos_start: Position, pos_end: Position, context: Con
             case None:
                 return Null.null()
             case _ if inspect.isfunction(value):
-                from core.builtin_funcs import BuiltInFunction  # Lazy import
-                from core.builtin_funcs import args
+                from core.builtin_funcs import (
+                    BuiltInFunction,  # Lazy import
+                    args,
+                )
 
                 signature = inspect.signature(value)
                 params = list(signature.parameters.keys())

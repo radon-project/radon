@@ -4,10 +4,10 @@ const ns = {}
 pyapi("def chr_func(c: int) -> str: return chr(c)", ns)
 const chr = ns["chr_func"]
 
-for i=0 to arr_len(words) {
+for i=0 to words.length() {
     var temp_str = ""
-    for j=0 to arr_len(arr_get(words, i)) {
-        temp_str += chr(arr_get(arr_get(words, i), j))
+    for j=0 to words.get(i).length() {
+        temp_str += chr(words.get(i).get(j))
     }
     print(temp_str)
 }
