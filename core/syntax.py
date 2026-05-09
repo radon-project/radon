@@ -243,7 +243,7 @@ def _make_pt_lexer() -> Any:
             def get_line_highlighted(lineno: int) -> list[tuple[str, str]]:
                 if lineno >= len(highlighted):
                     return []
-                return highlighted[lineno].__pt_formatted_text__()
+                return highlighted[lineno].__pt_formatted_text__()  # type: ignore[no-any-return]
 
             return get_line_highlighted
 
@@ -286,5 +286,5 @@ def pt_input(prompt: str) -> str:
     """
     session = _get_pt_session()
     if session is not None:
-        return session.prompt(prompt)
+        return session.prompt(prompt)  # type: ignore[no-any-return]
     return input(prompt)
