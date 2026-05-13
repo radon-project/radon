@@ -732,10 +732,22 @@ class Interpreter:
                 var_name = target.var_name_tok.value
                 assert isinstance(var_name, str)
 
-                if context.symbol_table.get(var_name) is None:
+                value = context.symbol_table.get(var_name)
+                if value is None:
                     return res.failure(
                         RNNameError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context)
                     )
+
+                # Call __destructor__ if it exists on class instances
+                if isinstance(value, Instance):
+                    destructor = value.symbol_table.symbols.get("__destructor__", None)
+                    if destructor is not None and isinstance(destructor, Function):
+                        if destructor.symbol_table is None:
+                            destructor.symbol_table = SymbolTable()
+                        destructor.symbol_table.set("this", value)
+                        res.register(destructor.execute([], {}))
+                        if res.should_return():
+                            return res
 
                 table: Optional[SymbolTable] = context.symbol_table
                 while table is not None:

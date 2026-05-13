@@ -1,0 +1,128 @@
+# Test: __destructor__ method is called when deleting a class instance
+
+# Track destructor calls with a global variable
+var destructor_called = false
+
+class Simple {
+    fun __constructor__() {
+        # Empty constructor
+    }
+    
+    fun __destructor__() {
+        # This should be called when the object is deleted
+        destructor_called = true
+    }
+}
+
+# Test basic destructor call
+var obj = Simple()
+assert destructor_called == false, "destructor should not be called yet"
+del obj
+assert destructor_called == true, "destructor should have been called after del"
+
+# Test destructor with instance data
+var destructor_value = 0
+
+class WithData {
+    fun __constructor__(val) {
+        this.val = val
+    }
+    
+    fun __destructor__() {
+        destructor_value = this.val
+    }
+}
+
+var obj2 = WithData(42)
+assert destructor_value == 0, "destructor should not be called yet"
+del obj2
+assert destructor_value == 42, "destructor should have set the value to 42"
+
+# Test destructor with side effects (incrementing a counter)
+var counter = 0
+
+class Counter {
+    fun __constructor__() {
+        # Empty
+    }
+    
+    fun __destructor__() {
+        counter = counter + 1
+    }
+}
+
+var c1 = Counter()
+var c2 = Counter()
+var c3 = Counter()
+assert counter == 0, "counter should be 0 before any deletions"
+del c1
+assert counter == 1, "counter should be 1 after deleting c1"
+del c2
+assert counter == 2, "counter should be 2 after deleting c2"
+del c3
+assert counter == 3, "counter should be 3 after deleting c3"
+
+# Test that classes without __destructor__ still work with del
+class NoDestructor {
+    fun __constructor__(x) {
+        this.x = x
+    }
+    
+    fun get_x() {
+        return this.x
+    }
+}
+
+var nd = NoDestructor(10)
+assert nd.get_x() == 10, "object should work before del"
+del nd
+try {
+    nd.get_x()
+} catch as e {
+    assert e == "'nd' is not defined", "nd should be deleted"
+}
+
+# Test destructor is called even when deleting multiple variables
+var multi_counter = 0
+
+class MultiCounter {
+    fun __constructor__() {
+        # Empty
+    }
+    
+    fun __destructor__() {
+        multi_counter = multi_counter + 1
+    }
+}
+
+var m1 = MultiCounter()
+var m2 = MultiCounter()
+assert multi_counter == 0, "multi_counter should be 0 before deletion"
+del m1, m2
+assert multi_counter == 2, "both destructors should have been called"
+
+# Test destructor can raise an error (using a function that returns an error string)
+fun MyError(msg) {
+    return msg
+}
+
+var error_thrown = false
+
+class ErrorDestructor {
+    fun __constructor__() {
+        # Empty
+    }
+    
+    fun __destructor__() {
+        raise MyError("destructor error")
+    }
+}
+
+var ed = ErrorDestructor()
+try {
+    del ed
+} catch as e {
+    error_thrown = true
+    assert e == "destructor error", "should catch the error from destructor"
+}
+assert error_thrown == true, "error should have been thrown"
