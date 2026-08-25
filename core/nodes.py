@@ -397,6 +397,7 @@ class HashMapNode:
 @dataclass
 class ClassNode:
     class_name_tok: Token
+    parent_nodes: list[Node]
     desc: str
     body_nodes: Node
 
