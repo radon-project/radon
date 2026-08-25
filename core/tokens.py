@@ -137,6 +137,9 @@ KEYWORDS = [
     "var",
     "from",
     "del",
+    "public",
+    "private",
+    "protected",
 ]
 
 TokenValue: TypeAlias = Optional[str | int | float]

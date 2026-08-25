@@ -1,0 +1,25 @@
+class ExampleClass {
+    fun __constructor__(something) {
+        this.something = something
+    }
+
+    fun some_method() {
+        return 123
+    }
+
+    public fun public_method() -> 0
+
+    private fun private_method() {
+        return 123
+    }
+
+    protected fun protected_method() {
+        return 123
+    }
+}
+
+var ex = ExampleClass(7)
+assert ex.some_method() == 123
+assert ex.public_method() == 0
+assert ex.private_method() == 123
+assert ex.protected_method() == 123
