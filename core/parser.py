@@ -942,7 +942,7 @@ class Parser:
             assert while_expr is not None
             node = while_expr
 
-        elif tok.matches(TT_KEYWORD, "fun") or tok.matches(TT_KEYWORD, "static"):
+        elif tok.type == TT_KEYWORD and tok.value in ("fun", "static", "public", "private", "protected"):
             self.in_func += 1
             func_def = res.register(self.func_def())
             self.in_func -= 1
@@ -1460,9 +1460,15 @@ class Parser:
         node_pos_start = self.current_tok.pos_start
 
         static = False
-        if self.current_tok.matches(TT_KEYWORD, "static"):
+        while self.current_tok.type == TT_KEYWORD and self.current_tok.value in (
+            "static",
+            "public",
+            "private",
+            "protected",
+        ):
+            if self.current_tok.value == "static":
+                static = True
             self.advance(res)
-            static = True
 
         if not self.current_tok.matches(TT_KEYWORD, "fun"):
             return res.failure(
