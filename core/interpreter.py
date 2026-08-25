@@ -1046,14 +1046,11 @@ class Interpreter:
         for name, value in ctx.symbol_table.symbols.items():
             merged_symbol_table.set(name, value)
 
-        cls = Class(
-            class_name,
-            node.desc,
-            merged_symbol_table,
-            bases=parents,
-            mro=[],
-            own_symbol_table=ctx.symbol_table,
-        ).set_context(context).set_pos(node.pos_start, node.pos_end)
+        cls = (
+            Class(class_name, node.desc, merged_symbol_table, bases=parents, mro=[], own_symbol_table=ctx.symbol_table)
+            .set_context(context)
+            .set_pos(node.pos_start, node.pos_end)
+        )
         cls.mro = [cls, *parent_mro]
 
         for value in cls.own_symbol_table.symbols.values():

@@ -1346,7 +1346,7 @@ class Instance(BaseInstance):
         if method.symbol_table is None:
             method.symbol_table = SymbolTable()
         method.symbol_table.set("this", self)
-        if isinstance(method, Function):
+        if isinstance(self.parent_class, Class) and isinstance(method, Function):
             method.symbol_table.set("super", self.parent_class.get_super_callable(method.owner_class, self))
         return RTResult[BaseFunction]().success(method)
 
@@ -1382,8 +1382,10 @@ class SuperInstance(BaseInstance):
         if method.symbol_table is None:
             method.symbol_table = SymbolTable()
         method.symbol_table.set("this", self.bound_instance)
-        if isinstance(method, Function):
-            method.symbol_table.set("super", self.bound_instance.parent_class.get_super_callable(method.owner_class, self.bound_instance))
+        if isinstance(self.bound_instance.parent_class, Class) and isinstance(method, Function):
+            method.symbol_table.set(
+                "super", self.bound_instance.parent_class.get_super_callable(method.owner_class, self.bound_instance)
+            )
         return RTResult[BaseFunction]().success(method)
 
     def operator(self, operator: str, *args: Value) -> ResultTuple:
@@ -1395,7 +1397,10 @@ class SuperInstance(BaseInstance):
         if method.symbol_table is None:
             method.symbol_table = SymbolTable()
         method.symbol_table.set("this", self.bound_instance)
-        method.symbol_table.set("super", self.bound_instance.parent_class.get_super_callable(method.owner_class, self.bound_instance))
+        if isinstance(self.bound_instance.parent_class, Class):
+            method.symbol_table.set(
+                "super", self.bound_instance.parent_class.get_super_callable(method.owner_class, self.bound_instance)
+            )
 
         value = res.register(method.execute(list(args), {}))
         if res.error is not None:
@@ -1415,11 +1420,11 @@ class SuperCallable(Value):
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         res = RTResult[Value]()
         if len(args) > 0 or len(kwargs) > 0:
-            return res.failure(
-                RTError(self.pos_start, self.pos_end, "super() does not take arguments", self.context)
-            )
+            return res.failure(RTError(self.pos_start, self.pos_end, "super() does not take arguments", self.context))
         if self.super_instance is None:
-            return res.failure(RTError(self.pos_start, self.pos_end, "super() has no parent class to resolve", self.context))
+            return res.failure(
+                RTError(self.pos_start, self.pos_end, "super() has no parent class to resolve", self.context)
+            )
         return res.success(self.super_instance)
 
     def copy(self) -> SuperCallable:
@@ -1499,8 +1504,10 @@ class Class(BaseClass):
 
     def get_super_callable(self, owner_class: Optional[Class], bound_instance: Instance) -> SuperCallable:
         super_instance = self.get_super_instance(owner_class, bound_instance)
-        callable_ = SuperCallable(super_instance).set_context(bound_instance.context).set_pos(
-            bound_instance.pos_start, bound_instance.pos_end
+        callable_ = (
+            SuperCallable(super_instance)
+            .set_context(bound_instance.context)
+            .set_pos(bound_instance.pos_start, bound_instance.pos_end)
         )
         return callable_
 
@@ -1573,7 +1580,7 @@ class Class(BaseClass):
         if method.symbol_table is None:  # type: ignore
             method.symbol_table = SymbolTable()  # type: ignore
         method.symbol_table.set("this", inst)  # type: ignore
-        if isinstance(inst, Instance) and isinstance(method, Function):
+        if isinstance(inst, Instance) and isinstance(inst.parent_class, Class) and isinstance(method, Function):
             method.symbol_table.set("super", inst.parent_class.get_super_callable(method.owner_class, inst))
 
         res.register(method.execute(args, kwargs))
