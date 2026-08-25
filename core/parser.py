@@ -1460,7 +1460,12 @@ class Parser:
         node_pos_start = self.current_tok.pos_start
 
         static = False
-        while self.current_tok.type == TT_KEYWORD and self.current_tok.value in ("static", "public", "private", "protected"):
+        while self.current_tok.type == TT_KEYWORD and self.current_tok.value in (
+            "static",
+            "public",
+            "private",
+            "protected",
+        ):
             if self.current_tok.value == "static":
                 static = True
             self.advance(res)
