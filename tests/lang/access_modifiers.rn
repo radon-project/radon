@@ -1,25 +1,50 @@
-class ExampleClass {
-    fun __constructor__(something) {
-        this.something = something
+class VisibilityBasics {
+    fun __constructor__(seed) {
+        this.seed = seed
     }
 
-    fun some_method() {
-        return 123
-    }
-
-    public fun public_method() -> 0
-
-    private fun private_method() {
-        return 123
-    }
-
-    protected fun protected_method() {
-        return 123
-    }
+    fun implicit_method() -> this.seed
+    public fun public_method() -> this.seed + 1
+    private fun private_method() -> this.seed + 2
+    protected fun protected_method() -> this.seed + 3
 }
 
-var ex = ExampleClass(7)
-assert ex.some_method() == 123
-assert ex.public_method() == 0
-assert ex.private_method() == 123
-assert ex.protected_method() == 123
+class VisibilityStaticOrders {
+    public static fun sum(a, b) -> a + b
+    static private fun product(a, b) -> a * b
+    protected static fun diff(a, b) -> a - b
+    static protected fun join(a, b) -> a + ":" + b
+}
+
+class VisibilityInternalCalls {
+    public fun __constructor__(value) {
+        this.value = value
+    }
+
+    private fun twice() -> this.value * 2
+    protected fun thrice() -> this.value * 3
+    public fun calculate() -> this.twice() + this.thrice()
+}
+
+class VisibilityMixed {
+    static public fun one() -> 1
+    private static fun two() -> 2
+    public fun call_static_sum() -> VisibilityMixed.one() + VisibilityMixed.two()
+}
+
+var basics = VisibilityBasics(10)
+assert basics.implicit_method() == 10
+assert basics.public_method() == 11
+assert basics.private_method() == 12
+assert basics.protected_method() == 13
+
+assert VisibilityStaticOrders.sum(4, 5) == 9
+assert VisibilityStaticOrders.product(4, 5) == 20
+assert VisibilityStaticOrders.diff(4, 5) == -1
+assert VisibilityStaticOrders.join("a", "b") == "a:b"
+
+var internal = VisibilityInternalCalls(4)
+assert internal.calculate() == 20
+
+var mixed = VisibilityMixed()
+assert mixed.call_static_sum() == 3
