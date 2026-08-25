@@ -1111,12 +1111,16 @@ class BaseFunction(Value):
     arg_names: list[str]
     va_name: Optional[str]
     va_kw_name: Optional[str]
+    access_modifier: str
+    is_abstract: bool
 
     def __init__(self, name: Optional[str], symbol_table: Optional[SymbolTable]) -> None:
         super().__init__()
         self.name = name if name is not None else "<anonymous>"
         self.symbol_table = symbol_table
         self.owner_class = None
+        self.access_modifier = "public"
+        self.is_abstract = False
 
     def generate_new_context(self) -> Context:
         new_context = Context(self.name, self.context, self.pos_start)
@@ -1438,12 +1442,14 @@ class BaseClass(Value, ABC):
     name: str
     desc: Optional[str]
     symbol_table: SymbolTable
+    is_abstract: bool
 
     def __init__(self, name: str, desc: Optional[str], symbol_table: SymbolTable) -> None:
         super().__init__()
         self.name = name
         self.desc = desc
         self.symbol_table = symbol_table
+        self.is_abstract = False
 
     @abstractmethod
     def get(self, name: str) -> Optional[Value]: ...
@@ -1466,6 +1472,11 @@ class BaseClass(Value, ABC):
 
     def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         res = RTResult[Value]()
+
+        if self.is_abstract:
+            return res.failure(
+                RTError(self.pos_start, self.pos_end, f"Cannot instantiate abstract class '{self.name}'", self.context)
+            )
 
         inst = res.register(self.create(args))
         if res.should_return():
@@ -1594,7 +1605,7 @@ class Class(BaseClass):
 
 
 class Function(BaseFunction):
-    body_node: Node
+    body_node: Optional[Node]
     arg_names: list[str]
     defaults: list[Optional[Value]]
     should_auto_return: bool
@@ -1624,7 +1635,7 @@ class Function(BaseFunction):
         self,
         name: Optional[str],
         symbol_table: Optional[SymbolTable],
-        body_node: Node,
+        body_node: Optional[Node],
         arg_names: list[str],
         defaults: list[Optional[Value]],
         should_auto_return: bool,
@@ -1647,8 +1658,21 @@ class Function(BaseFunction):
         from core.interpreter import Interpreter  # Lazy import
 
         res = RTResult[Value]()
+
+        if self.body_node is None:
+            return res.failure(
+                RTError(
+                    self.pos_start,
+                    self.pos_end,
+                    f"Method '{self.name}' is abstract and has no implementation",
+                    self.context,
+                )
+            )
+
         interpreter = Interpreter()
         exec_ctx = self.generate_new_context()
+        if self.owner_class is not None:
+            exec_ctx.symbol_table.set("__class__", self.owner_class)
 
         res.register(
             self.check_and_populate_args(self.arg_names, args, kwargs, self.defaults, self.max_pos_args, exec_ctx)
@@ -1682,6 +1706,8 @@ class Function(BaseFunction):
             self.max_pos_args,
         )
         copy.owner_class = self.owner_class
+        copy.access_modifier = self.access_modifier
+        copy.is_abstract = self.is_abstract
         copy.set_context(self.context)
         copy.set_pos(self.pos_start, self.pos_end)
         return copy

@@ -254,7 +254,7 @@ class FuncDefNode:
     var_name_tok: Optional[Token]
     arg_name_toks: list[Token]
     defaults: list[Optional[Node]]
-    body_node: Node
+    body_node: Optional[Node]
     should_auto_return: bool
     static: bool
     desc: str
@@ -264,6 +264,9 @@ class FuncDefNode:
 
     pos_start: Position
     pos_end: Position
+
+    access_modifier: str = "public"
+    is_abstract: bool = False
 
 
 class CallNode:
@@ -403,6 +406,8 @@ class ClassNode:
 
     pos_start: Position
     pos_end: Position
+
+    is_abstract: bool = False
 
 
 @dataclass

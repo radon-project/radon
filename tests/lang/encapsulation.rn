@@ -1,0 +1,101 @@
+# Encapsulation (#212): public/private/protected are enforced at runtime.
+# public   -> accessible from anywhere.
+# protected -> accessible from the declaring class and its subclasses.
+# private  -> accessible only from the exact declaring class (not even subclasses).
+
+# Private access is scoped to the class, not the instance: one instance's
+# method can reach another instance's private members of the same class.
+class Wallet {
+    fun __constructor__(balance) {
+        this.balance = balance
+    }
+
+    private fun peek() -> this.balance
+
+    public fun richer_than(other) -> this.peek() > other.peek()
+}
+
+var a = Wallet(100)
+var b = Wallet(50)
+assert a.richer_than(b) == true
+assert b.richer_than(a) == false
+
+# Nested blocks (if/while/for) inside a method still resolve the correct
+# owning class for private/protected access checks.
+class Counter {
+    fun __constructor__(n) {
+        this.n = n
+    }
+
+    private fun tick() -> 1
+
+    public fun count_to_zero() {
+        var total = 0
+        while this.n > 0 {
+            if true {
+                total = total + this.tick()
+            }
+            this.n = this.n - 1
+        }
+        return total
+    }
+}
+
+assert Counter(5).count_to_zero() == 5
+
+# A closure defined inside a method keeps that method's class context, so it
+# can still call private/protected members when invoked later.
+class Repeater {
+    fun __constructor__(value) {
+        this.value = value
+    }
+
+    private fun doubled() -> this.value * 2
+
+    public fun make_closure() {
+        fun inner() -> this.doubled()
+        return inner
+    }
+}
+
+var repeater = Repeater(21)
+var closure = repeater.make_closure()
+assert closure() == 42
+
+# An unrelated class (not a subclass) cannot reach another class's
+# private/protected members, even from inside its own methods.
+class Vault {
+    private fun secret() -> "vault-secret"
+    protected fun guarded() -> "vault-guarded"
+}
+
+class Outsider {
+    public fun try_secret(vault) -> vault.secret()
+    public fun try_guarded(vault) -> vault.guarded()
+}
+
+var vault = Vault()
+var outsider = Outsider()
+try {
+    outsider.try_secret(vault)
+    assert false, "expected private member to be inaccessible from an unrelated class"
+} catch as e {
+    assert e == "Cannot access private member 'secret' of class 'Vault' from outside its class hierarchy"
+}
+try {
+    outsider.try_guarded(vault)
+    assert false, "expected protected member to be inaccessible from an unrelated class"
+} catch as e {
+    assert e == "Cannot access protected member 'guarded' of class 'Vault' from outside its class hierarchy"
+}
+
+# A subclass CAN reach an inherited protected member through its own method.
+class Base {
+    protected fun helper() -> "base-helper"
+}
+
+class Derived(Base) {
+    public fun use_helper() -> this.helper()
+}
+
+assert Derived().use_helper() == "base-helper"

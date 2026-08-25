@@ -15,8 +15,21 @@ class ModChild(ModParent) {}
 var mod_child = ModChild(10)
 assert mod_child.implicit_method() == 10
 assert mod_child.public_method() == 11
-assert mod_child.private_method() == 12
-assert mod_child.protected_method() == 13
+
+# private/protected are enforced: outside the class hierarchy (here, top-level
+# script code) they raise a RuntimeError instead of returning a value.
+try {
+    mod_child.private_method()
+    assert false, "expected private_method() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access private member 'private_method' of class 'ModParent' from outside its class hierarchy"
+}
+try {
+    mod_child.protected_method()
+    assert false, "expected protected_method() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access protected member 'protected_method' of class 'ModParent' from outside its class hierarchy"
+}
 
 # Overriding across differing modifiers: child modifier need not match parent's
 class OverrideParent {
@@ -32,11 +45,23 @@ class OverrideChild(OverrideParent) {
 }
 
 var override_child = OverrideChild()
-assert override_child.greet() == "private-child"
-assert override_child.secret() == "protected-child"
 assert override_child.guarded() == "public-child"
+try {
+    override_child.greet()
+    assert false, "expected greet() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access private member 'greet' of class 'OverrideChild' from outside its class hierarchy"
+}
+try {
+    override_child.secret()
+    assert false, "expected secret() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access protected member 'secret' of class 'OverrideChild' from outside its class hierarchy"
+}
 
-# super() calls into private/protected parent methods regardless of the caller's own modifier
+# super() can reach a protected/public parent method from a subclass, but a
+# private parent method stays off-limits even via super() -- private members
+# are not inherited, matching standard OOP semantics.
 class SuperParent {
     private fun private_value() -> 100
     protected fun protected_value() -> 200
@@ -44,10 +69,17 @@ class SuperParent {
 }
 
 class SuperChild(SuperParent) {
-    public fun combined() -> super().private_value() + super().protected_value() + super().public_value()
+    public fun combined() -> super().protected_value() + super().public_value()
+    public fun try_private() -> super().private_value()
 }
 
-assert SuperChild().combined() == 600
+assert SuperChild().combined() == 500
+try {
+    SuperChild().try_private()
+    assert false, "expected super().private_value() to be inaccessible from a subclass"
+} catch as e {
+    assert e == "Cannot access private member 'private_value' of class 'SuperParent' from outside its class hierarchy"
+}
 
 # Static methods with every modifier-order combination, inherited without redefinition
 class StaticModParent {
@@ -60,9 +92,24 @@ class StaticModParent {
 class StaticModChild(StaticModParent) {}
 
 assert StaticModChild.add(2, 3) == 5
-assert StaticModChild.mul(2, 3) == 6
-assert StaticModChild.sub(5, 2) == 3
-assert StaticModChild.cat("a", "b") == "a:b"
+try {
+    StaticModChild.mul(2, 3)
+    assert false, "expected mul() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access private member 'mul' of class 'StaticModParent' from outside its class hierarchy"
+}
+try {
+    StaticModChild.sub(5, 2)
+    assert false, "expected sub() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access protected member 'sub' of class 'StaticModParent' from outside its class hierarchy"
+}
+try {
+    StaticModChild.cat("a", "b")
+    assert false, "expected cat() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access protected member 'cat' of class 'StaticModParent' from outside its class hierarchy"
+}
 
 # Overriding a static modified method in a child class
 class StaticOverrideParent {
@@ -73,16 +120,21 @@ class StaticOverrideChild(StaticOverrideParent) {
     public static fun label() -> "child"
 }
 
-assert StaticOverrideParent.label() == "parent"
 assert StaticOverrideChild.label() == "child"
+try {
+    StaticOverrideParent.label()
+    assert false, "expected label() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access private member 'label' of class 'StaticOverrideParent' from outside its class hierarchy"
+}
 
-# Multi-level inheritance chaining super() through mixed modifiers at each level
+# Multi-level inheritance chaining super() through protected methods at each level
 class ModGrand {
     protected fun stage() -> 1
 }
 
 class ModMid(ModGrand) {
-    private fun stage() -> super().stage() + 1
+    protected fun stage() -> super().stage() + 1
 }
 
 class ModLeaf(ModMid) {
@@ -91,17 +143,22 @@ class ModLeaf(ModMid) {
 
 assert ModLeaf().stage() == 3
 
-# Multiple inheritance (diamond) where same-named methods carry different modifiers
+# Multiple inheritance (diamond): cooperative super() chaining through a
+# diamond visits sibling mixins (e.g. ModLeft's super() can reach ModRight)
+# purely because of their shared participation in ModHybrid's MRO, not because
+# either is an ancestor of the other -- so this chain uses public methods
+# rather than asserting a specific answer to the ambiguous question of
+# whether protected access should be shared between cooperating siblings.
 class ModBase {
     public fun tag() -> "B"
 }
 
 class ModLeft(ModBase) {
-    private fun tag() -> super().tag() + "L"
+    public fun tag() -> super().tag() + "L"
 }
 
 class ModRight(ModBase) {
-    protected fun tag() -> super().tag() + "R"
+    public fun tag() -> super().tag() + "R"
 }
 
 class ModHybrid(ModLeft, ModRight) {
@@ -116,7 +173,7 @@ class ModCtorParent {
         this.value = value
     }
 
-    private fun doubled() -> this.value * 2
+    protected fun doubled() -> this.value * 2
     protected fun tripled() -> this.value * 3
 }
 
