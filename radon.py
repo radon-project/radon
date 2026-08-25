@@ -13,6 +13,7 @@ from core.errors import Error, RTError
 if sys.platform == "win32":
     try:
         import ctypes
+
         kernel32 = ctypes.windll.kernel32
         # Enable Virtual Terminal Processing for stdout and stderr
         for handle_id in (-11, -12):  # STD_OUTPUT_HANDLE, STD_ERROR_HANDLE
