@@ -9,6 +9,22 @@ from typing import IO, TYPE_CHECKING, Optional
 from core.datatypes import Value
 from core.errors import Error, RTError
 
+# Enable ANSI colors on Windows
+if sys.platform == "win32":
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+        # Enable Virtual Terminal Processing for stdout and stderr
+        for handle_id in (-11, -12):  # STD_OUTPUT_HANDLE, STD_ERROR_HANDLE
+            handle = kernel32.GetStdHandle(handle_id)
+            mode = ctypes.c_ulong()
+            kernel32.GetConsoleMode(handle, ctypes.byref(mode))
+            # ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+            kernel32.SetConsoleMode(handle, mode.value | 0x0004)
+    except Exception:
+        pass
+
 if sys.platform != "win32" and not TYPE_CHECKING:
     try:
         import readline
@@ -293,15 +309,15 @@ def main(argv: list[str]) -> None:
         match arg:
             case "--help" | "-h":
                 usage(program_name, sys.stdout)
-                exit(0)
+                sys.exit(0)
             case "--version" | "-v":
                 print(base_core.__version__)
-                exit(0)
+                sys.exit(0)
             case "--command" | "-c":
                 if len(argv) == 0:
                     usage(program_name, sys.stderr)
                     print(f"ERROR: {arg} requires an argument", file=sys.stderr)
-                    exit(1)
+                    sys.exit(1)
                 command = argv.pop(0)
             # These flags starting with --allow should only be used for testing, and not be allowed to be set by a user
             case "--allow-all" | "-A":
@@ -318,7 +334,7 @@ def main(argv: list[str]) -> None:
                     break
                 usage(program_name, sys.stderr)
                 print(f"ERROR: Unknown argument '{arg}'", file=sys.stderr)
-                exit(1)
+                sys.exit(1)
 
     pos = Position(0, 0, 0, "<argv>", "<argv>")
     base_core.global_symbol_table.set("argv", base_core.radonify(argv, pos, pos, Context("<global>")))
@@ -329,7 +345,7 @@ def main(argv: list[str]) -> None:
                 source = f.read()
         except FileNotFoundError:
             print(Log.deep_error(f"[!] FileNotFound: {Log.deep_error(source_file, bold=True)}"))
-            exit(1)
+            sys.exit(1)
 
         error: Error | RTError | None
         should_exit: Optional[bool]
@@ -337,10 +353,10 @@ def main(argv: list[str]) -> None:
 
         if error:
             print(error.as_string())
-            exit(1)
+            sys.exit(1)
 
         if should_exit:
-            exit()
+            sys.exit()
 
     elif command is not None:
         (_, error, should_exit) = base_core.run("<cli>", command)  # type: ignore

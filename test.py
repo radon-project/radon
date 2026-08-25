@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 from difflib import unified_diff  # Rule 34 of Python: If it exists, it's in the standard library
-from typing import IO, NamedTuple
+from typing import IO, NamedTuple, Optional
 
 
 class Output(NamedTuple):
@@ -164,18 +164,21 @@ def main(argv: list[str]) -> int:
 
         case "full":
             env = dict(**os.environ, FORCE_COLOR="1")
-            ruff_format = subprocess.Popen(
-                ["ruff", "format", "--check", "."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
-            )
-            ruff_check = subprocess.Popen(
-                ["ruff", "check", "."], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
-            )
-            mypy = subprocess.Popen(
-                ["mypy", ".", "--strict"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                env=dict(**os.environ, MYPY_FORCE_COLOR="1"),
-            )
+
+            def spawn(name: str, cmd: list[str], env: dict[str, str]) -> Optional["subprocess.Popen[bytes]"]:
+                try:
+                    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+                except FileNotFoundError:
+                    print(
+                        f"ERROR: '{name}' not found. Install dev dependencies with "
+                        "`pip install -r requirements-dev.txt`.",
+                        file=sys.stderr,
+                    )
+                    return None
+
+            ruff_format = spawn("ruff", ["ruff", "format", "--check", "."], env)
+            ruff_check = spawn("ruff", ["ruff", "check", "."], env)
+            mypy = spawn("mypy", ["mypy", ".", "--strict"], dict(**os.environ, MYPY_FORCE_COLOR="1"))
 
             test_returncode = run_tests("tests")
 
@@ -183,34 +186,35 @@ def main(argv: list[str]) -> int:
             print("    mypy . --strict   ")
             print("----------------------")
 
-            mypy_ret = mypy.wait()
-
-            assert mypy.stdout is not None
-            assert mypy.stderr is not None
-
-            sys.stdout.buffer.write(mypy.stdout.read())
-            sys.stderr.buffer.write(mypy.stderr.read())
+            mypy_ret = 1
+            if mypy is not None:
+                mypy_ret = mypy.wait()
+                assert mypy.stdout is not None
+                assert mypy.stderr is not None
+                sys.stdout.buffer.write(mypy.stdout.read())
+                sys.stderr.buffer.write(mypy.stderr.read())
 
             print("---------------------")
             print("ruff format --check .")
             print("---------------------")
 
-            format_ret = ruff_format.wait()
-            check_ret = ruff_check.wait()
-
-            assert ruff_format.stdout is not None and ruff_format.stderr is not None
-
-            sys.stdout.buffer.write(ruff_format.stdout.read())
-            sys.stderr.buffer.write(ruff_format.stderr.read())
+            format_ret = 1
+            if ruff_format is not None:
+                format_ret = ruff_format.wait()
+                assert ruff_format.stdout is not None and ruff_format.stderr is not None
+                sys.stdout.buffer.write(ruff_format.stdout.read())
+                sys.stderr.buffer.write(ruff_format.stderr.read())
 
             print("---------------------")
             print("     ruff check .    ")
             print("---------------------")
 
-            assert ruff_check.stdout is not None and ruff_check.stderr is not None
-
-            sys.stdout.buffer.write(ruff_check.stdout.read())
-            sys.stderr.buffer.write(ruff_check.stderr.read())
+            check_ret = 1
+            if ruff_check is not None:
+                check_ret = ruff_check.wait()
+                assert ruff_check.stdout is not None and ruff_check.stderr is not None
+                sys.stdout.buffer.write(ruff_check.stdout.read())
+                sys.stderr.buffer.write(ruff_check.stderr.read())
 
             if test_returncode == 0 and format_ret == 0 and check_ret == 0 and mypy_ret == 0:
                 print("Full test succeeded with no errors!")

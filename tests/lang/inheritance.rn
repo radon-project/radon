@@ -1,0 +1,88 @@
+class Parent {
+    fun __constructor__(x) {
+        this.x = x
+    }
+
+    fun single_method() -> this.x + 1
+}
+
+class Child(Parent) {
+    fun __constructor__(x) {
+        super().__constructor__(x)
+    }
+}
+
+var child = Child(5)
+assert child.single_method() == 6
+
+class Grand {
+    fun multilevel() -> 1
+}
+
+class Mid(Grand) {
+    fun multilevel() -> super().multilevel() + 1
+}
+
+class Leaf(Mid) {
+    fun multilevel() -> super().multilevel() + 1
+}
+
+assert Leaf().multilevel() == 3
+
+class HierParent {
+    fun value() -> 10
+}
+
+class HierA(HierParent) {}
+class HierB(HierParent) {}
+
+assert HierA().value() == 10
+assert HierB().value() == 10
+
+class Base {
+    fun merge() -> "A"
+}
+
+class Left(Base) {
+    fun merge() -> super().merge() + "B"
+}
+
+class Right(Base) {
+    fun merge() -> super().merge() + "C"
+}
+
+class Hybrid(Left, Right) {
+    fun merge() -> super().merge() + "D"
+}
+
+assert Hybrid().merge() == "ACBD"
+
+class Root {
+    fun __constructor__() {
+        this.trace = "R"
+    }
+}
+
+class LeftCtor(Root) {
+    fun __constructor__() {
+        super().__constructor__()
+        this.trace = this.trace + "L"
+    }
+}
+
+class RightCtor(Root) {
+    fun __constructor__() {
+        super().__constructor__()
+        this.trace = this.trace + "R"
+    }
+}
+
+class HybridCtor(LeftCtor, RightCtor) {
+    fun __constructor__() {
+        super().__constructor__()
+        this.trace = this.trace + "C"
+    }
+}
+
+var hybrid_ctor = HybridCtor()
+assert hybrid_ctor.trace == "RRLC"

@@ -1106,6 +1106,7 @@ class PyAPI(Value):
 class BaseFunction(Value):
     name: str
     symbol_table: Optional[SymbolTable]
+    owner_class: Optional["Class"]
     desc: str
     arg_names: list[str]
     va_name: Optional[str]
@@ -1115,6 +1116,7 @@ class BaseFunction(Value):
         super().__init__()
         self.name = name if name is not None else "<anonymous>"
         self.symbol_table = symbol_table
+        self.owner_class = None
 
     def generate_new_context(self) -> Context:
         new_context = Context(self.name, self.context, self.pos_start)
@@ -1344,11 +1346,13 @@ class Instance(BaseInstance):
         if method.symbol_table is None:
             method.symbol_table = SymbolTable()
         method.symbol_table.set("this", self)
+        if isinstance(self.parent_class, Class) and isinstance(method, Function):
+            method.symbol_table.set("super", self.parent_class.get_super_callable(method.owner_class, self))
         return RTResult[BaseFunction]().success(method)
 
     def operator(self, operator: str, *args: Value) -> ResultTuple:
         res = RTResult[Value]()
-        method = self.symbol_table.symbols.get(operator, None)
+        method = self.symbol_table.get(operator)
 
         if method is None or not isinstance(method, Function):
             return None, RTError(self.pos_start, self.pos_end, f"Function '{operator}' not defined", self.context)
@@ -1365,6 +1369,69 @@ class Instance(BaseInstance):
     def __repr__(self) -> str:
         # TODO: make this overloadable as well
         return f"<instance of class {self.parent_class.name}>"
+
+
+class SuperInstance(BaseInstance):
+    def __init__(self, parent_class: Class, symbol_table: SymbolTable, bound_instance: Instance) -> None:
+        super().__init__(parent_class, symbol_table)
+        self.bound_instance = bound_instance
+        self.symbol_table.set("this", bound_instance)
+
+    def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]:
+        method = method.copy()
+        if method.symbol_table is None:
+            method.symbol_table = SymbolTable()
+        method.symbol_table.set("this", self.bound_instance)
+        if isinstance(self.bound_instance.parent_class, Class) and isinstance(method, Function):
+            method.symbol_table.set(
+                "super", self.bound_instance.parent_class.get_super_callable(method.owner_class, self.bound_instance)
+            )
+        return RTResult[BaseFunction]().success(method)
+
+    def operator(self, operator: str, *args: Value) -> ResultTuple:
+        res = RTResult[Value]()
+        method = self.symbol_table.get(operator)
+
+        if method is None or not isinstance(method, Function):
+            return None, RTError(self.pos_start, self.pos_end, f"Function '{operator}' not defined", self.context)
+        if method.symbol_table is None:
+            method.symbol_table = SymbolTable()
+        method.symbol_table.set("this", self.bound_instance)
+        if isinstance(self.bound_instance.parent_class, Class):
+            method.symbol_table.set(
+                "super", self.bound_instance.parent_class.get_super_callable(method.owner_class, self.bound_instance)
+            )
+
+        value = res.register(method.execute(list(args), {}))
+        if res.error is not None:
+            return None, res.error
+        assert value is not None
+        return value, None
+
+    def __repr__(self) -> str:
+        return f"<super of class {self.parent_class.name}>"
+
+
+class SuperCallable(Value):
+    def __init__(self, super_instance: Optional[SuperInstance]) -> None:
+        super().__init__()
+        self.super_instance = super_instance
+
+    def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
+        res = RTResult[Value]()
+        if len(args) > 0 or len(kwargs) > 0:
+            return res.failure(RTError(self.pos_start, self.pos_end, "super() does not take arguments", self.context))
+        if self.super_instance is None:
+            return res.failure(
+                RTError(self.pos_start, self.pos_end, "super() has no parent class to resolve", self.context)
+            )
+        return res.success(self.super_instance)
+
+    def copy(self) -> SuperCallable:
+        return self
+
+    def __repr__(self) -> str:
+        return "<super>"
 
 
 class BaseClass(Value, ABC):
@@ -1415,11 +1482,54 @@ class BaseClass(Value, ABC):
 
 
 class Class(BaseClass):
+    def __init__(
+        self,
+        name: str,
+        desc: Optional[str],
+        symbol_table: SymbolTable,
+        bases: Optional[list[Class]] = None,
+        mro: Optional[list[Class]] = None,
+        own_symbol_table: Optional[SymbolTable] = None,
+    ) -> None:
+        super().__init__(name, desc, symbol_table)
+        self.bases = bases if bases is not None else []
+        self.mro = mro if mro is not None else [self]
+        self.own_symbol_table = own_symbol_table if own_symbol_table is not None else symbol_table
+
     def get(self, name: str) -> Optional[Value]:
         method = self.symbol_table.symbols.get(name, None)
         if method is None:
             return None
         return method
+
+    def get_super_callable(self, owner_class: Optional[Class], bound_instance: Instance) -> SuperCallable:
+        super_instance = self.get_super_instance(owner_class, bound_instance)
+        callable_ = (
+            SuperCallable(super_instance)
+            .set_context(bound_instance.context)
+            .set_pos(bound_instance.pos_start, bound_instance.pos_end)
+        )
+        return callable_
+
+    def get_super_instance(self, owner_class: Optional[Class], bound_instance: Instance) -> Optional[SuperInstance]:
+        current_class = owner_class if owner_class is not None else self
+        try:
+            start_idx = self.mro.index(current_class) + 1
+        except ValueError:
+            start_idx = 1
+
+        if start_idx >= len(self.mro):
+            return None
+
+        super_chain = self.mro[start_idx:]
+        symbol_table = SymbolTable()
+        for cls in reversed(super_chain):
+            for name, value in cls.own_symbol_table.symbols.items():
+                symbol_table.set(name, value.copy())
+
+        super_instance = SuperInstance(super_chain[0], symbol_table, bound_instance)
+        super_instance.set_context(bound_instance.context).set_pos(bound_instance.pos_start, bound_instance.pos_end)
+        return super_instance
 
     def __help_repr__(self) -> str:
         result: str = f"Help on object {Log.deep_white(self.name, bold=True)}:\n\nclass {Log.deep_white(self.name, bold=True)}\n |\n"
@@ -1445,10 +1555,11 @@ class Class(BaseClass):
 
         # TODO: Some issue here when direct accessing class methods without instantiation
         inst = Instance(self)
-        inst.symbol_table = SymbolTable(self.symbol_table)
+        inst.symbol_table = SymbolTable()
 
-        for name in self.symbol_table.symbols:
-            inst.symbol_table.set(name, self.symbol_table.symbols[name].copy())
+        for cls in reversed(self.mro):
+            for name, value in cls.own_symbol_table.symbols.items():
+                inst.symbol_table.set(name, value.copy())
 
         exec_ctx = Context(f"<class {self.name}>", self.context, self.pos_start)
         exec_ctx.symbol_table = inst.symbol_table
@@ -1469,6 +1580,8 @@ class Class(BaseClass):
         if method.symbol_table is None:  # type: ignore
             method.symbol_table = SymbolTable()  # type: ignore
         method.symbol_table.set("this", inst)  # type: ignore
+        if isinstance(inst, Instance) and isinstance(inst.parent_class, Class) and isinstance(method, Function):
+            method.symbol_table.set("super", inst.parent_class.get_super_callable(method.owner_class, inst))
 
         res.register(method.execute(args, kwargs))
         if res.should_return():
@@ -1568,6 +1681,7 @@ class Function(BaseFunction):
             self.va_kw_name,
             self.max_pos_args,
         )
+        copy.owner_class = self.owner_class
         copy.set_context(self.context)
         copy.set_pos(self.pos_start, self.pos_end)
         return copy

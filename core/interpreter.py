@@ -149,6 +149,50 @@ def resolve_module(pos_start: Position, pos_end: Position, exec_ctx: Context, mo
 
 
 class Interpreter:
+    def _merge_mro(self, sequences: list[list[Class]], node: ClassNode, context: Context) -> RTResult[list[Class]]:
+        res = RTResult[list[Class]]()
+        merged: list[Class] = []
+        seqs = [seq[:] for seq in sequences if len(seq) > 0]
+
+        while len(seqs) > 0:
+            candidate: Optional[Class] = None
+            for seq in seqs:
+                head = seq[0]
+                if not any(head in other[1:] for other in seqs):
+                    candidate = head
+                    break
+
+            if candidate is None:
+                return res.failure(
+                    RTError(
+                        node.pos_start,
+                        node.pos_end,
+                        "Cannot create a consistent method resolution order (MRO) for inheritance graph",
+                        context,
+                    )
+                )
+
+            merged.append(candidate)
+            next_seqs: list[list[Class]] = []
+            for seq in seqs:
+                if len(seq) > 0 and seq[0] is candidate:
+                    seq.pop(0)
+                if len(seq) > 0:
+                    next_seqs.append(seq)
+            seqs = next_seqs
+
+        return res.success(merged)
+
+    def _compute_parent_mro(self, parents: list[Class], node: ClassNode, context: Context) -> RTResult[list[Class]]:
+        res = RTResult[list[Class]]()
+        sequences = [parent.mro[:] for parent in parents]
+        sequences.append(parents[:])
+        merged = res.register(self._merge_mro(sequences, node, context))
+        if res.should_return():
+            return res
+        assert merged is not None
+        return res.success(merged)
+
     def assign(
         self,
         *,
@@ -962,6 +1006,31 @@ class Interpreter:
 
         class_name = node.class_name_tok.value
         assert isinstance(class_name, str), "This could be a bug in the lexer"
+
+        parents: list[Class] = []
+        for parent_node in node.parent_nodes:
+            parent = res.register(self.visit(parent_node, context))
+            if res.should_return():
+                return res
+            if not isinstance(parent, Class):
+                return res.failure(
+                    RTError(
+                        parent_node.pos_start,
+                        parent_node.pos_end,
+                        f"Can only inherit from class values, got '{type(parent).__name__}'",
+                        context,
+                    )
+                )
+            parents.append(parent)
+
+        parent_mro: list[Class] = []
+        if len(parents) > 0:
+            parent_mro_result = res.register(self._compute_parent_mro(parents, node, context))
+            if res.should_return():
+                return res
+            assert parent_mro_result is not None
+            parent_mro = parent_mro_result
+
         ctx = Context(class_name, context, node.pos_start)
         ctx.symbol_table = SymbolTable(context.symbol_table)
 
@@ -969,7 +1038,25 @@ class Interpreter:
         if res.should_return():
             return res
 
-        cls = Class(class_name, node.desc, ctx.symbol_table).set_context(context).set_pos(node.pos_start, node.pos_end)
+        merged_symbol_table = SymbolTable(context.symbol_table)
+        for parent in reversed(parent_mro):
+            for name, value in parent.own_symbol_table.symbols.items():
+                merged_symbol_table.set(name, value.copy())
+
+        for name, value in ctx.symbol_table.symbols.items():
+            merged_symbol_table.set(name, value)
+
+        cls = (
+            Class(class_name, node.desc, merged_symbol_table, bases=parents, mro=[], own_symbol_table=ctx.symbol_table)
+            .set_context(context)
+            .set_pos(node.pos_start, node.pos_end)
+        )
+        cls.mro = [cls, *parent_mro]
+
+        for value in cls.own_symbol_table.symbols.values():
+            if isinstance(value, Function):
+                value.owner_class = cls
+
         context.symbol_table.set(class_name, cls)
         return res.success(cls)
 

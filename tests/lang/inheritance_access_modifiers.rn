@@ -1,0 +1,132 @@
+# Instance methods with every modifier, inherited without override
+class ModParent {
+    fun __constructor__(x) {
+        this.x = x
+    }
+
+    fun implicit_method() -> this.x
+    public fun public_method() -> this.x + 1
+    private fun private_method() -> this.x + 2
+    protected fun protected_method() -> this.x + 3
+}
+
+class ModChild(ModParent) {}
+
+var mod_child = ModChild(10)
+assert mod_child.implicit_method() == 10
+assert mod_child.public_method() == 11
+assert mod_child.private_method() == 12
+assert mod_child.protected_method() == 13
+
+# Overriding across differing modifiers: child modifier need not match parent's
+class OverrideParent {
+    public fun greet() -> "public-parent"
+    private fun secret() -> "private-parent"
+    protected fun guarded() -> "protected-parent"
+}
+
+class OverrideChild(OverrideParent) {
+    private fun greet() -> "private-child"
+    protected fun secret() -> "protected-child"
+    public fun guarded() -> "public-child"
+}
+
+var override_child = OverrideChild()
+assert override_child.greet() == "private-child"
+assert override_child.secret() == "protected-child"
+assert override_child.guarded() == "public-child"
+
+# super() calls into private/protected parent methods regardless of the caller's own modifier
+class SuperParent {
+    private fun private_value() -> 100
+    protected fun protected_value() -> 200
+    public fun public_value() -> 300
+}
+
+class SuperChild(SuperParent) {
+    public fun combined() -> super().private_value() + super().protected_value() + super().public_value()
+}
+
+assert SuperChild().combined() == 600
+
+# Static methods with every modifier-order combination, inherited without redefinition
+class StaticModParent {
+    public static fun add(a, b) -> a + b
+    static private fun mul(a, b) -> a * b
+    protected static fun sub(a, b) -> a - b
+    static protected fun cat(a, b) -> a + ":" + b
+}
+
+class StaticModChild(StaticModParent) {}
+
+assert StaticModChild.add(2, 3) == 5
+assert StaticModChild.mul(2, 3) == 6
+assert StaticModChild.sub(5, 2) == 3
+assert StaticModChild.cat("a", "b") == "a:b"
+
+# Overriding a static modified method in a child class
+class StaticOverrideParent {
+    private static fun label() -> "parent"
+}
+
+class StaticOverrideChild(StaticOverrideParent) {
+    public static fun label() -> "child"
+}
+
+assert StaticOverrideParent.label() == "parent"
+assert StaticOverrideChild.label() == "child"
+
+# Multi-level inheritance chaining super() through mixed modifiers at each level
+class ModGrand {
+    protected fun stage() -> 1
+}
+
+class ModMid(ModGrand) {
+    private fun stage() -> super().stage() + 1
+}
+
+class ModLeaf(ModMid) {
+    public fun stage() -> super().stage() + 1
+}
+
+assert ModLeaf().stage() == 3
+
+# Multiple inheritance (diamond) where same-named methods carry different modifiers
+class ModBase {
+    public fun tag() -> "B"
+}
+
+class ModLeft(ModBase) {
+    private fun tag() -> super().tag() + "L"
+}
+
+class ModRight(ModBase) {
+    protected fun tag() -> super().tag() + "R"
+}
+
+class ModHybrid(ModLeft, ModRight) {
+    public fun tag() -> super().tag() + "H"
+}
+
+assert ModHybrid().tag() == "BRLH"
+
+# Constructor modifiers combined with inheritance and internal private/protected calls
+class ModCtorParent {
+    protected fun __constructor__(value) {
+        this.value = value
+    }
+
+    private fun doubled() -> this.value * 2
+    protected fun tripled() -> this.value * 3
+}
+
+class ModCtorChild(ModCtorParent) {
+    public fun __constructor__(value) {
+        super().__constructor__(value)
+    }
+
+    public fun total() -> this.doubled() + this.tripled()
+}
+
+var mod_ctor_child = ModCtorChild(4)
+assert mod_ctor_child.total() == 20

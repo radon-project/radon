@@ -1430,6 +1430,35 @@ class Parser:
         self.advance(res)
         self.skip_newlines()
 
+        parent_nodes: list[Node] = []
+        if self.current_tok.type == TT_LPAREN:
+            self.advance(res)
+            self.skip_newlines()
+
+            if self.current_tok.type != TT_RPAREN:
+                first_parent = res.register(self.expr())
+                if res.error:
+                    return res
+                assert first_parent is not None
+                parent_nodes.append(first_parent)
+                self.skip_newlines()
+
+                while self.current_tok.type == TT_COMMA:
+                    self.advance(res)
+                    self.skip_newlines()
+
+                    parent = res.register(self.expr())
+                    if res.error:
+                        return res
+                    assert parent is not None
+                    parent_nodes.append(parent)
+                    self.skip_newlines()
+
+            if self.current_tok.type != TT_RPAREN:
+                return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')'"))
+            self.advance(res)
+            self.skip_newlines()
+
         if self.current_tok.type != TT_LBRACE:
             return res.failure(RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '{'"))
 
@@ -1452,7 +1481,7 @@ class Parser:
 
         self.advance(res)
 
-        return res.success(ClassNode(class_name_tok, desc, body, pos_start, self.current_tok.pos_end))
+        return res.success(ClassNode(class_name_tok, parent_nodes, desc, body, pos_start, self.current_tok.pos_end))
 
     def func_def(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
