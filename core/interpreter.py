@@ -633,7 +633,7 @@ class Interpreter:
                 return res
             assert condition_value is not None
 
-            if condition_value.is_true():
+            if await condition_value.is_true():
                 expr_value = res.register(await self.visit_block(expr, context))
                 if res.should_return():
                     return res
@@ -739,7 +739,7 @@ class Interpreter:
                 return res
             assert condition is not None
 
-            if not condition.is_true():
+            if not (await condition.is_true()):
                 break
 
             value = res.register(await self.visit_block(node.body_node, context))
@@ -1159,7 +1159,7 @@ class Interpreter:
         if res.should_return():
             return res
         assert condition is not None
-        if not condition.is_true():
+        if not (await condition.is_true()):
             message = "Assertion failed"
             if node.message is not None:
                 message_val = res.register(await self.visit(node.message, context))
@@ -1257,7 +1257,7 @@ class Interpreter:
                 if error is not None:
                     return res.failure(error)
                 assert bool_ is not None
-                should_continue = bool(bool_.is_true())
+                should_continue = bool((await bool_.is_true()))
 
             if should_continue:
                 res.register(await self.visit(body, context))

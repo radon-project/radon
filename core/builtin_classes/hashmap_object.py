@@ -252,7 +252,7 @@ class HashMapObject(BuiltInObject):
             if res.should_return():
                 return res
             assert result is not None
-            if result.is_true():
+            if await result.is_true():
                 filtered[k] = v
 
         return res.success(HashMap(filtered))

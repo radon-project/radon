@@ -40,7 +40,7 @@ class BooleanObject(BuiltInObject):
     value: bool
 
     @operator("__constructor__")
-    def constructor(self, args_list: list[Value]) -> RTResult[Value]:
+    async def constructor(self, args_list: list[Value]) -> RTResult[Value]:
         """Initialize with an existing boolean or convert from any value."""
         if len(args_list) == 1 and isinstance(args_list[0], Boolean):
             self.value = args_list[0].value
@@ -48,7 +48,7 @@ class BooleanObject(BuiltInObject):
             self.value = False
         else:
             # Convert to boolean
-            self.value = args_list[0].is_true()
+            self.value = await args_list[0].is_true()
         return RTResult[Value]().success(Null.null())
 
     def __string_display__(self) -> str:
@@ -74,30 +74,30 @@ class BooleanObject(BuiltInObject):
 
     @args(["other"])
     @method
-    def and_(self, ctx: Context) -> RTResult[Value]:
+    async def and_(self, ctx: Context) -> RTResult[Value]:
         """Perform logical AND with another value."""
         res = RTResult[Value]()
         other = ctx.symbol_table.get("other")
         assert other is not None
-        return res.success(Boolean(self.value and other.is_true()))
+        return res.success(Boolean(self.value and (await other.is_true())))
 
     @args(["other"])
     @method
-    def or_(self, ctx: Context) -> RTResult[Value]:
+    async def or_(self, ctx: Context) -> RTResult[Value]:
         """Perform logical OR with another value."""
         res = RTResult[Value]()
         other = ctx.symbol_table.get("other")
         assert other is not None
-        return res.success(Boolean(self.value or other.is_true()))
+        return res.success(Boolean(self.value or (await other.is_true())))
 
     @args(["other"])
     @method
-    def xor(self, ctx: Context) -> RTResult[Value]:
+    async def xor(self, ctx: Context) -> RTResult[Value]:
         """Perform logical XOR with another value."""
         res = RTResult[Value]()
         other = ctx.symbol_table.get("other")
         assert other is not None
-        return res.success(Boolean(self.value != other.is_true()))
+        return res.success(Boolean(self.value != (await other.is_true())))
 
     @args([])
     @method
@@ -107,13 +107,13 @@ class BooleanObject(BuiltInObject):
 
     @args(["other"])
     @method
-    def implies(self, ctx: Context) -> RTResult[Value]:
+    async def implies(self, ctx: Context) -> RTResult[Value]:
         """Perform logical implication (this -> other). True unless this is true and other is false."""
         res = RTResult[Value]()
         other = ctx.symbol_table.get("other")
         assert other is not None
         # Implication: P -> Q is equivalent to (not P) or Q
-        return res.success(Boolean((not self.value) or other.is_true()))
+        return res.success(Boolean((not self.value) or (await other.is_true())))
 
     @args(["other"])
     @method

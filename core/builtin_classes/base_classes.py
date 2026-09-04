@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import Any, Callable, Optional, Sequence, TypeAlias, TypeVar
 
 from core.builtin_funcs import BuiltInFunction, args
@@ -69,7 +70,10 @@ class BuiltInInstance(BaseInstance):
         except KeyError:
             return None, self.illegal_operation(*args)
         res = RTResult[Value]()
-        value = res.register(op(self.obj, list(args)))
+        raw_result = op(self.obj, list(args))
+        if inspect.isawaitable(raw_result):
+            raw_result = await raw_result
+        value = res.register(raw_result)
         if res.should_return():
             assert res.error is not None
             return None, res.error

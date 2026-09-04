@@ -143,7 +143,7 @@ class Value:
     def copy(self: Self) -> Self:
         raise Exception("No copy method defined")
 
-    def is_true(self) -> bool:
+    async def is_true(self) -> bool:
         return False
 
     # Help text for help() in radon
@@ -323,7 +323,7 @@ class Number(Value):
         copy.set_context(self.context)
         return copy
 
-    def is_true(self) -> bool:
+    async def is_true(self) -> bool:
         return self.value != 0
 
     def __str__(self) -> str:
@@ -361,10 +361,10 @@ class Boolean(Value):
         self.value = value
 
     async def anded_by(self, other: Value) -> ResultTuple:
-        return Boolean(self.value and other.is_true()).set_context(self.context), None
+        return Boolean(self.value and (await other.is_true())).set_context(self.context), None
 
     async def ored_by(self, other: Value) -> ResultTuple:
-        return Boolean(self.value or other.is_true()).set_context(self.context), None
+        return Boolean(self.value or (await other.is_true())).set_context(self.context), None
 
     async def notted(self) -> ResultTuple:
         return Boolean(not self.value).set_context(self.context), None
@@ -399,7 +399,7 @@ class Boolean(Value):
         copy.set_context(self.context)
         return copy
 
-    def is_true(self) -> bool:
+    async def is_true(self) -> bool:
         return self.value
 
     def __len__(self) -> int:
@@ -529,7 +529,7 @@ class String(Value):
             return None, self.illegal_operation(other)
         return Boolean(other.value in self.value), None
 
-    def is_true(self) -> bool:
+    async def is_true(self) -> bool:
         return len(self.value) > 0
 
     def copy(self) -> String:
@@ -659,7 +659,7 @@ class Array(Value):
                 if error is not None:
                     return None, error
                 assert ret is not None
-                if not ret.is_true():
+                if not (await ret.is_true()):
                     return Boolean.false(), None
             return Boolean.true(), None
         else:
@@ -670,7 +670,7 @@ class Array(Value):
         if error is not None:
             return None, error
         assert ret is not None
-        return Boolean.false() if ret.is_true() else Boolean.true(), None
+        return Boolean.false() if (await ret.is_true()) else Boolean.true(), None
 
     def gen(self) -> Generator[RTResult[Value], None, None]:
         for element in self.elements:
@@ -737,12 +737,12 @@ class Array(Value):
             if err is not None:
                 return None, err
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 ret = Boolean.true()
                 break
         return ret, None
 
-    def is_true(self) -> bool:
+    async def is_true(self) -> bool:
         return len(self.elements) > 0
 
     def copy(self) -> Array:
@@ -851,7 +851,7 @@ class HashMap(Value):
             if err:
                 return None, err
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 ret = Boolean.true()
                 break
         return ret, None
@@ -871,7 +871,7 @@ class HashMap(Value):
             if err:
                 return None, err
             assert cmp is not None
-            if not cmp.is_true():
+            if not (await cmp.is_true()):
                 return Boolean.false(), None
 
         return Boolean.true(), None
@@ -891,7 +891,7 @@ class HashMap(Value):
             if err:
                 return None, err
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 return Boolean.true(), None
 
         return Boolean.false(), None
@@ -1338,13 +1338,12 @@ class BaseInstance(Value, ABC):
     async def contains(self, other: Value) -> ResultTuple:
         return await self.operator("__contains__", other)
 
-    def is_true(self) -> bool:
-        # Deliberately does not consult a `__truthy__` operator overload:
-        # is_true() is called synchronously from many hot paths (if/while/not/
-        # and/or), and `operator()` is async (it may invoke a user-defined
-        # Function). Instances default to truthy, like Python's own objects
-        # absent a __bool__/__len__ override.
-        return True
+    async def is_true(self) -> bool:
+        res, err = await self.operator("__truthy__")
+        if err is not None:
+            return False
+        assert res is not None
+        return await res.is_true()
 
     def copy(self: Self) -> Self:
         return self
@@ -1765,7 +1764,7 @@ class Task(Value):
     def copy(self) -> Task:
         return self
 
-    def is_true(self) -> bool:
+    async def is_true(self) -> bool:
         return True
 
     def __repr__(self) -> str:
@@ -1801,7 +1800,7 @@ class Null(Value):
     def copy(self) -> Null:
         return self
 
-    def is_true(self) -> bool:
+    async def is_true(self) -> bool:
         return False
 
     async def get_comparison_eq(self, other: Value) -> ResultTuple:

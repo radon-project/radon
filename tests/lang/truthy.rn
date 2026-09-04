@@ -1,0 +1,71 @@
+# __truthy__ magic method: controls how an instance behaves in boolean
+# contexts (if/while/assert). A class with no __truthy__ override is falsy
+# by default; __truthy__ overrides that. (Note: `not`/`and`/`or` on an
+# instance route through separate __not__/__and__/__or__ operator overloads,
+# not __truthy__ -- unrelated to this file.)
+
+class NoOverride {
+    fun __constructor__(x) {
+        this.x = x
+    }
+}
+
+var plain = NoOverride(1)
+var plain_was_truthy = false
+if plain {
+    plain_was_truthy = true
+}
+assert not plain_was_truthy, "expected an instance with no __truthy__ to be falsy by default"
+
+class AlwaysTrue {
+    fun __truthy__() -> true
+}
+
+var always_true = AlwaysTrue()
+var always_true_was_truthy = false
+if always_true {
+    always_true_was_truthy = true
+}
+assert always_true_was_truthy, "expected __truthy__ returning true to make the instance truthy"
+
+class NonEmptyBox {
+    fun __constructor__(items) {
+        this.items = items
+    }
+
+    fun __truthy__() -> len(this.items) > 0
+}
+
+var full = NonEmptyBox([1, 2, 3])
+var empty = NonEmptyBox([])
+
+var full_was_truthy = false
+if full {
+    full_was_truthy = true
+}
+assert full_was_truthy
+
+var empty_was_truthy = false
+if empty {
+    empty_was_truthy = true
+}
+assert not empty_was_truthy
+
+var truthy_count = 0
+for box in [full, empty] {
+    if box {
+        truthy_count += 1
+    }
+}
+assert truthy_count == 1
+
+# assert <instance> and while <instance> also go through is_true()/__truthy__.
+assert full
+
+var iterations = 0
+var remaining = NonEmptyBox([1])
+while remaining {
+    iterations += 1
+    remaining = NonEmptyBox([])
+}
+assert iterations == 1

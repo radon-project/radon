@@ -267,11 +267,11 @@ class BuiltInFunction(BaseFunction):
             )
 
     @args(["value"])
-    def execute_bool(self, exec_ctx: Context) -> RTResult[Value]:
+    async def execute_bool(self, exec_ctx: Context) -> RTResult[Value]:
         value = exec_ctx.symbol_table.get("value")
         assert value is not None
 
-        return RTResult[Value]().success(Boolean.true() if value.is_true() else Boolean.false())
+        return RTResult[Value]().success(Boolean.true() if (await value.is_true()) else Boolean.false())
 
     @args(["value"])
     def execute_type(self, exec_ctx: Context) -> RTResult[Value]:

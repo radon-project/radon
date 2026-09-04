@@ -134,7 +134,7 @@ class ArrayObject(BuiltInObject):
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 return res.success(Number(i))
         return res.success(Number(-1))
 
@@ -250,7 +250,7 @@ class ArrayObject(BuiltInObject):
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 self.elements.pop(i)
                 return res.success(Null.null())
         return res.failure(RTError(value.pos_start, value.pos_end, "Value not found in array", ctx))
@@ -320,7 +320,7 @@ class ArrayObject(BuiltInObject):
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 return res.success(Boolean.true())
         return res.success(Boolean.false())
 
@@ -336,7 +336,7 @@ class ArrayObject(BuiltInObject):
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 return res.success(Number(i))
         return res.success(Number(-1))
 
@@ -371,7 +371,7 @@ class ArrayObject(BuiltInObject):
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 count += 1
         return res.success(Number(count))
 
@@ -401,7 +401,7 @@ class ArrayObject(BuiltInObject):
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 min_val = elem
         return res.success(min_val)
 
@@ -418,13 +418,13 @@ class ArrayObject(BuiltInObject):
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 max_val = elem
         return res.success(max_val)
 
     @args(["reverse"], [Boolean.false()])
     @method
-    def sort(self, ctx: Context) -> RTResult[Value]:
+    async def sort(self, ctx: Context) -> RTResult[Value]:
         """Sort the array in place."""
         res = RTResult[Value]()
         reverse = ctx.symbol_table.get("reverse")
@@ -447,10 +447,11 @@ class ArrayObject(BuiltInObject):
                 )
             )
 
+        reverse_flag = await reverse.is_true()
         if all_numbers:
-            self.elements.sort(key=lambda x: x.value, reverse=reverse.is_true())  # type: ignore
+            self.elements.sort(key=lambda x: x.value, reverse=reverse_flag)  # type: ignore
         else:
-            self.elements.sort(key=lambda x: x.value, reverse=reverse.is_true())  # type: ignore
+            self.elements.sort(key=lambda x: x.value, reverse=reverse_flag)  # type: ignore
 
         return res.success(Null.null())
 
@@ -464,7 +465,7 @@ class ArrayObject(BuiltInObject):
             is_duplicate = False
             for s in seen:
                 cmp, _ = await elem.get_comparison_eq(s)
-                if cmp is not None and cmp.is_true():
+                if cmp is not None and (await cmp.is_true()):
                     is_duplicate = True
                     break
             if not is_duplicate:
@@ -486,7 +487,7 @@ class ArrayObject(BuiltInObject):
             if res.should_return():
                 return res
             assert result is not None
-            if result.is_true():
+            if await result.is_true():
                 filtered.append(element)
 
         return res.success(Array(filtered))
@@ -504,7 +505,7 @@ class ArrayObject(BuiltInObject):
             if res.should_return():
                 return res
             assert result is not None
-            if not result.is_true():
+            if not (await result.is_true()):
                 return res.success(Boolean.false())
 
         return res.success(Boolean.true())
@@ -522,7 +523,7 @@ class ArrayObject(BuiltInObject):
             if res.should_return():
                 return res
             assert result is not None
-            if result.is_true():
+            if await result.is_true():
                 return res.success(Boolean.true())
 
         return res.success(Boolean.false())
