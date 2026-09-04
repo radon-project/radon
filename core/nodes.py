@@ -178,8 +178,20 @@ class UnaryOpNode:
         self.pos_start = self.op_tok.pos_start
         self.pos_end = node.pos_end
 
+
+class AwaitNode:
+    value_node: Node
+
+    pos_start: Position
+    pos_end: Position
+
+    def __init__(self, value_node: Node, pos_start: Position, pos_end: Position) -> None:
+        self.value_node = value_node
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
     def __repr__(self) -> str:
-        return f"({self.op_tok}, {self.node})"
+        return f"(await {self.value_node})"
 
 
 Case: TypeAlias = tuple[Node, Node, bool]
@@ -267,6 +279,7 @@ class FuncDefNode:
 
     access_modifier: str = "public"
     is_abstract: bool = False
+    is_async: bool = False
 
 
 class CallNode:

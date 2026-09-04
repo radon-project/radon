@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import Any, Callable, Optional, Sequence, TypeAlias, TypeVar
 
 from core.builtin_funcs import BuiltInFunction, args
@@ -20,7 +21,7 @@ class BuiltInClass(BaseClass):
         inst = BuiltInInstance(self, self.instance_class(self))
         return RTResult[BaseInstance]().success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
 
-    def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]:
+    async def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]:
         res = RTResult[None]()
         if len(kwargs) > 0:
             return res.failure(
@@ -31,7 +32,7 @@ class BuiltInClass(BaseClass):
                     list(kwargs.values())[0].context,
                 )
             )
-        _, error = inst.operator("__constructor__", *args)
+        _, error = await inst.operator("__constructor__", *args)
         if error:
             return res.failure(error)
         return res.success(None)
@@ -63,13 +64,16 @@ class BuiltInInstance(BaseInstance):
 
         return RTResult[BaseFunction]().success(BuiltInFunction(method.name, new_func))
 
-    def operator(self, operator: str, *args: Value) -> ResultTuple:
+    async def operator(self, operator: str, *args: Value) -> ResultTuple:
         try:
             op = type(self.obj).__operators__[operator]
         except KeyError:
             return None, self.illegal_operation(*args)
         res = RTResult[Value]()
-        value = res.register(op(self.obj, list(args)))
+        raw_result = op(self.obj, list(args))
+        if inspect.isawaitable(raw_result):
+            raw_result = await raw_result
+        value = res.register(raw_result)
         if res.should_return():
             assert res.error is not None
             return None, res.error

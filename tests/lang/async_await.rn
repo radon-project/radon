@@ -1,0 +1,101 @@
+# Async/await (#216): async fun marks a function body as allowed to contain
+# `await`; calling any function still runs it inline like today. Real
+# concurrency comes from spawn() (schedules a call as a background Task on
+# the event loop) + await/gather (suspend until a Task resolves).
+
+# Basic: awaiting a plain async call just returns its value, same as a
+# regular call -- async by itself doesn't change anything about a single,
+# un-spawned call.
+async fun answer() {
+    return 42
+}
+assert await answer() == 42
+
+# await is legal at a script's top level too (the whole program runs inside
+# the event loop already), not just inside async fun bodies.
+async fun make_value(x) {
+    return x * 2
+}
+assert await make_value(21) == 42
+
+# Errors raised inside an async function propagate through await like any
+# other function call.
+fun BoomError(msg) {
+    return msg
+}
+
+async fun fails() {
+    raise BoomError("async boom")
+}
+
+try {
+    await fails()
+    assert false, "expected fails() to raise"
+} catch as e {
+    assert e == "async boom"
+}
+
+# spawn() starts a call running concurrently in the background and returns a
+# Task immediately; awaiting a Task suspends until it resolves.
+async fun waiter(label, seconds, log) {
+    await sleep(seconds)
+    log.append(label)
+    return label
+}
+
+var log = []
+var slow = spawn(fun() -> waiter("slow", 0.06, log))
+var fast = spawn(fun() -> waiter("fast", 0.01, log))
+
+# gather() waits for both concurrently -- the shorter sleep finishes first,
+# proving they actually run in parallel rather than one after another
+# (sequential execution would always log "slow" before "fast").
+var results = await gather([slow, fast])
+assert results == ["slow", "fast"]
+assert log == ["fast", "slow"]
+
+# A Task's error is propagated through gather()/await too.
+async fun always_fails() {
+    raise BoomError("task boom")
+}
+
+var failing_task = spawn(always_fails)
+try {
+    await gather([failing_task])
+    assert false, "expected gather() to propagate the task's error"
+} catch as e {
+    assert e == "task boom"
+}
+
+# await on a plain (non-Task) value is a harmless passthrough.
+assert await 5 == 5
+
+# Direct sync-vs-concurrent timing proof: three waits run one at a time
+# (awaited sequentially, no spawn) must take roughly the SUM of their
+# durations, while the same three waits run via spawn()+gather() must take
+# roughly the MAX of their durations -- proving spawn() is genuine
+# concurrency, not just syntax. Sleeps are short but the ratio (3x work vs
+# ~1x wall-clock) is large enough to stay non-flaky even on a loaded CI box.
+async fun tick(seconds) {
+    await sleep(seconds)
+    return seconds
+}
+
+var sync_start = time_now()
+await tick(0.05)
+await tick(0.05)
+await tick(0.05)
+var sync_elapsed = time_now() - sync_start
+
+var async_start = time_now()
+var a = spawn(fun() -> tick(0.05))
+var b = spawn(fun() -> tick(0.05))
+var c = spawn(fun() -> tick(0.05))
+await gather([a, b, c])
+var async_elapsed = time_now() - async_start
+
+# Sequential should take close to 3x as long as concurrent (in practice
+# often more, since concurrent overlaps almost entirely); a 2x threshold
+# leaves generous headroom for scheduler/CI jitter while still being a
+# meaningful, unambiguous proof.
+assert sync_elapsed > async_elapsed * 2, "expected sequential awaits to take much longer than concurrent spawn()+gather()"

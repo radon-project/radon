@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
+import inspect
 import os
 from sys import stdout
-from typing import Callable, Generic, NoReturn, Optional, ParamSpec, Protocol, Sequence, Union, cast
+from typing import Any, Callable, Coroutine, Generic, NoReturn, Optional, ParamSpec, Protocol, Sequence, Union, cast
 
 from core import security
 from core.datatypes import (
@@ -17,6 +19,7 @@ from core.datatypes import (
     Number,
     PyAPI,
     String,
+    Task,
     Type,
     Value,
 )
@@ -28,8 +31,16 @@ from core.tokens import BASE_DIR, STDLIBS, Position
 P = ParamSpec("P")
 
 
+# A built-in implementation may be a plain synchronous function (the vast majority --
+# anything that never needs to call back into Radon code) or `async def` (only the
+# handful that do real async work: I/O, or invoking a possibly-async Radon callable).
+# BuiltInFunction.execute() awaits the result only when it's actually awaitable, so
+# sync implementations need no changes at all.
+BuiltInReturn = Union[RTResult[Value], Coroutine[Any, Any, RTResult[Value]]]
+
+
 class RadonCompatibleFunction(Protocol, Generic[P]):
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> RTResult[Value]: ...
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> BuiltInReturn: ...
 
     @property
     def arg_names(self) -> list[str]: ...
@@ -41,11 +52,11 @@ class RadonCompatibleFunction(Protocol, Generic[P]):
 # Decorator for built-in functions
 def args(
     arg_names: list[str], defaults: Optional[Sequence[Optional[Value]]] = None
-) -> Callable[[Callable[P, RTResult[Value]]], RadonCompatibleFunction[P]]:
+) -> Callable[[Callable[P, BuiltInReturn]], RadonCompatibleFunction[P]]:
     if defaults is None:
         defaults = [None] * len(arg_names)
 
-    def _args(f: Callable[P, RTResult[Value]]) -> RadonCompatibleFunction[P]:
+    def _args(f: Callable[P, BuiltInReturn]) -> RadonCompatibleFunction[P]:
         f.arg_names = arg_names  # type: ignore
         f.defaults = defaults  # type: ignore
         return cast(RadonCompatibleFunction[P], f)
@@ -60,7 +71,7 @@ class BuiltInFunction(BaseFunction):
         self.va_name = None
         self.va_kw_name = None
 
-    def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
+    async def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         res = RTResult[Value]()
         if len(kwargs) > 0:
             return res.failure(
@@ -87,7 +98,10 @@ class BuiltInFunction(BaseFunction):
         if res.should_return():
             return res
 
-        return_value = res.register(method(exec_ctx))  # type: ignore
+        raw_result = method(exec_ctx)  # type: ignore
+        if inspect.isawaitable(raw_result):
+            raw_result = await raw_result
+        return_value = res.register(raw_result)
         if res.should_return():
             return res
         assert return_value is not None
@@ -117,14 +131,14 @@ class BuiltInFunction(BaseFunction):
         return RTResult[Value]().success(String(str(exec_ctx.symbol_table.get("value"))))
 
     @args(["value"])
-    def execute_len(self, exec_ctx: Context) -> RTResult[Value]:
+    async def execute_len(self, exec_ctx: Context) -> RTResult[Value]:
         val = exec_ctx.symbol_table.get("value")
         try:
             if val is not None and val.__class__ is not Value:
                 if hasattr(val, "__len__"):
                     ret = int(getattr(val, "__len__")())
                 elif hasattr(val, "__exec_len__"):
-                    ret = int(getattr(val, "__exec_len__")())
+                    ret = int(await getattr(val, "__exec_len__")())
                 elif val.parent_class.instance_class.__len__ is not None:  # type: ignore
                     ret = int(val.parent_class.instance_class.__len__())  # type: ignore
                 else:
@@ -253,11 +267,11 @@ class BuiltInFunction(BaseFunction):
             )
 
     @args(["value"])
-    def execute_bool(self, exec_ctx: Context) -> RTResult[Value]:
+    async def execute_bool(self, exec_ctx: Context) -> RTResult[Value]:
         value = exec_ctx.symbol_table.get("value")
         assert value is not None
 
-        return RTResult[Value]().success(Boolean.true() if value.is_true() else Boolean.false())
+        return RTResult[Value]().success(Boolean.true() if (await value.is_true()) else Boolean.false())
 
     @args(["value"])
     def execute_type(self, exec_ctx: Context) -> RTResult[Value]:
@@ -290,6 +304,44 @@ class BuiltInFunction(BaseFunction):
         import time  # Lazy import
 
         return RTResult[Value]().success(Number(time.time()))
+
+    @args(["callable"])
+    def execute_spawn(self, exec_ctx: Context) -> RTResult[Value]:
+        callable_val = exec_ctx.symbol_table.get("callable")
+        assert callable_val is not None
+        # callable_val.execute(...) is a coroutine (never awaited yet) -- handing it
+        # straight to create_task() is what actually starts it running concurrently.
+        # If callable_val isn't actually callable, the base Value.execute() coroutine
+        # resolves to a failure RTResult, surfaced once the Task is awaited/gathered.
+        asyncio_task = asyncio.get_event_loop().create_task(callable_val.execute([], {}))
+        return RTResult[Value]().success(Task(asyncio_task).set_pos(self.pos_start, self.pos_end))
+
+    @args(["seconds"])
+    async def execute_sleep(self, exec_ctx: Context) -> RTResult[Value]:
+        seconds = exec_ctx.symbol_table.get("seconds")
+        if not isinstance(seconds, Number):
+            return RTResult[Value]().failure(
+                RTError(self.pos_start, self.pos_end, "sleep() expects a number of seconds", exec_ctx)
+            )
+        await asyncio.sleep(seconds.value)
+        return RTResult[Value]().success(Null.null())
+
+    @args(["tasks"])
+    async def execute_gather(self, exec_ctx: Context) -> RTResult[Value]:
+        tasks_val = exec_ctx.symbol_table.get("tasks")
+        if not isinstance(tasks_val, Array) or not all(isinstance(t, Task) for t in tasks_val.elements):
+            return RTResult[Value]().failure(
+                RTError(self.pos_start, self.pos_end, "gather() expects an array of tasks (from spawn())", exec_ctx)
+            )
+        task_results: list[RTResult[Value]] = await asyncio.gather(
+            *(t.asyncio_task for t in tasks_val.elements if isinstance(t, Task))
+        )
+        results: list[Value] = []
+        for task_result in task_results:
+            if task_result.error:
+                return task_result
+            results.append(task_result.value if task_result.value is not None else Null.null())
+        return RTResult[Value]().success(Array(results))
 
     @args(["obj"])
     def execute_dir(self, exec_ctx: Context) -> RTResult[Value]:
@@ -371,7 +423,7 @@ class BuiltInFunction(BaseFunction):
         return RTResult[Value]().success(Array(string_list))  # type: ignore
 
     @args(["module"])
-    def execute_require(self, exec_ctx: Context) -> RTResult[Value]:
+    async def execute_require(self, exec_ctx: Context) -> RTResult[Value]:
         module_val = exec_ctx.symbol_table.get("module")
 
         if not isinstance(module_val, String):
@@ -407,7 +459,7 @@ class BuiltInFunction(BaseFunction):
             )
 
         error: Error | RTError | None
-        _, error, should_exit = run(module, script)  # type: ignore
+        _, error, should_exit = await run(module, script)  # type: ignore
 
         if error:
             return RTResult[Value]().failure(
@@ -480,7 +532,7 @@ class BuiltInFunction(BaseFunction):
         return RTResult[Value]().success(Null.null())
 
 
-def run(
+async def run(
     fn: str,
     text: str,
     context: Optional[Context] = None,
@@ -520,7 +572,7 @@ def run(
         context.symbol_table = global_symbol_table
     else:
         context.symbol_table = context.parent.symbol_table
-    result = interpreter.visit(ast.node, context)
+    result = await interpreter.visit(ast.node, context)
 
     if return_result:
         return result  # type: ignore
@@ -565,6 +617,10 @@ def create_global_symbol_table() -> SymbolTable:
     ret.set("require", BuiltInFunction("require"))
     ret.set("exit", BuiltInFunction("exit"))
     ret.set("time_now", BuiltInFunction("time_now"))
+    # Async
+    ret.set("spawn", BuiltInFunction("spawn"))
+    ret.set("sleep", BuiltInFunction("sleep"))
+    ret.set("gather", BuiltInFunction("gather"))
     # Shell functions
     ret.set("license", BuiltInFunction("license"))
     ret.set("credits", BuiltInFunction("credits"))

@@ -124,23 +124,23 @@ class ArrayObject(BuiltInObject):
 
     @args(["element"])
     @method
-    def find(self, ctx: Context) -> RTResult[Value]:
+    async def find(self, ctx: Context) -> RTResult[Value]:
         """Find the index of an element in the array (-1 if not found)."""
         res = RTResult[Value]()
         element = ctx.symbol_table.get("element")
         assert element is not None
         for i, val in enumerate(self.elements):
-            cmp, err = val.get_comparison_eq(element)
+            cmp, err = await val.get_comparison_eq(element)
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 return res.success(Number(i))
         return res.success(Number(-1))
 
     @args(["func"])
     @method
-    def map(self, ctx: Context) -> RTResult[Value]:
+    async def map(self, ctx: Context) -> RTResult[Value]:
         """Map a function over the array elements."""
         res = RTResult[Value]()
         func = ctx.symbol_table.get("func")
@@ -148,7 +148,7 @@ class ArrayObject(BuiltInObject):
 
         new_elements: list[Value] = []
         for element in self.elements:
-            result = res.register(func.execute([element], {}))
+            result = res.register(await func.execute([element], {}))
             if res.should_return():
                 return res
             assert result is not None
@@ -240,17 +240,17 @@ class ArrayObject(BuiltInObject):
 
     @args(["value"])
     @method
-    def remove(self, ctx: Context) -> RTResult[Value]:
+    async def remove(self, ctx: Context) -> RTResult[Value]:
         """Remove first occurrence of the specified value."""
         res = RTResult[Value]()
         value = ctx.symbol_table.get("value")
         assert value is not None
         for i, elem in enumerate(self.elements):
-            cmp, err = elem.get_comparison_eq(value)
+            cmp, err = await elem.get_comparison_eq(value)
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 self.elements.pop(i)
                 return res.success(Null.null())
         return res.failure(RTError(value.pos_start, value.pos_end, "Value not found in array", ctx))
@@ -310,33 +310,33 @@ class ArrayObject(BuiltInObject):
 
     @args(["element"])
     @method
-    def includes(self, ctx: Context) -> RTResult[Value]:
+    async def includes(self, ctx: Context) -> RTResult[Value]:
         """Check if the array contains the specified element."""
         res = RTResult[Value]()
         element = ctx.symbol_table.get("element")
         assert element is not None
         for val in self.elements:
-            cmp, err = val.get_comparison_eq(element)
+            cmp, err = await val.get_comparison_eq(element)
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 return res.success(Boolean.true())
         return res.success(Boolean.false())
 
     @args(["element"])
     @method
-    def index_of(self, ctx: Context) -> RTResult[Value]:
+    async def index_of(self, ctx: Context) -> RTResult[Value]:
         """Find the index of an element (alias for find)."""
         res = RTResult[Value]()
         element = ctx.symbol_table.get("element")
         assert element is not None
         for i, val in enumerate(self.elements):
-            cmp, err = val.get_comparison_eq(element)
+            cmp, err = await val.get_comparison_eq(element)
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 return res.success(Number(i))
         return res.success(Number(-1))
 
@@ -360,18 +360,18 @@ class ArrayObject(BuiltInObject):
 
     @args(["element"])
     @method
-    def count(self, ctx: Context) -> RTResult[Value]:
+    async def count(self, ctx: Context) -> RTResult[Value]:
         """Count occurrences of the specified element."""
         res = RTResult[Value]()
         element = ctx.symbol_table.get("element")
         assert element is not None
         count = 0
         for val in self.elements:
-            cmp, err = val.get_comparison_eq(element)
+            cmp, err = await val.get_comparison_eq(element)
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 count += 1
         return res.success(Number(count))
 
@@ -390,41 +390,41 @@ class ArrayObject(BuiltInObject):
 
     @args([])
     @method
-    def min(self, ctx: Context) -> RTResult[Value]:
+    async def min(self, ctx: Context) -> RTResult[Value]:
         """Get the minimum element in the array."""
         res = RTResult[Value]()
         if len(self.elements) == 0:
             return res.failure(RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Array is empty", ctx))
         min_val = self.elements[0]
         for elem in self.elements[1:]:
-            cmp, err = elem.get_comparison_lt(min_val)
+            cmp, err = await elem.get_comparison_lt(min_val)
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 min_val = elem
         return res.success(min_val)
 
     @args([])
     @method
-    def max(self, ctx: Context) -> RTResult[Value]:
+    async def max(self, ctx: Context) -> RTResult[Value]:
         """Get the maximum element in the array."""
         res = RTResult[Value]()
         if len(self.elements) == 0:
             return res.failure(RTError(self.parent_class.pos_start, self.parent_class.pos_end, "Array is empty", ctx))
         max_val = self.elements[0]
         for elem in self.elements[1:]:
-            cmp, err = elem.get_comparison_gt(max_val)
+            cmp, err = await elem.get_comparison_gt(max_val)
             if err is not None:
                 return res.failure(err)
             assert cmp is not None
-            if cmp.is_true():
+            if await cmp.is_true():
                 max_val = elem
         return res.success(max_val)
 
     @args(["reverse"], [Boolean.false()])
     @method
-    def sort(self, ctx: Context) -> RTResult[Value]:
+    async def sort(self, ctx: Context) -> RTResult[Value]:
         """Sort the array in place."""
         res = RTResult[Value]()
         reverse = ctx.symbol_table.get("reverse")
@@ -447,24 +447,25 @@ class ArrayObject(BuiltInObject):
                 )
             )
 
+        reverse_flag = await reverse.is_true()
         if all_numbers:
-            self.elements.sort(key=lambda x: x.value, reverse=reverse.is_true())  # type: ignore
+            self.elements.sort(key=lambda x: x.value, reverse=reverse_flag)  # type: ignore
         else:
-            self.elements.sort(key=lambda x: x.value, reverse=reverse.is_true())  # type: ignore
+            self.elements.sort(key=lambda x: x.value, reverse=reverse_flag)  # type: ignore
 
         return res.success(Null.null())
 
     @args([])
     @method
-    def unique(self, _ctx: Context) -> RTResult[Value]:
+    async def unique(self, _ctx: Context) -> RTResult[Value]:
         """Return a new array with duplicate elements removed."""
         seen: list[Value] = []
         result: list[Value] = []
         for elem in self.elements:
             is_duplicate = False
             for s in seen:
-                cmp, _ = elem.get_comparison_eq(s)
-                if cmp is not None and cmp.is_true():
+                cmp, _ = await elem.get_comparison_eq(s)
+                if cmp is not None and (await cmp.is_true()):
                     is_duplicate = True
                     break
             if not is_duplicate:
@@ -474,7 +475,7 @@ class ArrayObject(BuiltInObject):
 
     @args(["func"])
     @method
-    def filter(self, ctx: Context) -> RTResult[Value]:
+    async def filter(self, ctx: Context) -> RTResult[Value]:
         """Filter elements by a predicate function."""
         res = RTResult[Value]()
         func = ctx.symbol_table.get("func")
@@ -482,47 +483,47 @@ class ArrayObject(BuiltInObject):
 
         filtered: list[Value] = []
         for element in self.elements:
-            result = res.register(func.execute([element], {}))
+            result = res.register(await func.execute([element], {}))
             if res.should_return():
                 return res
             assert result is not None
-            if result.is_true():
+            if await result.is_true():
                 filtered.append(element)
 
         return res.success(Array(filtered))
 
     @args(["func"])
     @method
-    def every(self, ctx: Context) -> RTResult[Value]:
+    async def every(self, ctx: Context) -> RTResult[Value]:
         """Check if all elements satisfy the predicate function."""
         res = RTResult[Value]()
         func = ctx.symbol_table.get("func")
         assert func is not None
 
         for element in self.elements:
-            result = res.register(func.execute([element], {}))
+            result = res.register(await func.execute([element], {}))
             if res.should_return():
                 return res
             assert result is not None
-            if not result.is_true():
+            if not (await result.is_true()):
                 return res.success(Boolean.false())
 
         return res.success(Boolean.true())
 
     @args(["func"])
     @method
-    def some(self, ctx: Context) -> RTResult[Value]:
+    async def some(self, ctx: Context) -> RTResult[Value]:
         """Check if any element satisfies the predicate function."""
         res = RTResult[Value]()
         func = ctx.symbol_table.get("func")
         assert func is not None
 
         for element in self.elements:
-            result = res.register(func.execute([element], {}))
+            result = res.register(await func.execute([element], {}))
             if res.should_return():
                 return res
             assert result is not None
-            if result.is_true():
+            if await result.is_true():
                 return res.success(Boolean.true())
 
         return res.success(Boolean.false())

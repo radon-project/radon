@@ -1,0 +1,101 @@
+# Demonstrates the actual wall-clock difference between running async
+# work sequentially (one `await` at a time) versus concurrently
+# (`spawn()` + `gather()`) -- using a more realistic scenario than a
+# handful of identical sleeps: for each user, fetch their profile, posts,
+# and friends from three separate (simulated) services with different
+# latencies, combine them into a report, and keep going even when one
+# service fails for one user.
+
+fun ApiError(msg) -> msg
+
+async fun fetch_profile(user) {
+    await sleep(0.12)
+    return {"name": user, "bio": user + "'s profile"}
+}
+
+async fun fetch_posts(user) {
+    await sleep(0.2)
+    var posts = []
+    for i = 0 to 3 {
+        posts.append(user + "-post-" + str(i))
+    }
+    return posts
+}
+
+async fun fetch_friends(user) {
+    await sleep(0.08)
+    if user == "carol" {
+        raise ApiError("friends service unavailable for " + user)
+    }
+    return [user + "-friend-1", user + "-friend-2"]
+}
+
+# Fan-out: fetch all three pieces for one user concurrently, then combine
+# once all three are ready. This task itself spawns and awaits its own
+# sub-tasks -- concurrency nested inside concurrency, not just a flat list
+# of identical jobs.
+async fun build_report(user) {
+    var profile_task = spawn(fun() -> fetch_profile(user))
+    var posts_task = spawn(fun() -> fetch_posts(user))
+    var friends_task = spawn(fun() -> fetch_friends(user))
+
+    var profile = await profile_task
+    var posts = await posts_task
+    var friends = await friends_task
+
+    return {"user": user, "profile": profile, "posts": posts, "friends": friends}
+}
+
+# `for user in users` reuses the same `user` binding across iterations, so
+# a closure made directly in the loop body would only see the LAST user by
+# the time a spawned task actually runs. Routing through this helper's own
+# parameter gives each task a fresh, independent binding instead.
+fun make_report_task(user) -> fun() -> build_report(user)
+
+fun print_report(user, report) {
+    print(report["user"] + ": " + str(len(report["posts"])) + " posts, " + str(len(report["friends"])) + " friends")
+}
+
+var users = ["alice", "bob", "carol"]
+
+print("--- sequential: one user fully processed at a time ---")
+var sync_start = time_now()
+for user in users {
+    try {
+        print_report(user, await build_report(user))
+    } catch as e {
+        print(user + ": FAILED (" + e + ")")
+    }
+}
+var sync_elapsed = time_now() - sync_start
+print("sequential total: " + str(sync_elapsed) + "s")
+
+print("")
+print("--- concurrent: every user's report built in parallel ---")
+var async_start = time_now()
+
+var report_tasks = []
+for user in users {
+    report_tasks.append(spawn(make_report_task(user)))
+}
+
+# Awaited one at a time (not through a single gather()) so carol's failure
+# doesn't stop us from collecting alice's and bob's results -- gather()
+# raises on the first task that fails, which isn't what we want for a batch
+# job where partial success is fine. The tasks themselves already started
+# running the moment spawn() was called, so this loop still overlaps them.
+for i = 0 to len(users) {
+    var user = users[i]
+    var task = report_tasks[i]
+    try {
+        print_report(user, await task)
+    } catch as e {
+        print(user + ": FAILED (" + e + ")")
+    }
+}
+
+var async_elapsed = time_now() - async_start
+print("concurrent total: " + str(async_elapsed) + "s")
+
+print("")
+print("speedup: " + str(sync_elapsed / async_elapsed) + "x")
