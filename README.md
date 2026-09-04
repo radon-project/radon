@@ -15,20 +15,29 @@
 ![GitHub Workflow Status](https://github.com/radon-project/radon/actions/workflows/ci.yaml/badge.svg "GitHub Workflow Status")
 ![GitHub license](https://img.shields.io/github/license/radon-project/radon?style=flat "License")
 [![Hits](https://hits.sh/github.com/radon-project/radon.svg?extraCount=1230)](https://github.com/radon-project/radon)
-[![Discord](https://img.shields.io/discord/1137834560290308306?style=flat&logo=discord&logoColor=%235865F2&label=join&link=https%3A%2F%2Fdiscord.gg%2FnNkQKfcxqa "Discord")](https://discord.com/invite/nNkQKfcxqa)
+[![Discord](https://img.shields.io/discord/1137834560290308306?style=flat&logo=discord&logoColor=%235865F2&label=join&link=https%3A%2F%2Fdiscord.gg%2FC2aVE9ya6N "Discord")](https://discord.gg/C2aVE9ya6N)
 
 </div>
 
-Radon is a programming language that is designed to be easy to learn and use. It is a high-level language intended to be used for general purpose programming. It is designed to be easy to learn and use, while still being powerful enough to be used for most tasks. Some of the features of Radon include:
+Radon is a dynamically-typed, general-purpose programming language designed to
+be easy to learn and use, with a syntax that will feel familiar if you already
+know Python, JavaScript, or C-family languages. It's under active development,
+with a growing feature set that already includes:
 
-- A simple syntax that is easy to learn and use
-- Dynamic typing so that you don't have to worry about types
-- Powerful standard library that makes it easy to do common tasks (Development)
-- Easy to use package manager that makes it easy to install packages (Future feature)
+- **Object-oriented programming** — classes, single/multiple/multilevel/hybrid
+  inheritance with `super()`, enforced `public`/`private`/`protected` access
+  modifiers, abstract classes, and operator overloading via magic methods
+- **`async`/`await`** with real concurrency through `spawn()`/`sleep()`/`gather()`
+- Closures, error handling (`try`/`catch`/`raise`), modules and
+  `from ... import ...`, and a growing Radon standard library
+- A Python interop bridge (`pyapi()`) for calling into and from Python code
+- A REPL with live syntax highlighting, and a CI-gated test suite covering
+  the language itself
+
+See the [documentation](https://radon-project.github.io/docs) for the full
+language guide.
 
 ## Installation
-
-Radon is currently in development state. It is not ready for use yet. But you can still try it out by cloning the repository and running the `radon-project/radon` repository.
 
 ```bash
 git clone https://github.com/radon-project/radon.git
@@ -69,13 +78,42 @@ class Network {
     }
 }
 
-var username = input("Enter you username: ")
+var username = input("Enter your username: ")
 # Access password securely using get_password
 var password = io.Input.get_password("Enter your password: ")
 
 var network = Network(username, password)
 network.login()
 ```
+
+Radon also supports inheritance, enforced access modifiers, and `async`/`await`
+with real concurrency:
+
+```radon
+abstract class Shape {
+    fun area() # abstract -- every concrete subclass must implement this
+
+    public fun label() -> "a shape"
+}
+
+class Circle(Shape) {
+    fun __constructor__(radius) {
+        this.radius = radius
+    }
+
+    fun area() -> this.radius * this.radius * 3.14159
+}
+
+async fun describe(shape) {
+    await sleep(0.1) # e.g. standing in for a slow I/O call
+    return shape.label() + " with area " + str(shape.area())
+}
+
+print(await describe(Circle(2))) # a shape with area 12.56636
+```
+
+See the [async and concurrency guide](https://radon-project.github.io/docs/async.html)
+and [classes guide](https://radon-project.github.io/docs/classes.html) for more.
 
 ## Contributing
 
@@ -93,7 +131,25 @@ Steps to contribute:
 
 Before making a pull request create an issue and discuss the changes you want to make. If you have any questions, feel free to ask in the issues section.
 
-You can also join our [Discord server](https://discord.gg/y2x4CSX7DM) to discuss the language and get help.
+Every pull request is checked by CI, so before pushing, run the same checks locally:
+
+```bash
+python -m pip install -r requirements-dev.txt
+
+python test.py full   # runs the test suite, mypy --strict, and ruff
+# or, equivalently:
+make test
+```
+
+Individual pieces, if you'd rather run them separately:
+
+```bash
+make lint       # ruff format --check . && ruff check .
+make typecheck  # mypy . --strict
+python test.py run tests/lang/<file>.rn   # a single test file
+```
+
+You can also join our [Discord server](https://discord.gg/C2aVE9ya6N) to discuss the language and get help.
 
 ## License
 
