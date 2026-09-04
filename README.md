@@ -54,24 +54,40 @@ Read the [documentation](https://radon-project.github.io/docs) to learn more abo
 
 ## Quick Start
 
-Here is a simple example of a Radon program that asks the user for their username and password and then checks if the username is "radon" and the password is "password". If the username and password are correct, it prints "Log in successful", otherwise it prints "Invalid credentials".
+Here's a login program that asks for a username and password and checks them
+against an authenticator. It's a small example, but it touches most of what
+Radon's OOP and `async`/`await` support look like in practice: an `abstract`
+base class defining the contract, inheritance, `private`/`protected` access
+modifiers, and an `async` login flow that awaits a (simulated) network call.
 
 ```radon
 import io
 
-class Network {
+abstract class Authenticator {
+    fun authenticate(username, password) # abstract -- every concrete subclass must implement this
+
+    protected fun log_attempt(username) -> print("Login attempt: " + username)
+}
+
+class Network(Authenticator) {
     fun __constructor__(username, password) {
         this.username = username
         this.password = password
     }
 
-    fun login() {
-        if this.username == "radon" {
-            if this.password == "password" {
-                print("Log in successful")
-            } else {
-                print("Invalid credentials")
-            }
+    private fun check_credentials(username, password) -> username == "radon" and password == "password"
+
+    async fun authenticate(username, password) {
+        this.log_attempt(username)  # protected method, inherited from Authenticator
+        await sleep(0.1)  # e.g. standing in for a network/database round trip
+
+        # private method, only callable from within Network
+        return this.check_credentials(username, password)
+    }
+
+    async fun login() {
+        if await this.authenticate(this.username, this.password) {
+            print("Log in successful")
         } else {
             print("Invalid credentials")
         }
@@ -83,37 +99,12 @@ var username = input("Enter your username: ")
 var password = io.Input.get_password("Enter your password: ")
 
 var network = Network(username, password)
-network.login()
+await network.login()
 ```
 
-Radon also supports inheritance, enforced access modifiers, and `async`/`await`
-with real concurrency:
-
-```radon
-abstract class Shape {
-    fun area() # abstract -- every concrete subclass must implement this
-
-    public fun label() -> "a shape"
-}
-
-class Circle(Shape) {
-    fun __constructor__(radius) {
-        this.radius = radius
-    }
-
-    fun area() -> this.radius * this.radius * 3.14159
-}
-
-async fun describe(shape) {
-    await sleep(0.1) # e.g. standing in for a slow I/O call
-    return shape.label() + " with area " + str(shape.area())
-}
-
-print(await describe(Circle(2))) # a shape with area 12.56636
-```
-
-See the [async and concurrency guide](https://radon-project.github.io/docs/async.html)
-and [classes guide](https://radon-project.github.io/docs/classes.html) for more.
+See the [classes guide](https://radon-project.github.io/docs/classes.html) and
+[async and concurrency guide](https://radon-project.github.io/docs/async.html)
+for more.
 
 ## Contributing
 
