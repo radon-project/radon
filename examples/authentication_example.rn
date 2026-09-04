@@ -1,0 +1,41 @@
+import io
+
+abstract class Authenticator {
+    fun authenticate(username, password) # abstract -- every concrete subclass must implement this
+
+    protected fun log_attempt(username) -> print("Login attempt: " + username)
+}
+
+class Network(Authenticator) {
+    fun __constructor__(username, password) {
+        this.username = username
+        this.password = password
+    }
+
+    private fun check_credentials(username, password) -> username == "radon" and password == "password"
+
+    async fun authenticate(username, password) {
+        this.log_attempt(username)  # protected method, inherited from Authenticator
+        await sleep(0.1)  # e.g. standing in for a network/database round trip
+
+        # private method, only callable from within Network
+        return this.check_credentials(username, password)
+    }
+
+    async fun login() {
+        if await this.authenticate(this.username, this.password) {
+            print("Log in successful")
+        } else {
+            print("Invalid credentials")
+        }
+    }
+}
+
+var username = input("Enter your username: ")
+# Access password securely using get_password
+var password = io.Input.get_password("Enter your password: ")
+
+var network = Network(username, password)
+await network.login()
+
+pyapi("print('Hello, Radon')", {})
