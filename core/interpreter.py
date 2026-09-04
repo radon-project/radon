@@ -183,6 +183,49 @@ class Interpreter:
 
         return res.success(merged)
 
+    def _get_current_class(self, context: Context) -> Optional[Class]:
+        # Walk the (stable, lexically-scoped) symbol table chain rather than
+        # Context.parent -- a Function's `.context` gets rebound to the call
+        # site every time it crosses a call/attribute-access boundary (see
+        # call_value and visit_AttrAccessNode), which would lose the class a
+        # closure was defined in. `.symbol_table` is set once at definition
+        # time and never reassigned, so it reliably threads through closures.
+        value = context.symbol_table.get("__class__")
+        if isinstance(value, Class):
+            return value
+        return None
+
+    def _check_member_access(
+        self, attr_value: Value, attr_name: str, context: Context, pos_start: Position, pos_end: Position
+    ) -> Optional[RTError]:
+        if not isinstance(attr_value, Function) or attr_value.access_modifier == "public":
+            return None
+
+        owner = attr_value.owner_class
+        if owner is None:
+            return None
+
+        caller_class = self._get_current_class(context)
+        if attr_value.access_modifier == "private":
+            allowed = caller_class is owner
+        else:  # protected -- visible to the whole ancestor/descendant chain,
+            # in both directions: a subclass reaching an inherited protected
+            # member (owner in caller_class.mro), and base-class code that
+            # virtually dispatches into a subclass's protected override
+            # (caller_class in owner.mro), as in the Template Method pattern.
+            allowed = caller_class is not None and (owner in caller_class.mro or caller_class in owner.mro)
+
+        if allowed:
+            return None
+
+        return RTError(
+            pos_start,
+            pos_end,
+            f"Cannot access {attr_value.access_modifier} member '{attr_name}' of class '{owner.name}' "
+            "from outside its class hierarchy",
+            context,
+        )
+
     def _compute_parent_mro(self, parents: list[Class], node: ClassNode, context: Context) -> RTResult[list[Class]]:
         res = RTResult[list[Class]]()
         sequences = [parent.mro[:] for parent in parents]
@@ -727,6 +770,8 @@ class Interpreter:
             .set_context(context)
             .set_pos(node.pos_start, node.pos_end)
         )
+        func_value.access_modifier = node.access_modifier
+        func_value.is_abstract = node.is_abstract
 
         if node.var_name_tok:
             assert context.symbol_table is not None
@@ -1052,10 +1097,33 @@ class Interpreter:
             .set_pos(node.pos_start, node.pos_end)
         )
         cls.mro = [cls, *parent_mro]
+        cls.is_abstract = node.is_abstract
 
         for value in cls.own_symbol_table.symbols.values():
             if isinstance(value, Function):
                 value.owner_class = cls
+
+        if not node.is_abstract:
+            abstract_names: set[str] = set()
+            for ancestor in cls.mro:
+                for name, value in ancestor.own_symbol_table.symbols.items():
+                    if isinstance(value, Function) and value.is_abstract:
+                        abstract_names.add(name)
+
+            def is_still_abstract(name: str) -> bool:
+                resolved = merged_symbol_table.symbols.get(name)
+                return not isinstance(resolved, Function) or resolved.is_abstract
+
+            unimplemented = sorted(name for name in abstract_names if is_still_abstract(name))
+            if unimplemented:
+                return res.failure(
+                    RTError(
+                        node.pos_start,
+                        node.pos_end,
+                        f"Class '{class_name}' must implement abstract method(s): {', '.join(unimplemented)}",
+                        context,
+                    )
+                )
 
         context.symbol_table.set(class_name, cls)
         return res.success(cls)
@@ -1217,6 +1285,10 @@ class Interpreter:
                 return res.failure(
                     RTError(node.pos_start, node.pos_end, f"Attribute '{attr_name}' does not exist", context)
                 )
+
+            access_error = self._check_member_access(attr_value, attr_name, context, node.pos_start, node.pos_end)
+            if access_error is not None:
+                return res.failure(access_error)
 
             if isinstance(orig_value, BaseInstance) and isinstance(attr_value, BaseFunction):
                 attr_value = res.register(orig_value.bind_method(attr_value))

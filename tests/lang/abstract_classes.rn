@@ -1,0 +1,128 @@
+# Abstraction (#210, #211): `abstract class` cannot be instantiated directly,
+# and a concrete subclass must implement every abstract method it inherits.
+
+abstract class Shape {
+    fun area()
+    fun perimeter()
+
+    fun describe() -> "a shape with area " + str(this.area())
+}
+
+class Circle(Shape) {
+    fun __constructor__(radius) {
+        this.radius = radius
+    }
+
+    fun area() -> this.radius * this.radius * 3
+    fun perimeter() -> this.radius * 2 * 3
+}
+
+var circle = Circle(2)
+assert circle.area() == 12
+assert circle.perimeter() == 12
+assert circle.describe() == "a shape with area 12"
+
+# Instantiating the abstract class itself is a runtime error.
+try {
+    Shape()
+    assert false, "expected instantiating an abstract class to fail"
+} catch as e {
+    assert e == "Cannot instantiate abstract class 'Shape'"
+}
+
+# A subclass that doesn't implement every abstract method is rejected at
+# class-definition time, before it's ever instantiated.
+try {
+    class Broken(Shape) {
+        fun area() -> 0
+        # perimeter() is still missing
+    }
+    assert false, "expected class definition to fail for a missing override"
+} catch as e {
+    assert e == "Class 'Broken' must implement abstract method(s): perimeter"
+}
+
+# Multi-level: an abstract subclass doesn't need to implement its parent's
+# abstract methods; only the first concrete class in the chain does.
+abstract class Named {
+    fun name()
+}
+
+abstract class NamedShape(Named) {
+    fun area()
+}
+
+class Square(NamedShape) {
+    fun __constructor__(side) {
+        this.side = side
+    }
+
+    fun name() -> "square"
+    fun area() -> this.side * this.side
+}
+
+var square = Square(4)
+assert square.name() == "square"
+assert square.area() == 16
+
+try {
+    Named()
+    assert false, "expected instantiating an abstract class to fail"
+} catch as e {
+    assert e == "Cannot instantiate abstract class 'Named'"
+}
+try {
+    NamedShape()
+    assert false, "expected instantiating an abstract class to fail"
+} catch as e {
+    assert e == "Cannot instantiate abstract class 'NamedShape'"
+}
+
+# Abstract classes can mix concrete methods, static methods, and access
+# modifiers with abstract method declarations.
+abstract class Repository {
+    private fun log(msg) -> "[log] " + msg
+
+    static fun kind() -> "repository"
+
+    protected fun save(item)
+    public fun save_and_log(item) -> this.log(this.save(item))
+}
+
+class ListRepository(Repository) {
+    fun __constructor__() {
+        this.items = []
+    }
+
+    protected fun save(item) -> "saved " + item
+}
+
+assert Repository.kind() == "repository"
+var repo = ListRepository()
+assert repo.save_and_log("widget") == "[log] saved widget"
+
+# A concrete class further down the chain can be reused as a base for
+# another abstract class, and abstract-ness always tracks the `abstract`
+# keyword on that specific class, not inherited implicitly from ancestors.
+class ConcreteBase {
+    fun greet() -> "hi"
+}
+
+abstract class StillAbstract(ConcreteBase) {
+    fun extra()
+}
+
+try {
+    StillAbstract()
+    assert false, "expected instantiating an abstract class to fail"
+} catch as e {
+    assert e == "Cannot instantiate abstract class 'StillAbstract'"
+}
+
+class Finisher(StillAbstract) {
+    fun extra() -> "extra"
+}
+
+var finisher = Finisher()
+assert finisher.greet() == "hi"
+assert finisher.extra() == "extra"

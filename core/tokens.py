@@ -140,6 +140,7 @@ KEYWORDS = [
     "public",
     "private",
     "protected",
+    "abstract",
 ]
 
 TokenValue: TypeAlias = Optional[str | int | float]

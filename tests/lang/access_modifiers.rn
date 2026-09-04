@@ -35,13 +35,41 @@ class VisibilityMixed {
 var basics = VisibilityBasics(10)
 assert basics.implicit_method() == 10
 assert basics.public_method() == 11
-assert basics.private_method() == 12
-assert basics.protected_method() == 13
+
+# private/protected members are enforced: calling them from outside the
+# declaring class's hierarchy (e.g. top-level script code) is an error.
+try {
+    basics.private_method()
+    assert false, "expected private_method() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access private member 'private_method' of class 'VisibilityBasics' from outside its class hierarchy"
+}
+try {
+    basics.protected_method()
+    assert false, "expected protected_method() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access protected member 'protected_method' of class 'VisibilityBasics' from outside its class hierarchy"
+}
 
 assert VisibilityStaticOrders.sum(4, 5) == 9
-assert VisibilityStaticOrders.product(4, 5) == 20
-assert VisibilityStaticOrders.diff(4, 5) == -1
-assert VisibilityStaticOrders.join("a", "b") == "a:b"
+try {
+    VisibilityStaticOrders.product(4, 5)
+    assert false, "expected product() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access private member 'product' of class 'VisibilityStaticOrders' from outside its class hierarchy"
+}
+try {
+    VisibilityStaticOrders.diff(4, 5)
+    assert false, "expected diff() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access protected member 'diff' of class 'VisibilityStaticOrders' from outside its class hierarchy"
+}
+try {
+    VisibilityStaticOrders.join("a", "b")
+    assert false, "expected join() to be inaccessible from outside the class"
+} catch as e {
+    assert e == "Cannot access protected member 'join' of class 'VisibilityStaticOrders' from outside its class hierarchy"
+}
 
 var internal = VisibilityInternalCalls(4)
 assert internal.calculate() == 20

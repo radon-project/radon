@@ -951,7 +951,11 @@ class Parser:
             assert func_def is not None
             node = func_def
 
-        elif tok.matches(TT_KEYWORD, "class"):
+        elif tok.matches(TT_KEYWORD, "class") or (
+            tok.matches(TT_KEYWORD, "abstract")
+            and self.tok_idx + 1 < len(self.tokens)
+            and self.tokens[self.tok_idx + 1].matches(TT_KEYWORD, "class")
+        ):
             self.in_class += 1
             class_node = res.register(self.class_node())
             self.in_class -= 1
@@ -1415,6 +1419,11 @@ class Parser:
 
         pos_start = self.current_tok.pos_start
 
+        is_abstract = False
+        if self.current_tok.matches(TT_KEYWORD, "abstract"):
+            is_abstract = True
+            self.advance(res)
+
         if not self.current_tok.matches(TT_KEYWORD, "class"):
             assert False, "unreachable"
 
@@ -1481,7 +1490,11 @@ class Parser:
 
         self.advance(res)
 
-        return res.success(ClassNode(class_name_tok, parent_nodes, desc, body, pos_start, self.current_tok.pos_end))
+        return res.success(
+            ClassNode(
+                class_name_tok, parent_nodes, desc, body, pos_start, self.current_tok.pos_end, is_abstract=is_abstract
+            )
+        )
 
     def func_def(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
@@ -1489,6 +1502,7 @@ class Parser:
         node_pos_start = self.current_tok.pos_start
 
         static = False
+        access_modifier = "public"
         while self.current_tok.type == TT_KEYWORD and self.current_tok.value in (
             "static",
             "public",
@@ -1497,6 +1511,9 @@ class Parser:
         ):
             if self.current_tok.value == "static":
                 static = True
+            else:
+                assert isinstance(self.current_tok.value, str)
+                access_modifier = self.current_tok.value
             self.advance(res)
 
         if not self.current_tok.matches(TT_KEYWORD, "fun"):
@@ -1656,11 +1673,37 @@ class Parser:
                     max_pos_args=max_pos_args,
                     pos_start=node_pos_start,
                     pos_end=self.current_tok.pos_end,
+                    access_modifier=access_modifier,
                 )
             )
 
+        # Look ahead past newlines for a '{' (allows the brace on its own line). If no
+        # block body or arrow body is found, this is an abstract method declaration with
+        # no implementation -- only valid directly inside a class body. Newlines are
+        # un-consumed in that case so `statements()` still sees the statement separator.
+        saved_idx = self.tok_idx
         self.skip_newlines()
         if self.current_tok.type != TT_LBRACE:
+            if self.in_class:
+                self.reverse(self.tok_idx - saved_idx)
+                return res.success(
+                    FuncDefNode(
+                        var_name_tok,
+                        arg_name_toks,
+                        defaults,
+                        None,
+                        False,
+                        static=static,
+                        desc="[No Description]",
+                        va_name=va_name,
+                        va_kw_name=va_kw_name,
+                        max_pos_args=max_pos_args,
+                        pos_start=node_pos_start,
+                        pos_end=self.current_tok.pos_end,
+                        access_modifier=access_modifier,
+                        is_abstract=True,
+                    )
+                )
             return res.failure(
                 RNSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '->' or '{'")
             )
@@ -1698,6 +1741,7 @@ class Parser:
                 max_pos_args=max_pos_args,
                 pos_start=node_pos_start,
                 pos_end=self.current_tok.pos_end,
+                access_modifier=access_modifier,
             )
         )
 
