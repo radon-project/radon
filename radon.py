@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # By: Md. Almas Ali
 
+import asyncio
 import os
 import platform
 import sys
@@ -253,7 +254,7 @@ def shell() -> None:
             result: list[Optional[Value]]
             error: Error | RTError | None
             should_exit: Optional[bool]
-            (result, error, should_exit) = base_core.run("<stdin>", text, import_cwd=os.getcwd())  # type: ignore
+            (result, error, should_exit) = asyncio.run(base_core.run("<stdin>", text, import_cwd=os.getcwd()))  # type: ignore
 
             if error:
                 print(error.as_string())
@@ -349,7 +350,7 @@ def main(argv: list[str]) -> None:
 
         error: Error | RTError | None
         should_exit: Optional[bool]
-        (_, error, should_exit) = base_core.run(source_file, source, import_cwd=head)  # type: ignore
+        (_, error, should_exit) = asyncio.run(base_core.run(source_file, source, import_cwd=head))  # type: ignore
 
         if error:
             print(error.as_string())
@@ -359,7 +360,7 @@ def main(argv: list[str]) -> None:
             sys.exit()
 
     elif command is not None:
-        (_, error, should_exit) = base_core.run("<cli>", command)  # type: ignore
+        (_, error, should_exit) = asyncio.run(base_core.run("<cli>", command))  # type: ignore
 
         if error:
             print(error.as_string())

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import inspect
+import threading
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Generator, Optional, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, Coroutine, Generator, Optional, TypeAlias, TypeVar
 from typing import Iterator as PyIterator
 
 from core.colortools import Log
@@ -66,52 +68,52 @@ class Value:
         self.context = context if context is not None else Context("<unset>")
         return self
 
-    def added_to(self, other: Value) -> ResultTuple:
+    async def added_to(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def subbed_by(self, other: Value) -> ResultTuple:
+    async def subbed_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def multed_by(self, other: Value) -> ResultTuple:
+    async def multed_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def dived_by(self, other: Value) -> ResultTuple:
+    async def dived_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def modded_by(self, other: Value) -> ResultTuple:
+    async def modded_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def idived_by(self, other: Value) -> ResultTuple:
+    async def idived_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def powed_by(self, other: Value) -> ResultTuple:
+    async def powed_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_eq(self, other: Value) -> ResultTuple:
+    async def get_comparison_eq(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_ne(self, other: Value) -> ResultTuple:
+    async def get_comparison_ne(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_lt(self, other: Value) -> ResultTuple:
+    async def get_comparison_lt(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_gt(self, other: Value) -> ResultTuple:
+    async def get_comparison_gt(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_lte(self, other: Value) -> ResultTuple:
+    async def get_comparison_lte(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def get_comparison_gte(self, other: Value) -> ResultTuple:
+    async def get_comparison_gte(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def anded_by(self, other: Value) -> ResultTuple:
+    async def anded_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def ored_by(self, other: Value) -> ResultTuple:
+    async def ored_by(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
-    def notted(self) -> ResultTuple:
+    async def notted(self) -> ResultTuple:
         return None, self.illegal_operation()
 
     def iter(self) -> Iterator:
@@ -120,22 +122,22 @@ class Value:
     def gen(self) -> Generator[RTResult[Value], None, None]:
         yield RTResult[Value]().failure(self.illegal_operation())
 
-    def get_index(self, index: Value) -> ResultTuple:
+    async def get_index(self, index: Value) -> ResultTuple:
         return None, self.illegal_operation(index)
 
-    def get_slice(self, start: Optional[Value], end: Optional[Value], step: Optional[Value]) -> ResultTuple:
+    async def get_slice(self, start: Optional[Value], end: Optional[Value], step: Optional[Value]) -> ResultTuple:
         return None, self.illegal_operation()
 
-    def set_index(self, index: Value, value: Value) -> ResultTuple:
+    async def set_index(self, index: Value, value: Value) -> ResultTuple:
         return None, self.illegal_operation(index, value)
 
-    def del_index(self, index: Value) -> ResultTuple:
+    async def del_index(self, index: Value) -> ResultTuple:
         return None, self.illegal_operation(index)
 
-    def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
+    async def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         return RTResult[Value]().failure(self.illegal_operation())
 
-    def contains(self, other: Value) -> ResultTuple:
+    async def contains(self, other: Value) -> ResultTuple:
         return None, self.illegal_operation(other)
 
     def copy(self: Self) -> Self:
@@ -211,7 +213,7 @@ class Number(Value):
         super().__init__()
         self.value = value
 
-    def added_to(self, other: Value) -> ResultTuple:
+    async def added_to(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(self.value + other.value).set_context(self.context), None
         elif isinstance(other, String):
@@ -219,19 +221,19 @@ class Number(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def subbed_by(self, other: Value) -> ResultTuple:
+    async def subbed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(self.value - other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def multed_by(self, other: Value) -> ResultTuple:
+    async def multed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(self.value * other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def dived_by(self, other: Value) -> ResultTuple:
+    async def dived_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             if other.value == 0:
                 return None, RTError(other.pos_start, other.pos_end, "Division by zero", self.context)
@@ -240,7 +242,7 @@ class Number(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def idived_by(self, other: Value) -> ResultTuple:
+    async def idived_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             if other.value == 0:
                 return None, RTError(other.pos_start, other.pos_end, "Division by zero", self.context)
@@ -248,19 +250,19 @@ class Number(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def powed_by(self, other: Value) -> ResultTuple:
+    async def powed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(self.value**other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def modded_by(self, other: Value) -> ResultTuple:
+    async def modded_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(self.value % other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_eq(self, other: Value) -> ResultTuple:
+    async def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Boolean(self.value == other.value).set_context(self.context), None
         elif isinstance(other, String):
@@ -268,7 +270,7 @@ class Number(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_ne(self, other: Value) -> ResultTuple:
+    async def get_comparison_ne(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Boolean(self.value != other.value).set_context(self.context), None
         elif isinstance(other, String):
@@ -276,43 +278,43 @@ class Number(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_lt(self, other: Value) -> ResultTuple:
+    async def get_comparison_lt(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Boolean(self.value < other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_gt(self, other: Value) -> ResultTuple:
+    async def get_comparison_gt(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Boolean(self.value > other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_lte(self, other: Value) -> ResultTuple:
+    async def get_comparison_lte(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Boolean(self.value <= other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_gte(self, other: Value) -> ResultTuple:
+    async def get_comparison_gte(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Boolean(self.value >= other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def anded_by(self, other: Value) -> ResultTuple:
+    async def anded_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(int(self.value and other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def ored_by(self, other: Value) -> ResultTuple:
+    async def ored_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return Number(int(self.value or other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def notted(self) -> ResultTuple:
+    async def notted(self) -> ResultTuple:
         return Number(1 if self.value == 0 else 0).set_context(self.context), None
 
     def copy(self) -> Number:
@@ -358,16 +360,16 @@ class Boolean(Value):
         super().__init__()
         self.value = value
 
-    def anded_by(self, other: Value) -> ResultTuple:
+    async def anded_by(self, other: Value) -> ResultTuple:
         return Boolean(self.value and other.is_true()).set_context(self.context), None
 
-    def ored_by(self, other: Value) -> ResultTuple:
+    async def ored_by(self, other: Value) -> ResultTuple:
         return Boolean(self.value or other.is_true()).set_context(self.context), None
 
-    def notted(self) -> ResultTuple:
+    async def notted(self) -> ResultTuple:
         return Boolean(not self.value).set_context(self.context), None
 
-    def get_comparison_eq(self, other: Value) -> ResultTuple:
+    async def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, Boolean):
             return Boolean(self.value == other.value).set_context(self.context), None
         elif isinstance(other, Number):
@@ -379,7 +381,7 @@ class Boolean(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_ne(self, other: Value) -> ResultTuple:
+    async def get_comparison_ne(self, other: Value) -> ResultTuple:
         if isinstance(other, Boolean):
             return Boolean(self.value != other.value).set_context(self.context), None
         elif isinstance(other, Number):
@@ -438,7 +440,7 @@ class String(Value):
         super().__init__()
         self.value = value
 
-    def added_to(self, other: Value) -> ResultTuple:
+    async def added_to(self, other: Value) -> ResultTuple:
         if isinstance(other, String):
             return String(self.value + other.value).set_context(self.context), None
         elif isinstance(other, Number):
@@ -446,13 +448,13 @@ class String(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def multed_by(self, other: Value) -> ResultTuple:
+    async def multed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             return String(self.value * int(other.value)).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_eq(self, other: Value) -> ResultTuple:
+    async def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, String):
             return Boolean(self.value == other.value).set_context(self.context), None
         elif isinstance(other, Array):
@@ -462,7 +464,7 @@ class String(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_ne(self, other: Value) -> ResultTuple:
+    async def get_comparison_ne(self, other: Value) -> ResultTuple:
         if isinstance(other, String):
             return Boolean(self.value != other.value).set_context(self.context), None
         elif isinstance(other, Array):
@@ -476,7 +478,7 @@ class String(Value):
         for char in self.value:
             yield RTResult[Value]().success(String(char))
 
-    def get_index(self, index: Value) -> ResultTuple:
+    async def get_index(self, index: Value) -> ResultTuple:
         if not isinstance(index, Number):
             return None, self.illegal_operation(index)
         try:
@@ -484,7 +486,7 @@ class String(Value):
         except IndexError:
             return None, RNIndexError(index.pos_start, index.pos_end, "String index out of range", self.context)
 
-    def get_slice(self, start: Optional[Value], end: Optional[Value], step: Optional[Value]) -> ResultTuple:
+    async def get_slice(self, start: Optional[Value], end: Optional[Value], step: Optional[Value]) -> ResultTuple:
         if start is not None and not isinstance(start, Number):
             return None, self.illegal_operation(start)
         if end is not None and not isinstance(end, Number):
@@ -511,7 +513,7 @@ class String(Value):
             istep = None
         return String(self.value[istart:iend:istep]), None
 
-    def set_index(self, index: Value, value: Value) -> ResultTuple:
+    async def set_index(self, index: Value, value: Value) -> ResultTuple:
         if not isinstance(index, Number):
             return None, self.illegal_operation(index)
         if not isinstance(value, String):
@@ -522,7 +524,7 @@ class String(Value):
             return None, RNIndexError(index.pos_start, index.pos_end, "String index out of range", self.context)
         return self, None
 
-    def contains(self, other: Value) -> ResultTuple:
+    async def contains(self, other: Value) -> ResultTuple:
         if not isinstance(other, String):
             return None, self.illegal_operation(other)
         return Boolean(other.value in self.value), None
@@ -597,7 +599,7 @@ class Array(Value):
         super().__init__()
         self.elements = elements
 
-    def added_to(self, other: Value) -> ResultTuple:
+    async def added_to(self, other: Value) -> ResultTuple:
         new_array = self.copy()
         if isinstance(other, Array):
             new_array.elements.extend(other.elements)
@@ -605,7 +607,7 @@ class Array(Value):
             new_array.elements.append(other)
         return new_array, None
 
-    def subbed_by(self, other: Value) -> ResultTuple:
+    async def subbed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             new_array = self.copy()
             try:
@@ -621,7 +623,7 @@ class Array(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def multed_by(self, other: Value) -> ResultTuple:
+    async def multed_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Array):
             new_array = self.copy()
             new_array.elements.extend(other.elements)
@@ -633,7 +635,7 @@ class Array(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def dived_by(self, other: Value) -> ResultTuple:
+    async def dived_by(self, other: Value) -> ResultTuple:
         if isinstance(other, Number):
             try:
                 return self.elements[int(other.value)], None
@@ -647,13 +649,13 @@ class Array(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_eq(self, other: Value) -> ResultTuple:
+    async def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, Array):
             if len(self.elements) != len(other.elements):
                 return Boolean.false(), None
 
             for a, b in zip(self.elements, other.elements):
-                ret, error = a.get_comparison_eq(b)
+                ret, error = await a.get_comparison_eq(b)
                 if error is not None:
                     return None, error
                 assert ret is not None
@@ -663,8 +665,8 @@ class Array(Value):
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_ne(self, other: Value) -> ResultTuple:
-        ret, error = self.get_comparison_eq(other)
+    async def get_comparison_ne(self, other: Value) -> ResultTuple:
+        ret, error = await self.get_comparison_eq(other)
         if error is not None:
             return None, error
         assert ret is not None
@@ -674,7 +676,7 @@ class Array(Value):
         for element in self.elements:
             yield RTResult[Value]().success(element)
 
-    def get_index(self, index: Value) -> ResultTuple:
+    async def get_index(self, index: Value) -> ResultTuple:
         if not isinstance(index, Number):
             return None, self.illegal_operation(index)
         try:
@@ -683,7 +685,7 @@ class Array(Value):
             return None, RNIndexError(index.pos_start, index.pos_end, "Array index out of range", self.context)
         return self, None
 
-    def get_slice(self, start: Optional[Value], end: Optional[Value], step: Optional[Value]) -> ResultTuple:
+    async def get_slice(self, start: Optional[Value], end: Optional[Value], step: Optional[Value]) -> ResultTuple:
         if start is not None and not isinstance(start, Number):
             return None, self.illegal_operation(start)
         if end is not None and not isinstance(end, Number):
@@ -710,7 +712,7 @@ class Array(Value):
             istep = None
         return Array(self.elements[istart:iend:istep]), None
 
-    def set_index(self, index: Value, value: Value) -> ResultTuple:
+    async def set_index(self, index: Value, value: Value) -> ResultTuple:
         if not isinstance(index, Number):
             return None, self.illegal_operation(index)
         try:
@@ -719,7 +721,7 @@ class Array(Value):
             return None, RNIndexError(index.pos_start, index.pos_end, "Array index out of range", self.context)
         return self, None
 
-    def del_index(self, index: Value) -> ResultTuple:
+    async def del_index(self, index: Value) -> ResultTuple:
         if not isinstance(index, Number):
             return None, self.illegal_operation(index)
         try:
@@ -728,10 +730,10 @@ class Array(Value):
             return None, RNIndexError(index.pos_start, index.pos_end, "Array index out of range", self.context)
         return self, None
 
-    def contains(self, other: Value) -> ResultTuple:
+    async def contains(self, other: Value) -> ResultTuple:
         ret: Boolean = Boolean.false()
         for val in self.elements:
-            cmp, err = val.get_comparison_eq(other)
+            cmp, err = await val.get_comparison_eq(other)
             if err is not None:
                 return None, err
             assert cmp is not None
@@ -797,7 +799,7 @@ class HashMap(Value):
         super().__init__()
         self.values = values
 
-    def added_to(self, other: Value) -> ResultTuple:
+    async def added_to(self, other: Value) -> ResultTuple:
         if not isinstance(other, HashMap):
             return None, self.illegal_operation(other)
 
@@ -813,7 +815,7 @@ class HashMap(Value):
             key_as_value = String(key).set_pos(fake_pos, fake_pos).set_context(self.context)
             yield RTResult[Value]().success(key_as_value)
 
-    def get_index(self, index: Value) -> ResultTuple:
+    async def get_index(self, index: Value) -> ResultTuple:
         if not isinstance(index, String):
             return None, self.illegal_operation(index)
 
@@ -824,7 +826,7 @@ class HashMap(Value):
                 self.pos_start, self.pos_end, f"Key '{index.value}' not found in HashMap", self.context
             )
 
-    def set_index(self, index: Value, value: Value) -> ResultTuple:
+    async def set_index(self, index: Value, value: Value) -> ResultTuple:
         if not isinstance(index, String):
             return None, self.illegal_operation(index)
 
@@ -832,7 +834,7 @@ class HashMap(Value):
 
         return self, None
 
-    def del_index(self, index: Value) -> ResultTuple:
+    async def del_index(self, index: Value) -> ResultTuple:
         if not isinstance(index, String):
             return None, self.illegal_operation(index)
         if index.value not in self.values:
@@ -842,10 +844,10 @@ class HashMap(Value):
         del self.values[index.value]
         return self, None
 
-    def contains(self, other: Value) -> ResultTuple:
+    async def contains(self, other: Value) -> ResultTuple:
         ret = Boolean.false()
         for val in self.values.keys():
-            cmp, err = other.get_comparison_eq(String(val))
+            cmp, err = await other.get_comparison_eq(String(val))
             if err:
                 return None, err
             assert cmp is not None
@@ -854,7 +856,7 @@ class HashMap(Value):
                 break
         return ret, None
 
-    def get_comparison_eq(self, other: Value) -> ResultTuple:
+    async def get_comparison_eq(self, other: Value) -> ResultTuple:
         if not isinstance(other, HashMap):
             return None, self.illegal_operation(other)
 
@@ -865,7 +867,7 @@ class HashMap(Value):
             if key not in other.values:
                 return Boolean.false(), None
 
-            cmp, err = value.get_comparison_eq(other.values[key])
+            cmp, err = await value.get_comparison_eq(other.values[key])
             if err:
                 return None, err
             assert cmp is not None
@@ -874,7 +876,7 @@ class HashMap(Value):
 
         return Boolean.true(), None
 
-    def get_comparison_ne(self, other: Value) -> ResultTuple:
+    async def get_comparison_ne(self, other: Value) -> ResultTuple:
         if not isinstance(other, HashMap):
             return None, self.illegal_operation(other)
 
@@ -885,7 +887,7 @@ class HashMap(Value):
             if key not in other.values:
                 return Boolean.true(), None
 
-            cmp, err = value.get_comparison_ne(other.values[key])
+            cmp, err = await value.get_comparison_ne(other.values[key])
             if err:
                 return None, err
             assert cmp is not None
@@ -956,13 +958,13 @@ class Type(Value):
     def __repr__(self) -> str:
         return f"<class '{self.type}'>"
 
-    def get_comparison_eq(self, other: Value) -> ResultTuple:
+    async def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, Type):
             return Boolean(self.type == other.type).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
-    def get_comparison_ne(self, other: Value) -> ResultTuple:
+    async def get_comparison_ne(self, other: Value) -> ResultTuple:
         if isinstance(other, Type):
             return Boolean(self.type != other.type).set_context(self.context), None
         else:
@@ -1016,6 +1018,27 @@ def radonify(value: object, pos_start: Position, pos_end: Position, context: Con
     return _radonify(value).set_pos(pos_start, pos_end).set_context(context)
 
 
+def _run_coro_on_new_loop(coro: Coroutine[Any, Any, RTResult[Value]]) -> RTResult[Value]:
+    """Run a coroutine to completion on a fresh event loop in a separate thread.
+
+    `asyncio.run()` can't be called from inside an already-running loop, which
+    the interpreter always is by the time this could be needed (a synchronous
+    Python callback -- e.g. a pyapi() snippet -- calling back into a Radon
+    function). A separate thread has no loop of its own, so this sidesteps
+    that restriction; the caller blocks until the coroutine finishes, which is
+    the expected behavior for a plain synchronous callback.
+    """
+    result_box: list[RTResult[Value]] = []
+
+    def runner() -> None:
+        result_box.append(asyncio.run(coro))
+
+    thread = threading.Thread(target=runner)
+    thread.start()
+    thread.join()
+    return result_box[0]
+
+
 def deradonify(value: Optional[Value]) -> str | dict[str, Any] | int | float | list[object] | object:
     match value:
         case PyObj():
@@ -1029,12 +1052,21 @@ def deradonify(value: Optional[Value]) -> str | dict[str, Any] | int | float | l
         case Array():
             return [deradonify(v) for v in value.elements]
         case BaseFunction():
-
+            # Radon functions are always `async def execute(...)` now (needed so an
+            # `async fun`'s body can suspend at `await`), but pyapi() hands this
+            # closure to arbitrary synchronous Python code (e.g. exec()'d pyapi()
+            # snippets calling back into a Radon function) that expects a plain
+            # return value immediately. `asyncio.run()` can't be called reentrantly
+            # from inside the already-running interpreter loop, so this drives the
+            # coroutine to completion on a separate thread with its own fresh loop
+            # -- a standard sync-from-async bridge -- and blocks (from this
+            # synchronous callback's perspective, that's expected) until it's done.
             def ret(*args: list[Value], **kwargs: dict[str, Value]) -> object:
-                res = value.execute(
+                coro = value.execute(
                     [radonify(arg, value.pos_start, value.pos_end, value.context) for arg in args],
                     {k: radonify(arg, value.pos_start, value.pos_end, value.context) for k, arg in kwargs.items()},
                 )
+                res = _run_coro_on_new_loop(coro)
                 if res.error:
                     raise RuntimeError(f"Radon exception: {res.error.as_string()}")
                 elif res.should_return():
@@ -1243,75 +1275,76 @@ class BaseInstance(Value, ABC):
         self.symbol_table = SymbolTable(symbol_table)
 
     @abstractmethod
-    def operator(self, operator: str, *args: Value) -> ResultTuple: ...
+    async def operator(self, operator: str, *args: Value) -> ResultTuple: ...
 
     @abstractmethod
     def bind_method(self, method: BaseFunction) -> RTResult[BaseFunction]: ...
 
-    def added_to(self, other: Value) -> ResultTuple:
-        return self.operator("__add__", other)
+    async def added_to(self, other: Value) -> ResultTuple:
+        return await self.operator("__add__", other)
 
-    def subbed_by(self, other: Value) -> ResultTuple:
-        return self.operator("__sub__", other)
+    async def subbed_by(self, other: Value) -> ResultTuple:
+        return await self.operator("__sub__", other)
 
-    def multed_by(self, other: Value) -> ResultTuple:
-        return self.operator("__mul__", other)
+    async def multed_by(self, other: Value) -> ResultTuple:
+        return await self.operator("__mul__", other)
 
-    def dived_by(self, other: Value) -> ResultTuple:
-        return self.operator("__div__", other)
+    async def dived_by(self, other: Value) -> ResultTuple:
+        return await self.operator("__div__", other)
 
-    def powed_by(self, other: Value) -> ResultTuple:
-        return self.operator("__pow__", other)
+    async def powed_by(self, other: Value) -> ResultTuple:
+        return await self.operator("__pow__", other)
 
-    def get_comparison_eq(self, other: Value) -> ResultTuple:
-        return self.operator("__eq__", other)
+    async def get_comparison_eq(self, other: Value) -> ResultTuple:
+        return await self.operator("__eq__", other)
 
-    def get_comparison_ne(self, other: Value) -> ResultTuple:
-        return self.operator("__ne__", other)
+    async def get_comparison_ne(self, other: Value) -> ResultTuple:
+        return await self.operator("__ne__", other)
 
-    def get_comparison_lt(self, other: Value) -> ResultTuple:
-        return self.operator("__lt__", other)
+    async def get_comparison_lt(self, other: Value) -> ResultTuple:
+        return await self.operator("__lt__", other)
 
-    def get_comparison_gt(self, other: Value) -> ResultTuple:
-        return self.operator("__gt__", other)
+    async def get_comparison_gt(self, other: Value) -> ResultTuple:
+        return await self.operator("__gt__", other)
 
-    def get_comparison_lte(self, other: Value) -> ResultTuple:
-        return self.operator("__lte__", other)
+    async def get_comparison_lte(self, other: Value) -> ResultTuple:
+        return await self.operator("__lte__", other)
 
-    def get_comparison_gte(self, other: Value) -> ResultTuple:
-        return self.operator("__gte__", other)
+    async def get_comparison_gte(self, other: Value) -> ResultTuple:
+        return await self.operator("__gte__", other)
 
-    def anded_by(self, other: Value) -> ResultTuple:
-        return self.operator("__and__", other)
+    async def anded_by(self, other: Value) -> ResultTuple:
+        return await self.operator("__and__", other)
 
-    def ored_by(self, other: Value) -> ResultTuple:
-        return self.operator("__or__", other)
+    async def ored_by(self, other: Value) -> ResultTuple:
+        return await self.operator("__or__", other)
 
-    def notted(self) -> ResultTuple:
-        return self.operator("__not__")
+    async def notted(self) -> ResultTuple:
+        return await self.operator("__not__")
 
-    def get_index(self, index: Value) -> ResultTuple:
-        return self.operator("__getitem__", index)
+    async def get_index(self, index: Value) -> ResultTuple:
+        return await self.operator("__getitem__", index)
 
-    def set_index(self, index: Value, value: Value) -> ResultTuple:
-        return self.operator("__setitem__", index, value)
+    async def set_index(self, index: Value, value: Value) -> ResultTuple:
+        return await self.operator("__setitem__", index, value)
 
-    def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
-        res, err = self.operator("__call__", *args)
+    async def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
+        res, err = await self.operator("__call__", *args)
         if err is not None:
             return RTResult[Value]().failure(err)
         assert res is not None
         return RTResult[Value]().success(res)
 
-    def contains(self, other: Value) -> ResultTuple:
-        return self.operator("__contains__", other)
+    async def contains(self, other: Value) -> ResultTuple:
+        return await self.operator("__contains__", other)
 
     def is_true(self) -> bool:
-        res, err = self.operator("__truthy__")
-        if err is not None:
-            return False
-        assert res is not None
-        return res.is_true()
+        # Deliberately does not consult a `__truthy__` operator overload:
+        # is_true() is called synchronously from many hot paths (if/while/not/
+        # and/or), and `operator()` is async (it may invoke a user-defined
+        # Function). Instances default to truthy, like Python's own objects
+        # absent a __bool__/__len__ override.
+        return True
 
     def copy(self: Self) -> Self:
         return self
@@ -1321,9 +1354,9 @@ class Instance(BaseInstance):
     def __init__(self, parent_class: Class) -> None:
         super().__init__(parent_class, None)
 
-    def __exec_len__(self) -> Value | Null:
+    async def __exec_len__(self) -> Value | Null:
         try:
-            return self.operator("__len__")[0].value  # type: ignore
+            return (await self.operator("__len__"))[0].value  # type: ignore
         except AttributeError:
             return Null.null()
 
@@ -1354,7 +1387,7 @@ class Instance(BaseInstance):
             method.symbol_table.set("super", self.parent_class.get_super_callable(method.owner_class, self))
         return RTResult[BaseFunction]().success(method)
 
-    def operator(self, operator: str, *args: Value) -> ResultTuple:
+    async def operator(self, operator: str, *args: Value) -> ResultTuple:
         res = RTResult[Value]()
         method = self.symbol_table.get(operator)
 
@@ -1364,7 +1397,7 @@ class Instance(BaseInstance):
             method.symbol_table = SymbolTable()
         method.symbol_table.set("this", self)
 
-        value = res.register(method.execute(list(args), {}))
+        value = res.register(await method.execute(list(args), {}))
         if res.error is not None:
             return None, res.error
         assert value is not None
@@ -1392,7 +1425,7 @@ class SuperInstance(BaseInstance):
             )
         return RTResult[BaseFunction]().success(method)
 
-    def operator(self, operator: str, *args: Value) -> ResultTuple:
+    async def operator(self, operator: str, *args: Value) -> ResultTuple:
         res = RTResult[Value]()
         method = self.symbol_table.get(operator)
 
@@ -1406,7 +1439,7 @@ class SuperInstance(BaseInstance):
                 "super", self.bound_instance.parent_class.get_super_callable(method.owner_class, self.bound_instance)
             )
 
-        value = res.register(method.execute(list(args), {}))
+        value = res.register(await method.execute(list(args), {}))
         if res.error is not None:
             return None, res.error
         assert value is not None
@@ -1421,7 +1454,7 @@ class SuperCallable(Value):
         super().__init__()
         self.super_instance = super_instance
 
-    def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
+    async def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         res = RTResult[Value]()
         if len(args) > 0 or len(kwargs) > 0:
             return res.failure(RTError(self.pos_start, self.pos_end, "super() does not take arguments", self.context))
@@ -1454,7 +1487,7 @@ class BaseClass(Value, ABC):
     @abstractmethod
     def get(self, name: str) -> Optional[Value]: ...
 
-    def dived_by(self, other: Value) -> ResultTuple:
+    async def dived_by(self, other: Value) -> ResultTuple:
         if not isinstance(other, String):
             return None, self.illegal_operation(other)
 
@@ -1468,9 +1501,9 @@ class BaseClass(Value, ABC):
     def create(self, args: list[Value]) -> RTResult[BaseInstance]: ...
 
     @abstractmethod
-    def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]: ...
+    async def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]: ...
 
-    def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
+    async def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         res = RTResult[Value]()
 
         if self.is_abstract:
@@ -1483,7 +1516,7 @@ class BaseClass(Value, ABC):
             return res
         assert inst is not None
 
-        res.register(self.init(inst, args, kwargs))
+        res.register(await self.init(inst, args, kwargs))
         if res.should_return():
             return res
         return res.success(inst)
@@ -1580,7 +1613,7 @@ class Class(BaseClass):
         inst.symbol_table.set("this", inst)
         return res.success(inst.set_context(self.context).set_pos(self.pos_start, self.pos_end))
 
-    def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]:
+    async def init(self, inst: BaseInstance, args: list[Value], kwargs: dict[str, Value]) -> RTResult[None]:
         res = RTResult[None]()
         # if constructor is not defined, create a default one
         method = inst.symbol_table.symbols.get(
@@ -1594,7 +1627,7 @@ class Class(BaseClass):
         if isinstance(inst, Instance) and isinstance(inst.parent_class, Class) and isinstance(method, Function):
             method.symbol_table.set("super", inst.parent_class.get_super_callable(method.owner_class, inst))
 
-        res.register(method.execute(args, kwargs))
+        res.register(await method.execute(args, kwargs))
         if res.should_return():
             return res
 
@@ -1654,7 +1687,7 @@ class Function(BaseFunction):
         self.va_kw_name = va_kw_name
         self.max_pos_args = max_pos_args
 
-    def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
+    async def execute(self, args: list[Value], kwargs: dict[str, Value]) -> RTResult[Value]:
         from core.interpreter import Interpreter  # Lazy import
 
         res = RTResult[Value]()
@@ -1680,7 +1713,7 @@ class Function(BaseFunction):
         if res.should_return():
             return res
 
-        value = res.register(interpreter.visit(self.body_node, exec_ctx))
+        value = res.register(await interpreter.visit(self.body_node, exec_ctx))
         if res.should_return() and res.func_return_value is None:
             return res
 
@@ -1716,6 +1749,29 @@ class Function(BaseFunction):
         return f"<function {self.name} at {hex(id(self))}>"
 
 
+class Task(Value):
+    """Wraps an in-flight or completed `asyncio.Task`, produced by the `spawn()` builtin.
+
+    `await` on a Task suspends until it resolves and unwraps the underlying
+    RTResult's value/error; `await` on any other value is a passthrough.
+    """
+
+    asyncio_task: asyncio.Task[RTResult[Value]]
+
+    def __init__(self, asyncio_task: asyncio.Task[RTResult[Value]]) -> None:
+        super().__init__()
+        self.asyncio_task = asyncio_task
+
+    def copy(self) -> Task:
+        return self
+
+    def is_true(self) -> bool:
+        return True
+
+    def __repr__(self) -> str:
+        return f"<task {'done' if self.asyncio_task.done() else 'pending'}>"
+
+
 class Module(Value):
     name: str
     file_path: str
@@ -1748,13 +1804,13 @@ class Null(Value):
     def is_true(self) -> bool:
         return False
 
-    def get_comparison_eq(self, other: Value) -> ResultTuple:
+    async def get_comparison_eq(self, other: Value) -> ResultTuple:
         if isinstance(other, Null):
             return Boolean.true(), None
         else:
             return Boolean.false(), None
 
-    def get_comparison_ne(self, other: Value) -> ResultTuple:
+    async def get_comparison_ne(self, other: Value) -> ResultTuple:
         if isinstance(other, Null):
             return Boolean.false(), None
         else:

@@ -141,6 +141,8 @@ KEYWORDS = [
     "private",
     "protected",
     "abstract",
+    "async",
+    "await",
 ]
 
 TokenValue: TypeAlias = Optional[str | int | float]

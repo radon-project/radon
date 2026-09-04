@@ -240,7 +240,7 @@ class HashMapObject(BuiltInObject):
 
     @args(["func"])
     @method
-    def filter(self, ctx: Context) -> RTResult[Value]:
+    async def filter(self, ctx: Context) -> RTResult[Value]:
         """Filter key-value pairs by a predicate function that receives (key, value)."""
         res = RTResult[Value]()
         func = ctx.symbol_table.get("func")
@@ -248,7 +248,7 @@ class HashMapObject(BuiltInObject):
 
         filtered: Dict[str, Value] = {}
         for k, v in self._data.items():
-            result = res.register(func.execute([String(k), v], {}))
+            result = res.register(await func.execute([String(k), v], {}))
             if res.should_return():
                 return res
             assert result is not None
@@ -259,7 +259,7 @@ class HashMapObject(BuiltInObject):
 
     @args(["func"])
     @method
-    def map_values(self, ctx: Context) -> RTResult[Value]:
+    async def map_values(self, ctx: Context) -> RTResult[Value]:
         """Transform values with a function that receives (key, value) and returns new value."""
         res = RTResult[Value]()
         func = ctx.symbol_table.get("func")
@@ -267,7 +267,7 @@ class HashMapObject(BuiltInObject):
 
         mapped: Dict[str, Value] = {}
         for k, v in self._data.items():
-            result = res.register(func.execute([String(k), v], {}))
+            result = res.register(await func.execute([String(k), v], {}))
             if res.should_return():
                 return res
             assert result is not None

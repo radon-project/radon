@@ -1,0 +1,71 @@
+# Async/await (#216): async fun marks a function body as allowed to contain
+# `await`; calling any function still runs it inline like today. Real
+# concurrency comes from spawn() (schedules a call as a background Task on
+# the event loop) + await/gather (suspend until a Task resolves).
+
+# Basic: awaiting a plain async call just returns its value, same as a
+# regular call -- async by itself doesn't change anything about a single,
+# un-spawned call.
+async fun answer() {
+    return 42
+}
+assert await answer() == 42
+
+# await is legal at a script's top level too (the whole program runs inside
+# the event loop already), not just inside async fun bodies.
+async fun make_value(x) {
+    return x * 2
+}
+assert await make_value(21) == 42
+
+# Errors raised inside an async function propagate through await like any
+# other function call.
+fun BoomError(msg) {
+    return msg
+}
+
+async fun fails() {
+    raise BoomError("async boom")
+}
+
+try {
+    await fails()
+    assert false, "expected fails() to raise"
+} catch as e {
+    assert e == "async boom"
+}
+
+# spawn() starts a call running concurrently in the background and returns a
+# Task immediately; awaiting a Task suspends until it resolves.
+async fun waiter(label, seconds, log) {
+    await sleep(seconds)
+    log.append(label)
+    return label
+}
+
+var log = []
+var slow = spawn(fun() -> waiter("slow", 0.06, log))
+var fast = spawn(fun() -> waiter("fast", 0.01, log))
+
+# gather() waits for both concurrently -- the shorter sleep finishes first,
+# proving they actually run in parallel rather than one after another
+# (sequential execution would always log "slow" before "fast").
+var results = await gather([slow, fast])
+assert results == ["slow", "fast"]
+assert log == ["fast", "slow"]
+
+# A Task's error is propagated through gather()/await too.
+async fun always_fails() {
+    raise BoomError("task boom")
+}
+
+var failing_task = spawn(always_fails)
+try {
+    await gather([failing_task])
+    assert false, "expected gather() to propagate the task's error"
+} catch as e {
+    assert e == "task boom"
+}
+
+# await on a plain (non-Task) value is a harmless passthrough.
+assert await 5 == 5

@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Callable, NoReturn, Optional, Type
+from typing import Any, Callable, Coroutine, NoReturn, Optional, Type
 
 import core.builtin_classes as bic
 from core.builtin_funcs import BuiltInFunction, create_global_symbol_table, run
@@ -19,6 +19,7 @@ from core.datatypes import (
     Null,
     Number,
     String,
+    Task,
     Value,
 )
 from core.errors import Error, RNModuleNotFoundError, RNNameError, RTError, TryError
@@ -26,6 +27,7 @@ from core.nodes import (
     ArrayNode,
     AssertNode,
     AttrAccessNode,
+    AwaitNode,
     BinOpNode,
     BreakNode,
     CallNode,
@@ -85,7 +87,9 @@ from core.tokens import (
 )
 
 
-def resolve_module(pos_start: Position, pos_end: Position, exec_ctx: Context, module_ident: str) -> RTResult[Module]:
+async def resolve_module(
+    pos_start: Position, pos_end: Position, exec_ctx: Context, module_ident: str
+) -> RTResult[Module]:
     res = RTResult[Module]()
     module_name = module_ident
     try:
@@ -129,7 +133,7 @@ def resolve_module(pos_start: Position, pos_end: Position, exec_ctx: Context, mo
     new_ctx.symbol_table = symbol_table
     new_ctx.import_cwd = module_path
     # error: Error
-    _, error, should_exit = run(module_name, script, context=new_ctx)
+    _, error, should_exit = await run(module_name, script, context=new_ctx)
 
     if error:
         return RTResult[Value]().failure(
@@ -285,12 +289,12 @@ class Interpreter:
             return res
         return res.success(value)
 
-    def call_value(self, value_to_call: Value, node: CallNode, context: Context) -> RTResult[Value]:
+    async def call_value(self, value_to_call: Value, node: CallNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
         args: list[Value] = []
         for arg_node in node.arg_nodes:
-            arg = res.register(self.visit(arg_node, context))
+            arg = res.register(await self.visit(arg_node, context))
             if res.should_return():
                 return res
             assert arg is not None
@@ -298,61 +302,63 @@ class Interpreter:
 
         kwargs: dict[str, Value] = {}
         for kw, kwarg_node in node.kwarg_nodes.items():
-            kwarg = res.register(self.visit(kwarg_node, context))
+            kwarg = res.register(await self.visit(kwarg_node, context))
             if res.should_return():
                 return res
             assert kwarg is not None
             kwargs[kw] = kwarg
 
-        return_value = res.register(value_to_call.execute(args, kwargs))
+        return_value = res.register(await value_to_call.execute(args, kwargs))
         if res.should_return():
             return res
         assert return_value is not None
         return_value = return_value.copy().set_pos(node.pos_start, node.pos_end).set_context(context)
         return res.success(return_value)
 
-    def visit(self, node: Node, context: Context) -> RTResult[Value]:
+    async def visit(self, node: Node, context: Context) -> RTResult[Value]:
         method_name = f"visit_{type(node).__name__}"
-        method: Callable[[Node, Context], NoReturn] = getattr(self, method_name, self.no_visit_method)
+        method: Callable[[Node, Context], Coroutine[Any, Any, RTResult[Value]]] = getattr(
+            self, method_name, self.no_visit_method
+        )
         try:
-            return method(node, context)
+            return await method(node, context)
         except Exception as e:
             if sys.version_info >= (3, 11):
                 e.add_note(f"{node.pos_start} - {node.pos_end}: NOTE: happened here")
             raise
 
-    def visit_block(self, node: Node, context: Context) -> RTResult[Value]:
+    async def visit_block(self, node: Node, context: Context) -> RTResult[Value]:
         new_context = Context("<block scope>", context, node.pos_start)
         new_context.symbol_table = SymbolTable(context.symbol_table)
-        return self.visit(node, new_context)
+        return await self.visit(node, new_context)
 
     def no_visit_method(self, node: Node, context: Context) -> NoReturn:
         raise Exception(f"No visit_{type(node).__name__} method defined")
 
     ###################################
 
-    def visit_NullNode(self, node: Node, context: Context) -> RTResult[Value]:
+    async def visit_NullNode(self, node: Node, context: Context) -> RTResult[Value]:
         return RTResult[Value]().success(Null.null())
 
-    def visit_NumberNode(self, node: NumberNode, context: Context) -> RTResult[Value]:
+    async def visit_NumberNode(self, node: NumberNode, context: Context) -> RTResult[Value]:
         assert isinstance(node.tok.value, int | float), "This could be a bug in the parser or the lexer"
         return RTResult[Value]().success(
             Number(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
 
-    def visit_StringNode(self, node: StringNode, context: Context) -> RTResult[Value]:
+    async def visit_StringNode(self, node: StringNode, context: Context) -> RTResult[Value]:
         assert isinstance(node.tok.value, str), "This could be a bug in the parser or the lexer"
         return RTResult[Value]().success(
             String(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
 
-    def visit_ArrayNode(self, node: ArrayNode, context: Context) -> RTResult[Value]:
+    async def visit_ArrayNode(self, node: ArrayNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         elements: list[Value] = []
 
         for element_node in node.element_nodes:
             if isinstance(element_node, SpreadNode):
-                elt = res.register(self.visit(element_node.node_to_spread, context))
+                elt = res.register(await self.visit(element_node.node_to_spread, context))
                 if res.should_return():
                     return res
                 assert elt is not None
@@ -367,7 +373,7 @@ class Interpreter:
                     )
                 elements.extend(elt.elements)
             else:
-                elt = res.register(self.visit(element_node, context))
+                elt = res.register(await self.visit(element_node, context))
                 if res.should_return():
                     return res
                 assert elt is not None
@@ -375,7 +381,7 @@ class Interpreter:
 
         return res.success(Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end))
 
-    def visit_VarAccessNode(self, node: VarAccessNode, context: Context) -> RTResult[Value]:
+    async def visit_VarAccessNode(self, node: VarAccessNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         var_name = node.var_name_tok.value
         assert isinstance(var_name, str), "This could be a bug in the lexer"
@@ -389,11 +395,11 @@ class Interpreter:
         assert value is not None
         return res.success(value)
 
-    def visit_VarAssignNode(self, node: VarAssignNode, context: Context) -> RTResult[Value]:
+    async def visit_VarAssignNode(self, node: VarAssignNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         var_name = node.var_name_tok.value
         assert isinstance(var_name, str)
-        value = res.register(self.visit(node.value_node, context))
+        value = res.register(await self.visit(node.value_node, context))
         if res.should_return():
             return res
         assert value is not None
@@ -408,11 +414,11 @@ class Interpreter:
             pos_end=node.pos_end,
         )
 
-    def visit_RaiseNode(self, node: RaiseNode, context: Context) -> RTResult[Value]:
+    async def visit_RaiseNode(self, node: RaiseNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
         call_node = node.call
-        value_to_call = res.register(self.visit(call_node.node_to_call, context))
+        value_to_call = res.register(await self.visit(call_node.node_to_call, context))
         if res.should_return():
             return res
         assert value_to_call is not None
@@ -423,7 +429,7 @@ class Interpreter:
         else:
             errtype = repr(value_to_call)
 
-        msg_val = res.register(self.call_value(value_to_call, call_node, context))
+        msg_val = res.register(await self.call_value(value_to_call, call_node, context))
         if res.should_return():
             return res
         assert msg_val is not None
@@ -431,10 +437,10 @@ class Interpreter:
 
         return res.failure(Error(call_node.pos_start, call_node.pos_end, errtype, msg))
 
-    def visit_UnitRaiseNode(self, node: UnitRaiseNode, context: Context) -> RTResult[Value]:
+    async def visit_UnitRaiseNode(self, node: UnitRaiseNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
-        func = res.register(self.visit(node.func, context))
+        func = res.register(await self.visit(node.func, context))
         if res.should_return():
             return res
         assert func is not None
@@ -445,7 +451,7 @@ class Interpreter:
         else:
             errtype = repr(func)
 
-        msg_val = res.register(func.execute([], {}))
+        msg_val = res.register(await func.execute([], {}))
         if res.should_return():
             return res
         assert msg_val is not None
@@ -453,13 +459,13 @@ class Interpreter:
 
         return res.failure(Error(node.pos_start, node.pos_end, errtype, msg))
 
-    def visit_FromImportNode(self, node: FromImportNode, context: Context) -> RTResult[Value]:
+    async def visit_FromImportNode(self, node: FromImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
         module_name = node.module.value
         assert isinstance(module_name, str), "This could be a bug in the lexer"
 
-        module = res.register(resolve_module(node.pos_start, node.pos_end, context, module_name))
+        module = res.register(await resolve_module(node.pos_start, node.pos_end, context, module_name))
         if res.should_return():
             return res
         assert module is not None
@@ -495,13 +501,13 @@ class Interpreter:
                 return res
         return res.success(Null.null())
 
-    def visit_ImportNode(self, node: ImportNode, context: Context) -> RTResult[Value]:
+    async def visit_ImportNode(self, node: ImportNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
         module_name = node.module.value
         assert isinstance(module_name, str), "This could be a bug in the lexer"
 
-        module = res.register(resolve_module(node.pos_start, node.pos_end, context, module_name))
+        module = res.register(await resolve_module(node.pos_start, node.pos_end, context, module_name))
         if res.should_return():
             return res
         assert module is not None
@@ -524,49 +530,49 @@ class Interpreter:
             return res
         return res.success(module)
 
-    def visit_BinOpNode(self, node: BinOpNode, context: Context) -> RTResult[Value]:
+    async def visit_BinOpNode(self, node: BinOpNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        left = res.register(self.visit(node.left_node, context))
+        left = res.register(await self.visit(node.left_node, context))
         if res.should_return():
             return res
         assert left is not None
-        right = res.register(self.visit(node.right_node, context))
+        right = res.register(await self.visit(node.right_node, context))
         if res.should_return():
             return res
         assert right is not None
 
         if node.op_tok.type == TT_PLUS:
-            result, error = left.added_to(right)
+            result, error = await left.added_to(right)
         elif node.op_tok.type == TT_MINUS:
-            result, error = left.subbed_by(right)
+            result, error = await left.subbed_by(right)
         elif node.op_tok.type == TT_MUL:
-            result, error = left.multed_by(right)
+            result, error = await left.multed_by(right)
         elif node.op_tok.type == TT_DIV:
-            result, error = left.dived_by(right)
+            result, error = await left.dived_by(right)
         elif node.op_tok.type == TT_POW:
-            result, error = left.powed_by(right)
+            result, error = await left.powed_by(right)
         elif node.op_tok.type == TT_MOD:
-            result, error = left.modded_by(right)
+            result, error = await left.modded_by(right)
         elif node.op_tok.type == TT_EE:
-            result, error = left.get_comparison_eq(right)
+            result, error = await left.get_comparison_eq(right)
         elif node.op_tok.type == TT_NE:
-            result, error = left.get_comparison_ne(right)
+            result, error = await left.get_comparison_ne(right)
         elif node.op_tok.type == TT_LT:
-            result, error = left.get_comparison_lt(right)
+            result, error = await left.get_comparison_lt(right)
         elif node.op_tok.type == TT_GT:
-            result, error = left.get_comparison_gt(right)
+            result, error = await left.get_comparison_gt(right)
         elif node.op_tok.type == TT_LTE:
-            result, error = left.get_comparison_lte(right)
+            result, error = await left.get_comparison_lte(right)
         elif node.op_tok.type == TT_GTE:
-            result, error = left.get_comparison_gte(right)
+            result, error = await left.get_comparison_gte(right)
         elif node.op_tok.matches(TT_KEYWORD, "and"):
-            result, error = left.anded_by(right)
+            result, error = await left.anded_by(right)
         elif node.op_tok.matches(TT_KEYWORD, "or"):
-            result, error = left.ored_by(right)
+            result, error = await left.ored_by(right)
         elif node.op_tok.type == TT_IDIV:
-            result, error = left.idived_by(right)
+            result, error = await left.idived_by(right)
         elif node.op_tok.matches(TT_KEYWORD, "in"):
-            result, error = right.contains(left)
+            result, error = await right.contains(left)
         else:
             assert False, f"invalid binary operation: {node.op_tok}, this is probably a bug in the parser."
 
@@ -576,9 +582,9 @@ class Interpreter:
             assert result is not None
             return res.success(result.set_pos(node.pos_start, node.pos_end))
 
-    def visit_UnaryOpNode(self, node: UnaryOpNode, context: Context) -> RTResult[Value]:
+    async def visit_UnaryOpNode(self, node: UnaryOpNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        number = res.register(self.visit(node.node, context))
+        number = res.register(await self.visit(node.node, context))
         if res.should_return():
             return res
         assert number is not None
@@ -586,9 +592,9 @@ class Interpreter:
         error = None
 
         if node.op_tok.type == TT_MINUS:
-            number, error = number.multed_by(Number(-1))
+            number, error = await number.multed_by(Number(-1))
         elif node.op_tok.matches(TT_KEYWORD, "not"):
-            number, error = number.notted()
+            number, error = await number.notted()
         else:
             assert False, f"invalid unary operation: {node.op_tok}, this is probably a bug in the parser."
 
@@ -599,17 +605,36 @@ class Interpreter:
             assert number is not None
             return res.success(number.set_pos(node.pos_start, node.pos_end))
 
-    def visit_IfNode(self, node: IfNode, context: Context) -> RTResult[Value]:
+    async def visit_AwaitNode(self, node: AwaitNode, context: Context) -> RTResult[Value]:
+        res = RTResult[Value]()
+        value = res.register(await self.visit(node.value_node, context))
+        if res.should_return():
+            return res
+        assert value is not None
+
+        # Awaiting a Task (from spawn()) suspends until it resolves and
+        # unwraps its value/error; awaiting anything else is a passthrough,
+        # since a plain (un-spawned) call already ran to completion inline.
+        if isinstance(value, Task):
+            task_value = res.register(await value.asyncio_task)
+            if res.should_return():
+                return res
+            assert task_value is not None
+            return res.success(task_value.set_pos(node.pos_start, node.pos_end))
+
+        return res.success(value.set_pos(node.pos_start, node.pos_end))
+
+    async def visit_IfNode(self, node: IfNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
         for condition, expr, should_return_null in node.cases:
-            condition_value = res.register(self.visit(condition, context))
+            condition_value = res.register(await self.visit(condition, context))
             if res.should_return():
                 return res
             assert condition_value is not None
 
             if condition_value.is_true():
-                expr_value = res.register(self.visit_block(expr, context))
+                expr_value = res.register(await self.visit_block(expr, context))
                 if res.should_return():
                     return res
                 assert expr_value is not None
@@ -617,7 +642,7 @@ class Interpreter:
 
         if node.else_case is not None:
             expr, should_return_null = node.else_case
-            expr_value = res.register(self.visit_block(expr, context))
+            expr_value = res.register(await self.visit_block(expr, context))
             if res.should_return():
                 return res
             assert expr_value is not None
@@ -625,11 +650,11 @@ class Interpreter:
 
         return res.success(Null.null())
 
-    def visit_ForNode(self, node: ForNode, context: Context) -> RTResult[Value]:
+    async def visit_ForNode(self, node: ForNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         elements: list[Value] = []
 
-        start_value = res.register(self.visit(node.start_value_node, context))
+        start_value = res.register(await self.visit(node.start_value_node, context))
         if res.should_return():
             return res
         if not isinstance(start_value, Number):
@@ -642,7 +667,7 @@ class Interpreter:
                 )
             )
 
-        end_value = res.register(self.visit(node.end_value_node, context))
+        end_value = res.register(await self.visit(node.end_value_node, context))
         if res.should_return():
             return res
         if not isinstance(end_value, Number):
@@ -653,7 +678,7 @@ class Interpreter:
             )
 
         if node.step_value_node:
-            step_value = res.register(self.visit(node.step_value_node, context))
+            step_value = res.register(await self.visit(node.step_value_node, context))
             if res.should_return():
                 return res
             if not isinstance(step_value, Number):
@@ -685,7 +710,7 @@ class Interpreter:
             context.symbol_table.set(node.var_name_tok.value, Number(i))
             i += step_value.value
 
-            value = res.register(self.visit_block(node.body_node, context))
+            value = res.register(await self.visit_block(node.body_node, context))
             if res.should_return() and not res.loop_should_continue and not res.loop_should_break:
                 return res
 
@@ -704,12 +729,12 @@ class Interpreter:
             else Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
 
-    def visit_WhileNode(self, node: WhileNode, context: Context) -> RTResult[Value]:
+    async def visit_WhileNode(self, node: WhileNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         elements: list[Value] = []
 
         while True:
-            condition = res.register(self.visit(node.condition_node, context))
+            condition = res.register(await self.visit(node.condition_node, context))
             if res.should_return():
                 return res
             assert condition is not None
@@ -717,7 +742,7 @@ class Interpreter:
             if not condition.is_true():
                 break
 
-            value = res.register(self.visit_block(node.body_node, context))
+            value = res.register(await self.visit_block(node.body_node, context))
             if res.should_return() and not res.loop_should_continue and not res.loop_should_break:
                 return res
 
@@ -736,7 +761,7 @@ class Interpreter:
             else Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
 
-    def visit_FuncDefNode(self, node: FuncDefNode, context: Context) -> RTResult[Value]:
+    async def visit_FuncDefNode(self, node: FuncDefNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
         func_name = node.var_name_tok.value if node.var_name_tok else None
@@ -749,7 +774,7 @@ class Interpreter:
             if default is None:
                 defaults.append(None)
                 continue
-            default_value = res.register(self.visit(default, context))
+            default_value = res.register(await self.visit(default, context))
             if res.should_return():
                 return res
             defaults.append(default_value)
@@ -783,22 +808,22 @@ class Interpreter:
 
         return res.success(func_value)
 
-    def visit_CallNode(self, node: CallNode, context: Context) -> RTResult[Value]:
+    async def visit_CallNode(self, node: CallNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
-        value_to_call = res.register(self.visit(node.node_to_call, context))
+        value_to_call = res.register(await self.visit(node.node_to_call, context))
         if res.should_return():
             return res
         assert value_to_call is not None
         value_to_call = value_to_call.copy().set_pos(node.pos_start, node.pos_end)
 
-        return self.call_value(value_to_call, node, context)
+        return await self.call_value(value_to_call, node, context)
 
-    def visit_ReturnNode(self, node: ReturnNode, context: Context) -> RTResult[Value]:
+    async def visit_ReturnNode(self, node: ReturnNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
         if node.node_to_return:
-            value = res.register(self.visit(node.node_to_return, context))
+            value = res.register(await self.visit(node.node_to_return, context))
             if res.should_return():
                 return res
         else:
@@ -807,13 +832,13 @@ class Interpreter:
 
         return res.success_return(value)
 
-    def visit_ContinueNode(self, node: ContinueNode, context: Context) -> RTResult[Value]:
+    async def visit_ContinueNode(self, node: ContinueNode, context: Context) -> RTResult[Value]:
         return RTResult[Value]().success_continue()
 
-    def visit_BreakNode(self, node: BreakNode, context: Context) -> RTResult[Value]:
+    async def visit_BreakNode(self, node: BreakNode, context: Context) -> RTResult[Value]:
         return RTResult[Value]().success_break()
 
-    def visit_DelNode(self, node: DelNode, context: Context) -> RTResult[Value]:
+    async def visit_DelNode(self, node: DelNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
         for target in node.targets:
@@ -834,7 +859,7 @@ class Interpreter:
                         if destructor.symbol_table is None:
                             destructor.symbol_table = SymbolTable()
                         destructor.symbol_table.set("this", value)
-                        res.register(destructor.execute([], {}))
+                        res.register(await destructor.execute([], {}))
                         if res.should_return():
                             return res
 
@@ -846,25 +871,25 @@ class Interpreter:
                     table = table.parent
 
             elif isinstance(target, IndexGetNode):
-                indexee = res.register(self.visit(target.indexee, context))
+                indexee = res.register(await self.visit(target.indexee, context))
                 if res.should_return():
                     return res
                 assert indexee is not None
 
-                index = res.register(self.visit(target.index, context))
+                index = res.register(await self.visit(target.index, context))
                 if res.should_return():
                     return res
                 assert index is not None
 
-                _, error = indexee.del_index(index)
+                _, error = await indexee.del_index(index)
                 if error is not None:
                     return res.failure(error)
 
         return res.success(Null.null())
 
-    def visit_TryNode(self, node: TryNode, context: Context) -> RTResult[Value]:
+    async def visit_TryNode(self, node: TryNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        res.register(self.visit(node.try_block, context))
+        res.register(await self.visit(node.try_block, context))
         handled_error = res.error
         if res.should_return() and res.error is None:
             return res
@@ -873,7 +898,7 @@ class Interpreter:
             context.symbol_table.set(str(var_name), String(res.error.details))  # type: ignore
             res.error = None
 
-            res.register(self.visit(node.catch_block, context))
+            res.register(await self.visit(node.catch_block, context))
 
             if res.should_return():
                 return res
@@ -888,14 +913,14 @@ class Interpreter:
         else:
             return res.success(Null.null())
 
-    def visit_ForInNode(self, node: ForInNode, context: Context) -> RTResult[Value]:
+    async def visit_ForInNode(self, node: ForInNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         var_name = node.var_name_tok.value
         assert isinstance(var_name, str), "This could be a bug in the lexer"
         body = node.body_node
         should_return_null = node.should_return_null
 
-        iterable = res.register(self.visit(node.iterable_node, context))
+        iterable = res.register(await self.visit(node.iterable_node, context))
         if res.should_return():
             return res
         assert iterable is not None
@@ -912,7 +937,7 @@ class Interpreter:
 
             context.symbol_table.set(var_name, element)
 
-            value = res.register(self.visit(body, context))
+            value = res.register(await self.visit(body, context))
             if res.should_return() and not res.loop_should_continue and not res.loop_should_break:
                 return res
 
@@ -928,88 +953,88 @@ class Interpreter:
             return res.success(Null.null())
         return res.success(Array(elements).set_context(context).set_pos(node.pos_start, node.pos_end))
 
-    def visit_SliceGetNode(self, node: SliceGetNode, context: Context) -> RTResult[Value]:
+    async def visit_SliceGetNode(self, node: SliceGetNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        indexee = res.register(self.visit(node.indexee, context))
+        indexee = res.register(await self.visit(node.indexee, context))
         if res.should_return():
             return res
         assert indexee is not None
 
         index_start = None
         if node.index_start is not None:
-            index_start = res.register(self.visit(node.index_start, context))
+            index_start = res.register(await self.visit(node.index_start, context))
             if res.should_return():
                 return res
 
         index_end = None
         if node.index_end is not None:
-            index_end = res.register(self.visit(node.index_end, context))
+            index_end = res.register(await self.visit(node.index_end, context))
             if res.should_return():
                 return res
 
         index_step = None
         if node.index_step is not None:
-            index_step = res.register(self.visit(node.index_step, context))
+            index_step = res.register(await self.visit(node.index_step, context))
             if res.should_return():
                 return res
 
-        result, error = indexee.get_slice(index_start, index_end, index_step)
+        result, error = await indexee.get_slice(index_start, index_end, index_step)
 
         if error is not None:
             return res.failure(error)
         assert result is not None
         return res.success(result.set_pos(node.pos_start, node.pos_end).set_context(context))
 
-    def visit_IndexGetNode(self, node: IndexGetNode, context: Context) -> RTResult[Value]:
+    async def visit_IndexGetNode(self, node: IndexGetNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        indexee = res.register(self.visit(node.indexee, context))
+        indexee = res.register(await self.visit(node.indexee, context))
         if res.should_return():
             return res
         assert indexee is not None
 
-        index = res.register(self.visit(node.index, context))
+        index = res.register(await self.visit(node.index, context))
         if res.should_return():
             return res
         assert index is not None
 
-        result, error = indexee.get_index(index)
+        result, error = await indexee.get_index(index)
         if error is not None:
             return res.failure(error)
         assert result is not None
 
         return res.success(result)
 
-    def visit_IndexSetNode(self, node: IndexSetNode, context: Context) -> RTResult[Value]:
+    async def visit_IndexSetNode(self, node: IndexSetNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        indexee = res.register(self.visit(node.indexee, context))
+        indexee = res.register(await self.visit(node.indexee, context))
         if res.should_return():
             return res
         assert indexee is not None
 
-        index = res.register(self.visit(node.index, context))
+        index = res.register(await self.visit(node.index, context))
         if res.should_return():
             return res
         assert index is not None
 
-        value = res.register(self.visit(node.value, context))
+        value = res.register(await self.visit(node.value, context))
         if res.should_return():
             return res
         assert value is not None
 
-        result, error = indexee.set_index(index, value)
+        result, error = await indexee.set_index(index, value)
         if error:
             return res.failure(error)
         assert result is not None
 
         return res.success(result)
 
-    def visit_HashMapNode(self, node: HashMapNode, context: Context) -> RTResult[Value]:
+    async def visit_HashMapNode(self, node: HashMapNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         values: dict[str, Value] = {}
 
         for entry in node.pairs:
             if isinstance(entry, HashMapUnpackNode):
-                unpack_val = res.register(self.visit(entry.node, context))
+                unpack_val = res.register(await self.visit(entry.node, context))
                 if res.should_return():
                     return res
                 assert unpack_val is not None
@@ -1028,7 +1053,7 @@ class Interpreter:
                     values[k] = v
             else:
                 key_node, value_node = entry
-                key = res.register(self.visit(key_node, context))
+                key = res.register(await self.visit(key_node, context))
                 if res.should_return():
                     return res
 
@@ -1037,7 +1062,7 @@ class Interpreter:
                         RTError(key_node.pos_start, key_node.pos_end, f"Non-string key for hashmap: '{key!r}'", context)
                     )
 
-                value = res.register(self.visit(value_node, context))
+                value = res.register(await self.visit(value_node, context))
                 if res.should_return():
                     return res
                 assert value is not None
@@ -1046,7 +1071,7 @@ class Interpreter:
 
         return res.success(HashMap(values))
 
-    def visit_ClassNode(self, node: ClassNode, context: Context) -> RTResult[Value]:
+    async def visit_ClassNode(self, node: ClassNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
 
         class_name = node.class_name_tok.value
@@ -1054,7 +1079,7 @@ class Interpreter:
 
         parents: list[Class] = []
         for parent_node in node.parent_nodes:
-            parent = res.register(self.visit(parent_node, context))
+            parent = res.register(await self.visit(parent_node, context))
             if res.should_return():
                 return res
             if not isinstance(parent, Class):
@@ -1079,7 +1104,7 @@ class Interpreter:
         ctx = Context(class_name, context, node.pos_start)
         ctx.symbol_table = SymbolTable(context.symbol_table)
 
-        res.register(self.visit(node.body_nodes, ctx))
+        res.register(await self.visit(node.body_nodes, ctx))
         if res.should_return():
             return res
 
@@ -1128,16 +1153,16 @@ class Interpreter:
         context.symbol_table.set(class_name, cls)
         return res.success(cls)
 
-    def visit_AssertNode(self, node: AssertNode, context: Context) -> RTResult[Value]:
+    async def visit_AssertNode(self, node: AssertNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        condition = res.register(self.visit(node.condition, context))
+        condition = res.register(await self.visit(node.condition, context))
         if res.should_return():
             return res
         assert condition is not None
         if not condition.is_true():
             message = "Assertion failed"
             if node.message is not None:
-                message_val = res.register(self.visit(node.message, context))
+                message_val = res.register(await self.visit(node.message, context))
                 if res.should_return():
                     return res
                 if not isinstance(message_val, String):
@@ -1151,7 +1176,7 @@ class Interpreter:
             return res.failure(RTError(node.condition.pos_start, node.condition.pos_end, message, context))
         return res.success(condition)
 
-    def visit_IncNode(self, node: IncNode, context: Context) -> RTResult[Value]:
+    async def visit_IncNode(self, node: IncNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         var_name = node.var_name_tok.value
         assert isinstance(var_name, str), "This could be a bug in the lexer"
@@ -1161,7 +1186,7 @@ class Interpreter:
         if old_value is None:
             return res.failure(RNNameError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
 
-        new_value, error = old_value.added_to(Number.one())
+        new_value, error = await old_value.added_to(Number.one())
         if error is not None:
             return res.failure(error)
         assert new_value is not None
@@ -1182,7 +1207,7 @@ class Interpreter:
 
         return res.success(new_value if pre else old_value)
 
-    def visit_DecNode(self, node: DecNode, context: Context) -> RTResult[Value]:
+    async def visit_DecNode(self, node: DecNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
         var_name = node.var_name_tok.value
         assert isinstance(var_name, str), "This could be a bug in the lexer"
@@ -1192,7 +1217,7 @@ class Interpreter:
         if old_value is None:
             return res.failure(RNNameError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", context))
 
-        new_value, error = old_value.subbed_by(Number.one())
+        new_value, error = await old_value.subbed_by(Number.one())
         if error is not None:
             return res.failure(error)
         assert new_value is not None
@@ -1213,9 +1238,9 @@ class Interpreter:
 
         return res.success(new_value if pre else old_value)
 
-    def visit_SwitchNode(self, node: SwitchNode, context: Context) -> RTResult[Value]:
+    async def visit_SwitchNode(self, node: SwitchNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        subject = res.register(self.visit(node.subject_node, context))
+        subject = res.register(await self.visit(node.subject_node, context))
         if res.should_return():
             return res
         assert subject is not None
@@ -1224,18 +1249,18 @@ class Interpreter:
         fallout = False
         for expr, body in node.cases:
             if not should_continue:
-                value = res.register(self.visit(expr, context))
+                value = res.register(await self.visit(expr, context))
                 if res.should_return():
                     return res
                 assert value is not None
-                bool_, error = subject.get_comparison_eq(value)
+                bool_, error = await subject.get_comparison_eq(value)
                 if error is not None:
                     return res.failure(error)
                 assert bool_ is not None
                 should_continue = bool(bool_.is_true())
 
             if should_continue:
-                res.register(self.visit(body, context))
+                res.register(await self.visit(body, context))
                 if res.should_return():
                     return res
 
@@ -1254,22 +1279,22 @@ class Interpreter:
             should_continue = False
 
         if node.default is not None:
-            res.register(self.visit(node.default, context))
+            res.register(await self.visit(node.default, context))
             if res.should_return():
                 return res
             return res.success(Null.null())
 
         return res.success(Null.null())
 
-    def visit_FallthroughNode(self, node: FallthroughNode, context: Context) -> RTResult[Value]:
+    async def visit_FallthroughNode(self, node: FallthroughNode, context: Context) -> RTResult[Value]:
         return RTResult[Value]().success(Null.null()).fallthrough()
 
-    def visit_FalloutNode(self, node: FalloutNode, context: Context) -> RTResult[Value]:
+    async def visit_FalloutNode(self, node: FalloutNode, context: Context) -> RTResult[Value]:
         return RTResult[Value]().success(Null.null()).fallout()
 
-    def visit_AttrAccessNode(self, node: AttrAccessNode, context: Context) -> RTResult[Value]:
+    async def visit_AttrAccessNode(self, node: AttrAccessNode, context: Context) -> RTResult[Value]:
         res = RTResult[Value]()
-        value = res.register(self.visit(node.node_to_access, context))
+        value = res.register(await self.visit(node.node_to_access, context))
         if res.should_return():
             return res
         assert value is not None
@@ -1315,7 +1340,7 @@ class Interpreter:
             assert inst is not None
 
             # Initialize the instance with the primitive value
-            init_res = builtin_class.init(inst, [value], {})
+            init_res = await builtin_class.init(inst, [value], {})
             if init_res.error:
                 return res.failure(init_res.error)
 

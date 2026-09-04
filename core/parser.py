@@ -9,6 +9,7 @@ from core.nodes import (
     ArrayNode,
     AssertNode,
     AttrAccessNode,
+    AwaitNode,
     BinOpNode,
     BreakNode,
     CallNode,
@@ -158,6 +159,7 @@ class Parser:
     in_loop: int
     in_class: int
     in_case: int
+    func_async_stack: list[bool]
 
     def __init__(self, tokens: list[Token]) -> None:
         self.tokens = tokens
@@ -166,8 +168,18 @@ class Parser:
         self.in_loop = 0
         self.in_class = 0
         self.in_case = 0
+        # One entry per function-body nesting level, tracking whether that
+        # specific function is async -- a plain `fun` nested inside an
+        # `async fun` must NOT inherit await-legality from the outer scope,
+        # so this can't be a simple counter; only the innermost frame (or
+        # "no frame" at top level, which is itself an implicit async scope)
+        # decides whether `await` is legal here.
+        self.func_async_stack = []
 
         self.update_current_tok()
+
+    def await_allowed_here(self) -> bool:
+        return self.func_async_stack[-1] if self.func_async_stack else True
 
     def advance(self, res: ParseResult[T]) -> Token:
         self.tok_idx += 1
@@ -668,6 +680,22 @@ class Parser:
     def comp_expr(self) -> ParseResult[Node]:
         res = ParseResult[Node]()
 
+        if self.current_tok.matches(TT_KEYWORD, "await"):
+            if not self.await_allowed_here():
+                return res.failure(
+                    RNSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end, "'await' outside async function"
+                    )
+                )
+            pos_start = self.current_tok.pos_start
+            self.advance(res)
+
+            node = res.register(self.comp_expr())
+            if res.error:
+                return res
+            assert node is not None
+            return res.success(AwaitNode(node, pos_start, node.pos_end))
+
         if self.current_tok.matches(TT_KEYWORD, "not"):
             op_tok = self.current_tok
             self.advance(res)
@@ -942,7 +970,7 @@ class Parser:
             assert while_expr is not None
             node = while_expr
 
-        elif tok.type == TT_KEYWORD and tok.value in ("fun", "static", "public", "private", "protected"):
+        elif tok.type == TT_KEYWORD and tok.value in ("fun", "static", "public", "private", "protected", "async"):
             self.in_func += 1
             func_def = res.register(self.func_def())
             self.in_func -= 1
@@ -1502,15 +1530,19 @@ class Parser:
         node_pos_start = self.current_tok.pos_start
 
         static = False
+        is_async = False
         access_modifier = "public"
         while self.current_tok.type == TT_KEYWORD and self.current_tok.value in (
             "static",
             "public",
             "private",
             "protected",
+            "async",
         ):
             if self.current_tok.value == "static":
                 static = True
+            elif self.current_tok.value == "async":
+                is_async = True
             else:
                 assert isinstance(self.current_tok.value, str)
                 access_modifier = self.current_tok.value
@@ -1654,7 +1686,9 @@ class Parser:
         if self.current_tok.type == TT_ARROW:
             self.advance(res)
 
+            self.func_async_stack.append(is_async)
             body = res.register(self.expr())
+            self.func_async_stack.pop()
             if res.error:
                 return res
             assert body is not None
@@ -1674,6 +1708,7 @@ class Parser:
                     pos_start=node_pos_start,
                     pos_end=self.current_tok.pos_end,
                     access_modifier=access_modifier,
+                    is_async=is_async,
                 )
             )
 
@@ -1702,6 +1737,7 @@ class Parser:
                         pos_end=self.current_tok.pos_end,
                         access_modifier=access_modifier,
                         is_abstract=True,
+                        is_async=is_async,
                     )
                 )
             return res.failure(
@@ -1717,7 +1753,9 @@ class Parser:
             desc = str(self.current_tok.value)
             self.advance(res)
 
+        self.func_async_stack.append(is_async)
         body = res.register(self.statements())
+        self.func_async_stack.pop()
         if res.error:
             return res
         assert body is not None
@@ -1742,6 +1780,7 @@ class Parser:
                 pos_start=node_pos_start,
                 pos_end=self.current_tok.pos_end,
                 access_modifier=access_modifier,
+                is_async=is_async,
             )
         )
 
