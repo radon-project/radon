@@ -20,7 +20,6 @@ allowed: dict[str, bool] = {}
 _STDLIB_DIR = (BASE_DIR / "stdlib").resolve()
 
 
-# !!! Only used for tests !!!
 def allow_all_permissions() -> None:
     allowed["pyapi_access"] = True
     allowed["disk_access"] = True
