@@ -282,7 +282,7 @@ class BuiltInFunction(BaseFunction):
 
     @args(["code", "ns"])
     def execute_pyapi(self, exec_ctx: Context) -> RTResult[Value]:
-        security.security_prompt("pyapi_access")
+        security.security_prompt("pyapi_access", exec_ctx.parent_entry_pos)
 
         res = RTResult[Value]()
 
