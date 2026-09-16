@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Coroutine, Generator, Optional, TypeAlias
 from typing import Iterator as PyIterator
 
 from core.colortools import Log
-from core.errors import Error, RNIndexError, RNKeyError, RNNameError, RTError
+from core.errors import Error, RNIndexError, RNKeyError, RNNameError, RNTypeError, RTError
 from core.nodes import NullNode
 from core.parser import Context, RTResult, SymbolTable
 from core.tokens import STDLIBS, Position
@@ -1186,7 +1186,7 @@ class BaseFunction(Value):
             signature_suffix = f" ({signature_args})" if signature_args else ""
             were_word = "was" if actual_count == 1 else "were"
             return res.failure(
-                RTError(
+                RNTypeError(
                     self.pos_start,
                     self.pos_end,
                     (
@@ -1209,7 +1209,7 @@ class BaseFunction(Value):
             arg_word = "argument" if missing_count == 1 else "arguments"
             missing_args = ", ".join(f"'{arg_name}'" for arg_name in missing_arg_names)
             return res.failure(
-                RTError(
+                RNTypeError(
                     self.pos_start,
                     self.pos_end,
                     (
