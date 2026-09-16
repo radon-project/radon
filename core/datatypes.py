@@ -1172,23 +1172,50 @@ class BaseFunction(Value):
         # Only count kwargs that map to named args; extra kwargs go into ***kwargs if available
         named_kwargs_count = sum(1 for kw in kwargs if kw in arg_names) if self.va_kw_name is not None else len(kwargs)
         args_count = len(args) + named_kwargs_count
+        function_name = self.name
         if self.va_name is None and (args_count > len(arg_names) or len(args) > max_pos_args):
+            if len(args) > max_pos_args:
+                expected_count = max_pos_args
+                actual_count = len(args)
+                arg_word = "argument" if expected_count == 1 else "arguments"
+            else:
+                expected_count = len(arg_names)
+                actual_count = args_count
+                arg_word = "argument" if expected_count == 1 else "arguments"
+            signature_args = ", ".join(arg_names)
+            signature_suffix = f" ({signature_args})" if signature_args else ""
+            were_word = "was" if actual_count == 1 else "were"
             return res.failure(
                 RTError(
                     self.pos_start,
                     self.pos_end,
-                    f"{len(args) - len(arg_names)} too many args passed into {self}",
+                    (
+                        f"{function_name}() takes at most {expected_count} {arg_word}"
+                        f"{signature_suffix} but {actual_count} {were_word} given"
+                    ),
                     self.context,
                 )
             )
 
         defaults_count = sum(1 for default in defaults if default is not None)
         if args_count < len(arg_names) - defaults_count:
+            required_arg_names = [arg_name for arg_name, default in zip(arg_names, defaults) if default is None]
+            provided_arg_names = set(kwargs.keys()) & set(arg_names)
+            for i in range(min(len(args), len(arg_names), max_pos_args)):
+                provided_arg_names.add(arg_names[i])
+
+            missing_arg_names = [arg_name for arg_name in required_arg_names if arg_name not in provided_arg_names]
+            missing_count = len(missing_arg_names)
+            arg_word = "argument" if missing_count == 1 else "arguments"
+            missing_args = ", ".join(f"'{arg_name}'" for arg_name in missing_arg_names)
             return res.failure(
                 RTError(
                     self.pos_start,
                     self.pos_end,
-                    f"{args_count - defaults_count} too few args passed into {self}",
+                    (
+                        f"{function_name}() missing {missing_count} required {arg_word}: "
+                        f"{missing_args} (got {args_count})"
+                    ),
                     self.context,
                 )
             )

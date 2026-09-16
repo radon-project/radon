@@ -1,0 +1,16 @@
+
+fun utime(path, times) {
+    return null
+}
+
+try {
+    utime()
+} catch as e {
+    print(e)
+}
+
+try {
+    utime("tests/hello.txt", [0, 0], 1)
+} catch as e {
+    print(e)
+}
