@@ -23,6 +23,12 @@ class Argparser {
         this.pos_opts = []
         this.flags = []
         this.named = []
+        this.options = {}
+    }
+
+    fun add_option(option, description, is_flag=false) {
+        this.options[option] = {"description": description, "is_flag": is_flag}
+        return this
     }
 
     fun add_pos_opt(name, desc, default_=null, required=false, conversor=null) {
@@ -51,6 +57,50 @@ class Argparser {
         }
         this.named.append({"name": name, "desc": desc, "default": default_, "conversor": conversor})
         return this
+    }
+
+    fun parse_arguments(arguments=null) {
+        if is_null(arguments) {
+            arguments = argv[:]
+        } else {
+            arguments = arguments[:]
+        }
+        var parsed_args = {}
+        var index = 1
+        while index < arguments.length() {
+            const argument = arguments[index]
+            if str_starts_with(argument, "--") {
+                const option = argument[2:]
+                if option in this.options {
+                    if this.options[option]["is_flag"] {
+                        parsed_args[option] = true
+                    } else {
+                        index++
+                        if index < arguments.length() {
+                            parsed_args[option] = arguments[index]
+                        } else {
+                            print("Value missing for option: " + argument)
+                            return {}
+                        }
+                    }
+                } else {
+                    print("Unrecognized option: " + argument)
+                    return {}
+                }
+            } else {
+                print("Unrecognized argument: " + argument)
+                return {}
+            }
+            index++
+        }
+        return parsed_args
+    }
+
+    fun print_usage() {
+        print(this.desc)
+        for option in this.options {
+            print("\t--"+option+"\t"+this.options[option]["description"])
+        }
     }
 
     fun get_named_conversor(name) {
