@@ -1,0 +1,14 @@
+from argparser import Argparser;
+
+var parser = Argparser("This is a sample CLI tool");
+parser.add_option("help", "Display usage information", is_flag=true);
+parser.add_option("verbose", "Enable verbose mode", is_flag=true);
+parser.add_option("output", "Specify output file");
+
+parser.print_usage();
+print(parser.parse_arguments(["tool", "--help"]));
+print(parser.parse_arguments(["tool", "--verbose", "--output", "result.txt"]));
+print(parser.parse_arguments(["tool", "--output", "result.txt"]));
+print(parser.parse_arguments(["tool", "--unknown"]));
+print(parser.parse_arguments(["tool", "input.txt"]));
+print(parser.parse_arguments(["tool", "--output"]));

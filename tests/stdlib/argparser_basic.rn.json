@@ -1,0 +1,1 @@
+{"code": 0, "stdout": "This is a sample CLI tool\n\t--help\tDisplay usage information\n\t--verbose\tEnable verbose mode\n\t--output\tSpecify output file\n{'help': true}\n{'verbose': true, 'output': \"result.txt\"}\n{'output': \"result.txt\"}\nUnrecognized option: --unknown\n{}\nUnrecognized argument: input.txt\n{}\nValue missing for option: --output\n{}\n", "stderr": ""}
