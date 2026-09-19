@@ -21,7 +21,7 @@ class RequestsObject(BuiltInObject):
     @args(["url", "headers"], [None, HashMap({})])
     @method
     def get(self, ctx: Context) -> RTResult[Value]:
-        security.security_prompt("network_access")
+        security.security_prompt("network_access", ctx.parent_entry_pos)
 
         res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
@@ -43,7 +43,7 @@ class RequestsObject(BuiltInObject):
     @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
     def post(self, ctx: Context) -> RTResult[Value]:
-        security.security_prompt("network_access")
+        security.security_prompt("network_access", ctx.parent_entry_pos)
 
         res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
@@ -73,7 +73,7 @@ class RequestsObject(BuiltInObject):
     @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
     def put(self, ctx: Context) -> RTResult[Value]:
-        security.security_prompt("network_access")
+        security.security_prompt("network_access", ctx.parent_entry_pos)
 
         res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
@@ -102,7 +102,7 @@ class RequestsObject(BuiltInObject):
     @args(["url", "headers"], [None, HashMap({})])
     @method
     def delete(self, ctx: Context) -> RTResult[Value]:
-        security.security_prompt("network_access")
+        security.security_prompt("network_access", ctx.parent_entry_pos)
 
         res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
@@ -124,7 +124,7 @@ class RequestsObject(BuiltInObject):
     @args(["url", "data", "headers"], [None, HashMap({}), HashMap({})])
     @method
     def patch(self, ctx: Context) -> RTResult[Value]:
-        security.security_prompt("network_access")
+        security.security_prompt("network_access", ctx.parent_entry_pos)
 
         res = RTResult[Value]()
         url = ctx.symbol_table.get("url")
